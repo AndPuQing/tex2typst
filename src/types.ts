@@ -9,10 +9,6 @@ export enum TokenType {
     UNKNOWN,
 }
 
-export interface Token {
-    type: TokenType;
-    value: string;
-}
 
 
 export interface TexSupsubData {
