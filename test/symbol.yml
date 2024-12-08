@@ -32,7 +32,7 @@ cases:
     typst: bold(a)
   - title: variants of plus,minus,times,divide
     tex: \pm \mp \oplus \boxplus \otimes \boxtimes
-    typst: plus.minus minus.plus xor plus.square times.circle times.square
+    typst: plus.minus minus.plus plus.circle plus.square times.circle times.square
   - title: symbols about mathematical logic
     tex: \neg \land \lor
     typst: not and or
@@ -55,10 +55,10 @@ cases:
     typst: integral integral.cont integral.double integral.surf integral.triple integral.vol
   - title: big symbols used to denote accumulated operations
     tex: \sum \prod \bigcup \bigcap \bigvee \bigwedge \bigoplus \bigotimes \bigodot \biguplus \bigsqcup
-    typst: sum product union.big sect.big or.big and.big xor.big times.circle.big dot.circle.big union.plus.big union.sq.big
+    typst: sum product union.big sect.big or.big and.big plus.circle.big times.circle.big dot.circle.big union.plus.big union.sq.big
   - title: wave
     tex: \sim \approx \cong \simeq \asymp \equiv \propto
-    typst: tilde approx tilde.equiv tilde.eq ≍ equiv prop
+    typst: tilde.op approx tilde.equiv tilde.eq ≍ equiv prop
   - title: arrows used in proofs
     tex: \implies \iff \leftrightarrow \longleftrightarrow \rightrightarrows
     typst: arrow.r.double.long arrow.l.r.double.long arrow.l.r arrow.l.r.long arrows.rr
@@ -76,7 +76,7 @@ cases:
     typst: binom(n, k)
   - title: unpaired left and right floor,ceil
     tex: \rfloor \lceil \left\lceil \frac{1}{2} \right \rfloor
-    typst: ⌋ ⌈ lr(⌈ frac(1, 2) ⌋)
+    typst: floor.r ceil.l lr(ceil.l frac(1, 2) floor.r)
   - title: paired left and right floor,ceil
     tex: \lfloor x \rfloor \lceil x \rceil \left\lceil \frac{1}{2} \right \rceil 
     typst: floor(x) ceil(x) ceil(frac(1, 2))

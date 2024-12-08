@@ -267,22 +267,22 @@ export class TypstWriter {
     public finalize(): string {
         this.flushQueue();
         const smartFloorPass = function (input: string): string {
-            // Use regex to replace all "⌊ xxx ⌋" with "floor(xxx)"
-            let res = input.replace(/⌊\s*(.*?)\s*⌋/g, "floor($1)");
+            // Use regex to replace all "floor.l xxx floor.r" with "floor(xxx)"
+            let res = input.replace(/floor\.l\s*(.*?)\s*floor\.r/g, "floor($1)");
             // Typst disallow "floor()" with empty argument, so add am empty string inside if it's empty.
             res = res.replace(/floor\(\)/g, 'floor("")');
             return res;
         };
         const smartCeilPass = function (input: string): string {
-            // Use regex to replace all "⌈ xxx ⌉" with "ceil(xxx)"
-            let res = input.replace(/⌈\s*(.*?)\s*⌉/g, "ceil($1)");
+            // Use regex to replace all "ceil.l xxx ceil.r" with "ceil(xxx)"
+            let res = input.replace(/ceil\.l\s*(.*?)\s*ceil\.r/g, "ceil($1)");
             // Typst disallow "ceil()" with empty argument, so add an empty string inside if it's empty.
             res = res.replace(/ceil\(\)/g, 'ceil("")');
             return res;
         }
         const smartRoundPass = function (input: string): string {
-            // Use regex to replace all "⌊ xxx ⌉" with "round(xxx)"
-            let res = input.replace(/⌊\s*(.*?)\s*⌉/g, "round($1)");
+            // Use regex to replace all "floor.l xxx ceil.r" with "round(xxx)"
+            let res = input.replace(/floor\.l\s*(.*?)\s*ceil\.r/g, "round($1)");
             // Typst disallow "round()" with empty argument, so add an empty string inside if it's empty.
             res = res.replace(/round\(\)/g, 'round("")');
             return res;

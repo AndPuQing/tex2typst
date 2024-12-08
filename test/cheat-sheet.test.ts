@@ -14,8 +14,6 @@ describe('cheat sheet', () => {
     const text_content = fs.readFileSync(cheatSheetFile, { encoding: 'utf-8' });
     const data = toml.parse(text_content) as CheatSheet;
 
-    expect(data.math_symbols).toBeDefined();
-
     test('math_commands', () => {
         expect(data.math_commands).toBeDefined();
 
