@@ -280,8 +280,17 @@ export class TypstWriter {
             res = res.replace(/ceil\(\)/g, 'ceil("")');
             return res;
         }
-        this.buffer = smartFloorPass(this.buffer);
-        this.buffer = smartCeilPass(this.buffer);
+        const smartRoundPass = function (input: string): string {
+            // Use regex to replace all "⌊ xxx ⌉" with "round(xxx)"
+            let res = input.replace(/⌊\s*(.*?)\s*⌉/g, "round($1)");
+            // Typst disallow "round()" with empty argument, so add an empty string inside if it's empty.
+            res = res.replace(/round\(\)/g, 'round("")');
+            return res;
+        }
+        const all_passes = [smartFloorPass, smartCeilPass, smartRoundPass];
+        for (const pass of all_passes) {
+            this.buffer = pass(this.buffer);
+        }
         return this.buffer;
     }
 }
@@ -352,7 +361,12 @@ export function convertTree(node: TexNode): TypstNode {
                 content: '',
                 args: node.args!.map(convertTree),
             };                
-            if (["[]", "()", "\\{\\}", "\\lfloor\\rfloor", "\\lceil\\rceil"].includes(left.content + right.content)) {
+            if ([
+                    "[]", "()", "\\{\\}",
+                    "\\lfloor\\rfloor",
+                    "\\lceil\\rceil",
+                    "\\lfloor\\rceil",
+                ].includes(left.content + right.content)) {
                 return group;
             }
             return {
