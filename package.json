@@ -20,7 +20,7 @@
     "build:types": "tsc --project ./tsconfig.json",
     "build": "npm run build:node && npm run build:browser && npm run build:types",
     "test": "vitest run",
-    "publish": "npm run build && npm run test && npm publish"
+    "pub": "npm run build && npm run test && npm publish"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
