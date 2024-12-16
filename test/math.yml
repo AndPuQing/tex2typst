@@ -309,3 +309,12 @@ cases:
   - title: base is group wrapped in brackets
     tex: e = \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
     typst: e = lim_(n arrow.r infinity)(1 + frac(1, n))^n
+  - title: overset
+    tex: \overset{a}{+}
+    typst: "op(+, limits: #true)^a"
+  - title: overset, special case 1
+    tex: \overset{\text{def}}{=}
+    typst: eq.def
+  - title: overset, special case 2
+    tex: \overset{def}{=}
+    typst: eq.def

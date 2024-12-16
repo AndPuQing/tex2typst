@@ -41,6 +41,7 @@ const BINARY_COMMANDS = [
     'dbinom',
     'dfrac',
     'tbinom',
+    'overset',
 ]
 
 

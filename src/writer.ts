@@ -19,6 +19,54 @@ function is_delimiter(c: TypstNode): boolean {
     return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content);
 }
 
+function text_node_shallow_eq(a: TexNode, b: TexNode): boolean {
+    return (a.type === b.type) && (a.content === b.content);
+}
+
+// \overset{X}{Y} -> op(Y, limits: #true)^X
+// and with special case \overset{\text{def}}{=} -> eq.def
+function convert_overset(node: TexNode): TypstNode {
+    const [sup, base] = node.args!;
+
+    const is_def = (n: TexNode): boolean => {
+        if(n.type === 'text' && n.content === 'def') {
+            return true;
+        }
+        // \overset{def}{=} is also considered as eq.def
+        if(n.type === 'ordgroup' && n.args!.length === 3) {
+            const [a1, a2, a3] = n.args!;
+            const d: TexNode = { type: 'element', content: 'd' };
+            const e: TexNode = { type: 'element', content: 'e' };
+            const f: TexNode = { type: 'element', content: 'f' };
+            if(text_node_shallow_eq(a1, d) && text_node_shallow_eq(a2, e) && text_node_shallow_eq(a3, f)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    const is_eq = (n: TexNode): boolean => (n.type === 'element' && n.content === '=');
+    if(is_def(sup) && is_eq(base)) {
+        return {
+            type: 'symbol',
+            content: 'eq.def',
+        };
+    }
+    const op_call: TypstNode = {
+        type: 'unaryFunc',
+        content: 'op',
+        args: [convertTree(base)],
+        options: { limits: '#true' },
+    };
+    return {
+        type: 'supsub',
+        content: '',
+        data: {
+            base: op_call,
+            sup: convertTree(sup),
+        },
+    }
+}
+
 export class TypstWriterError extends Error {
     node: TexNode | TypstNode;
 
@@ -148,6 +196,11 @@ export class TypstWriter {
                 this.insideFunctionDepth ++;
                 this.queue.push({ type: 'atom', content: '('});
                 this.append(arg0);
+                if(node.options) {
+                    for (const [key, value] of Object.entries(node.options)) {
+                        this.queue.push({ type: 'symbol', content: `, ${key}: ${value}`});
+                    }
+                }
                 this.queue.push({ type: 'atom', content: ')'});
                 this.insideFunctionDepth --;
                 break;
@@ -376,6 +429,9 @@ export function convertTree(node: TexNode): TypstNode {
             };
         }
         case 'binaryFunc': {
+            if (node.content === '\\overset') {
+                return convert_overset(node);
+            }
             return {
                 type: 'binaryFunc',
                 content: convertToken(node.content),
