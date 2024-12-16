@@ -295,7 +295,7 @@ export function tokenize(latex: string): Token[] {
                 const firstTwoChars = latex.slice(pos, pos + 2);
                 if (['\\\\', '\\,'].includes(firstTwoChars)) {
                     token = new Token(TokenType.CONTROL, firstTwoChars);
-                } else if (['\\{','\\}', '\\%', '\\$', '\\&', '\\#', '\\_'].includes(firstTwoChars)) {
+                } else if (['\\{','\\}', '\\%', '\\$', '\\&', '\\#', '\\_', '\\|'].includes(firstTwoChars)) {
                     token = new Token(TokenType.ELEMENT, firstTwoChars);
                 } else {
                     const command = eat_command_name(latex, pos + 1);

@@ -482,10 +482,13 @@ export function convertTree(node: TexNode): TypstNode {
 function convertToken(token: string): string {
     if (/^[a-zA-Z0-9]$/.test(token)) {
         return token;
+    } else if (token === '/') {
+        return '\\/';
+    } else if (token === '\\|') {
+        // \| in LaTeX is double vertical bar looks like ||
+        return 'parallel'; 
     } else if (token === '\\\\') {
         return '\\';
-    } else if (token == '/') {
-        return '\\/';
     } else if (['\\$', '\\#', '\\&', '\\_'].includes(token)) {
         return token;
     } else if (token.startsWith('\\')) {

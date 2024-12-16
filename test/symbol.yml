@@ -118,3 +118,6 @@ cases:
   - title: slash
     tex: 1/2
     typst: 1 \/ 2
+  - title: backslash |
+    tex: \|
+    typst: parallel
