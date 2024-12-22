@@ -54,14 +54,33 @@ export interface TypstSupsubData {
 
 export type TypstArrayData = TypstNode[][];
 
-export interface TypstNode {
-    type: 'atom' | 'symbol' | 'text' | 'softSpace' | 'comment' | 'newline'
+type TypstNodeType = 'atom' | 'symbol' | 'text' | 'softSpace' | 'comment' | 'newline'
             | 'empty' | 'group' | 'supsub' | 'unaryFunc' | 'binaryFunc' | 'align' | 'matrix' | 'unknown';
+
+
+export class TypstNode {
+    type: TypstNodeType;
     content: string;
     args?: TypstNode[];
     data?: TypstSupsubData | TypstArrayData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: { [key: string]: string };
+
+    constructor(type: TypstNodeType, content: string, args?: TypstNode[],
+            data?: TypstSupsubData | TypstArrayData) {
+        this.type = type;
+        this.content = content;
+        this.args = args;
+        this.data = data;
+    }
+
+    public setOptions(options: { [key: string]: string }) {
+        this.options = options;
+    }
+
+    public eq_shadow(other: TypstNode): boolean {
+        return this.type === other.type && this.content === other.content;
+    }
 }
 
 export interface Tex2TypstOptions {

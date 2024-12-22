@@ -26,42 +26,40 @@ function convert_overset(node: TexNode): TypstNode {
     const [sup, base] = node.args!;
 
     const is_def = (n: TexNode): boolean => {
-        if(n.type === 'text' && n.content === 'def') {
+        if (n.eq_shadow(new TexNode('text', 'def'))) {
             return true;
         }
         // \overset{def}{=} is also considered as eq.def
-        if(n.type === 'ordgroup' && n.args!.length === 3) {
+        if (n.type === 'ordgroup' && n.args!.length === 3) {
             const [a1, a2, a3] = n.args!;
             const d = new TexNode('element', 'd');
             const e = new TexNode('element', 'e');
             const f = new TexNode('element', 'f');
-            if(a1.eq_shadow(d) && a2.eq_shadow(e) && a3.eq_shadow(f)) {
+            if (a1.eq_shadow(d) && a2.eq_shadow(e) && a3.eq_shadow(f)) {
                 return true;
             }
         }
         return false;
     };
-    const is_eq = (n: TexNode): boolean => (n.type === 'element' && n.content === '=');
-    if(is_def(sup) && is_eq(base)) {
-        return {
-            type: 'symbol',
-            content: 'eq.def',
-        };
+    const is_eq = (n: TexNode): boolean => n.eq_shadow(new TexNode('element', '='));
+    if (is_def(sup) && is_eq(base)) {
+        return new TypstNode('symbol', 'eq.def');
     }
-    const op_call: TypstNode = {
-        type: 'unaryFunc',
-        content: 'op',
-        args: [convertTree(base)],
-        options: { limits: '#true' },
-    };
-    return {
-        type: 'supsub',
-        content: '',
-        data: {
+    const op_call = new TypstNode(
+        'unaryFunc',
+        'op',
+        [convertTree(base)]
+    );
+    op_call.setOptions({ limits: '#true' });
+    return new TypstNode(
+        'supsub',
+        '',
+        [],
+        {
             base: op_call,
             sup: convertTree(sup),
-        },
-    }
+        }
+    );
 }
 
 export class TypstWriterError extends Error {
@@ -111,7 +109,7 @@ export class TypstWriter {
             no_need_space ||= this.buffer === "";
             // other cases
             no_need_space ||= /[\s_^{\(]$/.test(this.buffer);
-            if(!no_need_space) {
+            if (!no_need_space) {
                 this.buffer += ' ';
             }
         }
@@ -129,9 +127,9 @@ export class TypstWriter {
                 break;
             case 'atom': {
                 if (node.content === ',' && this.insideFunctionDepth > 0) {
-                    this.queue.push({ type: 'symbol', content: 'comma' });
+                    this.queue.push(new TypstNode('symbol', 'comma'));
                 } else {
-                    this.queue.push({ type: 'atom', content: node.content });
+                    this.queue.push(new TypstNode('atom', node.content));
                 }
                 break;
             }
@@ -157,49 +155,49 @@ export class TypstWriter {
                     // e.g. 
                     // y_1' -> y'_1
                     // y_{a_1}' -> y'_{a_1}
-                    this.queue.push({ type: 'atom', content: '\''});
+                    this.queue.push(new TypstNode('atom', '\''));
                     trailing_space_needed = false;
                 }
                 if (sub) {
-                    this.queue.push({ type: 'atom', content: '_'});
+                    this.queue.push(new TypstNode('atom', '_'));
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sub);
                 }
                 if (sup && !has_prime) {
-                    this.queue.push({ type: 'atom', content: '^'});
+                    this.queue.push(new TypstNode('atom', '^'));
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sup);
                 }
                 if (trailing_space_needed) {
-                    this.queue.push({ type: 'softSpace', content: ''});
+                    this.queue.push(new TypstNode('softSpace', ''));
                 }
                 break;
             }
             case 'binaryFunc': {
-                const func_symbol: TypstNode = { type: 'symbol', content: node.content };
+                const func_symbol: TypstNode = new TypstNode('symbol', node.content);
                 const [arg0, arg1] = node.args!;
                 this.queue.push(func_symbol);
-                this.insideFunctionDepth ++;
-                this.queue.push({ type: 'atom', content: '('});
+                this.insideFunctionDepth++;
+                this.queue.push(new TypstNode('atom', '('));
                 this.append(arg0);
-                this.queue.push({ type: 'atom', content: ','});
+                this.queue.push(new TypstNode('atom', ','));
                 this.append(arg1);
-                this.queue.push({ type: 'atom', content: ')'});
-                this.insideFunctionDepth --;
+                this.queue.push(new TypstNode('atom', ')'));
+                this.insideFunctionDepth--;
                 break;
             }
             case 'unaryFunc': {
-                const func_symbol: TypstNode = { type: 'symbol', content: node.content };
+                const func_symbol: TypstNode = new TypstNode('symbol', node.content);
                 const arg0 = node.args![0];
                 this.queue.push(func_symbol);
-                this.insideFunctionDepth ++;
-                this.queue.push({ type: 'atom', content: '('});
+                this.insideFunctionDepth++;
+                this.queue.push(new TypstNode('atom', '('));
                 this.append(arg0);
-                if(node.options) {
+                if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
-                        this.queue.push({ type: 'symbol', content: `, ${key}: ${value}`});
+                        this.queue.push(new TypstNode('symbol', `, ${key}: ${value}`));
                     }
                 }
-                this.queue.push({ type: 'atom', content: ')'});
-                this.insideFunctionDepth --;
+                this.queue.push(new TypstNode('atom', ')'));
+                this.insideFunctionDepth--;
                 break;
             }
             case 'align': {
@@ -207,50 +205,50 @@ export class TypstWriter {
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         if (j > 0) {
-                            this.queue.push({ type: 'atom', content: '&' });
+                            this.queue.push(new TypstNode('atom', '&'));
                         }
                         this.append(cell);
                     });
                     if (i < matrix.length - 1) {
-                        this.queue.push({ type: 'symbol', content: '\\' });
+                        this.queue.push(new TypstNode('symbol', '\\'));
                     }
                 });
                 break;
             }
             case 'matrix': {
                 const matrix = node.data as TypstNode[][];
-                this.queue.push({ type: 'symbol', content: 'mat' });
-                this.insideFunctionDepth ++; 
-                this.queue.push({ type: 'atom', content: '('});
-                this.queue.push({type: 'symbol', content: 'delim: #none, '});
+                this.queue.push(new TypstNode('symbol', 'mat'));
+                this.insideFunctionDepth++;
+                this.queue.push(new TypstNode('atom', '('));
+                this.queue.push(new TypstNode('symbol', 'delim: #none, '));
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         // There is a leading & in row
                         // if (cell.type === 'ordgroup' && cell.args!.length === 0) {
-                            // this.queue.push({ type: 'atom', content: ',' });
-                            // return;
+                        // this.queue.push(new TypstNode('atom', ','));
+                        // return;
                         // }
                         // if (j == 0 && cell.type === 'newline' && cell.content === '\n') {
-                            // return;
+                        // return;
                         // }
                         this.append(cell);
                         // cell.args!.forEach((n) => this.append(n));
                         if (j < row.length - 1) {
-                            this.queue.push({ type: 'atom', content: ',' });
+                            this.queue.push(new TypstNode('atom', ','));
                         } else {
                             if (i < matrix.length - 1) {
-                                this.queue.push({ type: 'atom', content: ';' });
+                                this.queue.push(new TypstNode('atom', ';'));
                             }
                         }
                     });
                 });
-                this.queue.push({ type: 'atom', content: ')'});
-                this.insideFunctionDepth --;
+                this.queue.push(new TypstNode('atom', ')'));
+                this.insideFunctionDepth--;
                 break;
             }
             case 'unknown': {
                 if (this.nonStrict) {
-                    this.queue.push({ type: 'symbol', content: node.content });
+                    this.queue.push(new TypstNode('symbol', node.content));
                 } else {
                     throw new TypstWriterError(`Unknown macro: ${node.content}`, node);
                 }
@@ -273,9 +271,9 @@ export class TypstWriter {
         }
 
         if (need_to_wrap) {
-            this.queue.push({ type: 'atom', content: '(' });
+            this.queue.push(new TypstNode('atom', '('));
             this.append(node);
-            this.queue.push({ type: 'atom', content: ')' });
+            this.queue.push(new TypstNode('atom', ')'));
         } else {
             this.append(node);
         }
@@ -349,44 +347,44 @@ export function convertTree(node: TexNode): TypstNode {
     switch (node.type) {
         case 'empty':
         case 'whitespace':
-            return { type: 'empty', content: '' };
+            return new TypstNode('empty', '');
         case 'ordgroup':
-            return {
-                type: 'group',
-                content: '',
-                args: node.args!.map(convertTree),
-            };
+            return new TypstNode(
+                'group',
+                '',
+                node.args!.map(convertTree),
+            );
         case 'element':
-            return { type: 'atom', content: convertToken(node.content) };
+            return new TypstNode('atom', convertToken(node.content));
         case 'symbol':
-            return { type: 'symbol', content: convertToken(node.content) };
+            return new TypstNode('symbol', convertToken(node.content));
         case 'text':
-            return { type: 'text', content: node.content };
+            return new TypstNode('text', node.content);
         case 'comment':
-            return { type: 'comment', content: node.content };
+            return new TypstNode('comment', node.content);
         case 'supsub': {
             let { base, sup, sub } = node.data as TexSupsubData;
 
             // Special logic for overbrace
             if (base && base.type === 'unaryFunc' && base.content === '\\overbrace' && sup) {
-                return {
-                    type: 'binaryFunc',
-                    content: 'overbrace',
-                    args: [convertTree(base.args![0]), convertTree(sup)],
-                };
+                return new TypstNode(
+                    'binaryFunc',
+                    'overbrace',
+                    [convertTree(base.args![0]), convertTree(sup)],
+                );
             } else if (base && base.type === 'unaryFunc' && base.content === '\\underbrace' && sub) {
-                return {
-                    type: 'binaryFunc',
-                    content: 'underbrace',
-                    args: [convertTree(base.args![0]), convertTree(sub)],
-                };
+                return new TypstNode(
+                    'binaryFunc',
+                    'underbrace',
+                    [convertTree(base.args![0]), convertTree(sub)],
+                );
             }
 
             const data: TypstSupsubData = {
                 base: convertTree(base),
             };
             if (data.base.type === 'empty') {
-                data.base = { type: 'text', content: '' };
+                data.base = new TypstNode('text', '');
             }
 
             if (sup) {
@@ -397,74 +395,67 @@ export function convertTree(node: TexNode): TypstNode {
                 data.sub = convertTree(sub);
             }
 
-            return {
-                type: 'supsub',
-                content: '',
-                data: data,
-            };
+            return new TypstNode('supsub', '', [], data);
         }
         case 'leftright': {
             const [left, body, right] = node.args!;
             // These pairs will be handled by Typst compiler by default. No need to add lr()
-            const group: TypstNode = {
-                type: 'group',
-                content: '',
-                args: node.args!.map(convertTree),
-            };                
+            const group: TypstNode = new TypstNode(
+                'group',
+                '',
+                node.args!.map(convertTree),
+            );
             if ([
-                    "[]", "()", "\\{\\}",
-                    "\\lfloor\\rfloor",
-                    "\\lceil\\rceil",
-                    "\\lfloor\\rceil",
-                ].includes(left.content + right.content)) {
+                "[]", "()", "\\{\\}",
+                "\\lfloor\\rfloor",
+                "\\lceil\\rceil",
+                "\\lfloor\\rceil",
+            ].includes(left.content + right.content)) {
                 return group;
             }
-            return {
-                type: 'unaryFunc',
-                content: 'lr',
-                args: [group],
-            };
+            return new TypstNode(
+                'unaryFunc',
+                'lr',
+                [group],
+            );
         }
         case 'binaryFunc': {
             if (node.content === '\\overset') {
                 return convert_overset(node);
             }
-            return {
-                type: 'binaryFunc',
-                content: convertToken(node.content),
-                args: node.args!.map(convertTree),
-            };
+            return new TypstNode(
+                'binaryFunc',
+                convertToken(node.content),
+                node.args!.map(convertTree),
+            );
         }
         case 'unaryFunc': {
             const arg0 = convertTree(node.args![0]);
             // \sqrt{3}{x} -> root(3, x)
             if (node.content === '\\sqrt' && node.data) {
                 const data = convertTree(node.data as TexSqrtData); // the number of times to take the root
-                return {
-                    type: 'binaryFunc',
-                    content: 'root',
-                    args: [data, arg0],
-                };
+                return new TypstNode(
+                    'binaryFunc',
+                    'root',
+                    [data, arg0],
+                );
             }
             // \mathbf{a} -> upright(mathbf(a))
             if (node.content === '\\mathbf') {
-                const inner: TypstNode = {
-                    type: 'unaryFunc',
-                    content: 'bold',
-                    args: [arg0],
-                };
-                return {
-                    type: 'unaryFunc',
-                    content: 'upright',
-                    args: [inner],
-                };
+                const inner: TypstNode = new TypstNode(
+                    'unaryFunc',
+                    'bold',
+                    [arg0],
+                );
+                return new TypstNode(
+                    'unaryFunc',
+                    'upright',
+                    [inner],
+                );
             }
             // \mathbb{R} -> RR
             if (node.content === '\\mathbb' && arg0.type === 'atom' && /^[A-Z]$/.test(arg0.content)) {
-                return {
-                    type: 'symbol',
-                    content: arg0.content + arg0.content,
-                };
+                return new TypstNode('symbol', arg0.content + arg0.content);
             }
             // \operatorname{opname} -> op("opname")
             if (node.content === '\\operatorname') {
@@ -475,54 +466,43 @@ export function convertTree(node: TexNode): TypstNode {
                 const text = body[0].content;
 
                 if (TYPST_INTRINSIC_SYMBOLS.includes(text)) {
-                    return {
-                        type: 'symbol',
-                        content: text,
-                    };
+                    return new TypstNode('symbol', text);
                 } else {
-                    return {
-                        type: 'unaryFunc',
-                        content: 'op',
-                        args: [{ type: 'text', content: text }],
-                    };
+                    return new TypstNode(
+                        'unaryFunc',
+                        'op',
+                        [new TypstNode('text', text)],
+                    );
                 }
             }
 
             // generic case
-            return {
-                type: 'unaryFunc',
-                content: convertToken(node.content),
-                args: node.args!.map(convertTree),
-            };
+            return new TypstNode(
+                'unaryFunc',
+                convertToken(node.content),
+                node.args!.map(convertTree),
+            );
         }
         case 'newline':
-            return { type: 'newline', content: '\n' };
+            return new TypstNode('newline', '\n');
         case 'beginend': {
             const matrix = node.data as TexNode[][];
             const data = matrix.map((row) => row.map(convertTree));
 
             if (node.content!.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.
-                return {
-                    type: 'align',
-                    content: '',
-                    data: data,
-                };
+                return new TypstNode( 'align', '', [], data);
             } else {
-                return {
-                    type: 'matrix',
-                    content: 'mat',
-                    data: data,
-                };
+                return new TypstNode('matrix', 'mat', [], data);
             }
         }
         case 'unknownMacro':
-            return { type: 'unknown', content: convertToken(node.content) };
+            return new TypstNode('unknown', convertToken(node.content));
         case 'control':
             if (node.content === '\\\\') {
-                return { type: 'symbol', content: '\\' };
+                return new TypstNode('symbol', '\\');
             } else if (node.content === '\\,') {
-                return { type: 'symbol', content: 'thin' };
+                return new TypstNode('symbol', 'thin');
             } else {
                 throw new TypstWriterError(`Unknown control sequence: ${node.content}`, node);
             }
@@ -539,7 +519,7 @@ function convertToken(token: string): string {
         return '\\/';
     } else if (token === '\\|') {
         // \| in LaTeX is double vertical bar looks like ||
-        return 'parallel'; 
+        return 'parallel';
     } else if (token === '\\\\') {
         return '\\';
     } else if (['\\$', '\\#', '\\&', '\\_'].includes(token)) {
