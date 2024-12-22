@@ -19,9 +19,6 @@ function is_delimiter(c: TypstNode): boolean {
     return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content);
 }
 
-function text_node_shallow_eq(a: TexNode, b: TexNode): boolean {
-    return (a.type === b.type) && (a.content === b.content);
-}
 
 // \overset{X}{Y} -> op(Y, limits: #true)^X
 // and with special case \overset{\text{def}}{=} -> eq.def
@@ -35,10 +32,10 @@ function convert_overset(node: TexNode): TypstNode {
         // \overset{def}{=} is also considered as eq.def
         if(n.type === 'ordgroup' && n.args!.length === 3) {
             const [a1, a2, a3] = n.args!;
-            const d: TexNode = { type: 'element', content: 'd' };
-            const e: TexNode = { type: 'element', content: 'e' };
-            const f: TexNode = { type: 'element', content: 'f' };
-            if(text_node_shallow_eq(a1, d) && text_node_shallow_eq(a2, e) && text_node_shallow_eq(a3, f)) {
+            const d = new TexNode('element', 'd');
+            const e = new TexNode('element', 'e');
+            const f = new TexNode('element', 'f');
+            if(a1.eq_shadow(d) && a2.eq_shadow(e) && a3.eq_shadow(f)) {
                 return true;
             }
         }

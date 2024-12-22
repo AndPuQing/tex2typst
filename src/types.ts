@@ -21,16 +21,29 @@ export type TexSqrtData = TexNode;
 
 export type TexArrayData = TexNode[][];
 
-export interface TexNode {
-    type: 'element' | 'text' | 'comment' | 'whitespace' | 'newline' | 'control' | 'ordgroup' | 'supsub'
+type TexNodeType = 'element' | 'text' | 'comment' | 'whitespace' | 'newline' | 'control' | 'ordgroup' | 'supsub'
              | 'unaryFunc' | 'binaryFunc' | 'leftright' | 'beginend' | 'symbol' | 'empty' | 'unknownMacro';
+
+export class TexNode {
+    type: TexNodeType;
     content: string;
     args?: TexNode[];
-    // position?: Position;
     // For type="sqrt", it's additional argument wrapped square bracket. e.g. 3 in \sqrt[3]{x}
     // For type="supsub", it's base, sup, and sub.
     // For type="array", it's the 2-dimensional matrix.
     data?: TexSqrtData | TexSupsubData | TexArrayData;
+
+    constructor(type: TexNodeType, content: string, args?: TexNode[],
+            data?: TexSqrtData | TexSupsubData | TexArrayData) {
+        this.type = type;
+        this.content = content;
+        this.args = args;
+        this.data = data;
+    }
+
+    public eq_shadow(other: TexNode): boolean {
+        return this.type === other.type && this.content === other.content;
+    }
 }
 
 export interface TypstSupsubData {
