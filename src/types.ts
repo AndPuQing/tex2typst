@@ -44,6 +44,15 @@ export class TexNode {
     public eq_shadow(other: TexNode): boolean {
         return this.type === other.type && this.content === other.content;
     }
+
+    public toString(): string {
+        switch (this.type) {
+            case 'text':
+                return `\\text{${this.content}}`;
+            default:
+                throw new Error(`toString() is not implemented for type ${this.type}`);
+        }
+    }
 }
 
 export interface TypstSupsubData {
