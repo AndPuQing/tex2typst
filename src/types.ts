@@ -71,6 +71,7 @@ export enum TypstTokenType {
     COMMENT,
     SPACE,
     SOFT_SPACE,
+    CONTROL,
     NEWLINE,
 }
 
@@ -81,6 +82,21 @@ export class TypstToken {
     constructor(type: TypstTokenType, content: string) {
         this.type = type;
         this.content = content;
+    }
+
+    eq(other: TypstToken): boolean {
+        return this.type === other.type && this.content === other.content;
+    }
+
+    isOneOf(tokens: TypstToken[]): boolean {
+        let found = false;
+        for (const token of tokens) {
+            if (this.eq(token)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
     }
 }
 

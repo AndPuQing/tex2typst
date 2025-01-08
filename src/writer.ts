@@ -64,6 +64,8 @@ function convert_overset(node: TexNode): TypstNode {
 
 const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ATOM, '(');
 const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ATOM, ')');
+const TYPST_COMMA: TypstToken = new TypstToken(TypstTokenType.ATOM, ',');
+const TYPST_NEWLINE: TypstToken = new TypstToken(TypstTokenType.SYMBOL, '\n');
 
 export class TypstWriterError extends Error {
     node: TexNode | TypstNode | TypstToken;
@@ -83,7 +85,6 @@ export class TypstWriter {
     protected buffer: string = "";
     protected queue: TypstToken[] = [];
 
-    private needSpaceAfterSingleItemScript = false;
     private insideFunctionDepth = 0;
 
     constructor(nonStrict: boolean, preferTypstIntrinsic: boolean, keepSpaces: boolean) {
@@ -93,34 +94,34 @@ export class TypstWriter {
     }
 
 
-    private writeBuffer(str: string) {
-        if (this.needSpaceAfterSingleItemScript && /^[0-9a-zA-Z\(]/.test(str)) {
-            this.buffer += ' ';
-        } else {
-            let no_need_space = false;
-            // starting clause
-            no_need_space ||= /[\(\|]$/.test(this.buffer) && /^\w/.test(str);
-            // putting punctuation
-            no_need_space ||= /^[}()_^,;!\|]$/.test(str);
-            // putting a prime
-            no_need_space ||= str === "'";
-            // continue a number
-            no_need_space ||= /[0-9]$/.test(this.buffer) && /^[0-9]/.test(str);
-            // leading sign
-            no_need_space ||= /[\(\[{]\s*(-|\+)$/.test(this.buffer) || this.buffer === "-" || this.buffer === "+";
-            // new line
-            no_need_space ||= str.startsWith('\n');
-            // buffer is empty
-            no_need_space ||= this.buffer === "";
-            // other cases
-            no_need_space ||= /[\s_^{\(]$/.test(this.buffer);
-            if (!no_need_space) {
-                this.buffer += ' ';
-            }
+    private writeBuffer(token: TypstToken) {
+        const str = token.content;
+
+        if (str === '') {
+            return;
         }
 
-        if (this.needSpaceAfterSingleItemScript) {
-            this.needSpaceAfterSingleItemScript = false;
+        let no_need_space = false;
+        // starting clause
+        no_need_space ||= /[\(\|]$/.test(this.buffer) && /^\w/.test(str);
+        // putting punctuation
+        no_need_space ||= /^[}()_^,;!\|]$/.test(str);
+        // putting a prime
+        no_need_space ||= str === "'";
+        // continue a number
+        no_need_space ||= /[0-9]$/.test(this.buffer) && /^[0-9]/.test(str);
+        // leading sign. e.g. produce "+1" instead of " +1"
+        no_need_space ||= /[\(\[{]\s*(-|\+)$/.test(this.buffer) || this.buffer === "-" || this.buffer === "+";
+        // new line
+        no_need_space ||= str.startsWith('\n');
+        // buffer is empty
+        no_need_space ||= this.buffer === "";
+        // str is starting with a space itself
+        no_need_space ||= /^\s/.test(str);
+        // other cases
+        no_need_space ||= /[\s_^{\(]$/.test(this.buffer);
+        if (!no_need_space) {
+            this.buffer += ' ';
         }
 
         this.buffer += str;
@@ -151,7 +152,9 @@ export class TypstWriter {
             case 'whitespace':
                 for (const c of node.content) {
                     if (c === ' ') {
-                        this.queue.push(new TypstToken(TypstTokenType.SPACE, c));
+                        if (this.keepSpaces) {
+                            this.queue.push(new TypstToken(TypstTokenType.SPACE, c));
+                        }
                     } else if (c === '\n') {
                         this.queue.push(new TypstToken(TypstTokenType.SYMBOL, c));
                     } else {
@@ -187,7 +190,7 @@ export class TypstWriter {
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sup);
                 }
                 if (trailing_space_needed) {
-                    this.queue.push(new TypstToken(TypstTokenType.SOFT_SPACE, ''));
+                    this.queue.push(new TypstToken(TypstTokenType.CONTROL, ' '));
                 }
                 break;
             }
@@ -306,18 +309,24 @@ export class TypstWriter {
     }
 
     protected flushQueue() {
-        this.queue.forEach((node) => {
-            let str = node.content;
-            if (node.type === TypstTokenType.SOFT_SPACE) {
-                this.needSpaceAfterSingleItemScript = true;
-                str = '';
-            } else if (node.type === TypstTokenType.SPACE && !this.keepSpaces) {
-                str = '';
+        const SOFT_SPACE = new TypstToken(TypstTokenType.CONTROL, ' ');
+
+        // delete soft spaces if they are not needed
+        for(let i = 0; i < this.queue.length; i++) {
+            let token = this.queue[i];
+            if (token.eq(SOFT_SPACE)) {
+                if (i === this.queue.length - 1) {
+                    this.queue[i].content = '';
+                } else if (this.queue[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE])) {
+                    this.queue[i].content = '';
+                }
             }
-            if (str !== '') {
-                this.writeBuffer(str);
-            }
+        }
+
+        this.queue.forEach((token) => {
+            this.writeBuffer(token)
         });
+
         this.queue = [];
     }
 
@@ -352,6 +361,7 @@ export class TypstWriter {
     }
 }
 
+// Convert a tree of TexNode into a tree of TypstNode
 export function convertTree(node: TexNode): TypstNode {
     switch (node.type) {
         case 'empty':
