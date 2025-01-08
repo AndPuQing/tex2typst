@@ -41,7 +41,7 @@ export class TexNode {
         this.data = data;
     }
 
-    public eq_shadow(other: TexNode): boolean {
+    public eq_shallow(other: TexNode): boolean {
         return this.type === other.type && this.content === other.content;
     }
 
@@ -87,7 +87,7 @@ export class TypstNode {
         this.options = options;
     }
 
-    public eq_shadow(other: TypstNode): boolean {
+    public eq_shallow(other: TypstNode): boolean {
         return this.type === other.type && this.content === other.content;
     }
 }
