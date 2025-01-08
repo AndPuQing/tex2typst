@@ -1,4 +1,4 @@
-export enum TokenType {
+export enum TexTokenType {
     ELEMENT,
     COMMAND,
     TEXT,
