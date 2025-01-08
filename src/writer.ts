@@ -62,6 +62,9 @@ function convert_overset(node: TexNode): TypstNode {
     );
 }
 
+const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ATOM, '(');
+const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ATOM, ')');
+
 export class TypstWriterError extends Error {
     node: TexNode | TypstNode | TypstToken;
 
@@ -193,11 +196,11 @@ export class TypstWriter {
                 const [arg0, arg1] = node.args!;
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
-                this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
+                this.queue.push(TYPST_LEFT_PARENTHESIS);
                 this.serialize(arg0);
                 this.queue.push(new TypstToken(TypstTokenType.ATOM, ','));
                 this.serialize(arg1);
-                this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
+                this.queue.push(TYPST_RIGHT_PARENTHESIS);
                 this.insideFunctionDepth--;
                 break;
             }
@@ -206,14 +209,14 @@ export class TypstWriter {
                 const arg0 = node.args![0];
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
-                this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
+                this.queue.push(TYPST_LEFT_PARENTHESIS);
                 this.serialize(arg0);
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
                         this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `, ${key}: ${value}`));
                     }
                 }
-                this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
+                this.queue.push(TYPST_RIGHT_PARENTHESIS);
                 this.insideFunctionDepth--;
                 break;
             }
@@ -236,7 +239,7 @@ export class TypstWriter {
                 const matrix = node.data as TypstNode[][];
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'mat'));
                 this.insideFunctionDepth++;
-                this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
+                this.queue.push(TYPST_LEFT_PARENTHESIS);
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
                         this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `${key}: ${value}, `));
@@ -263,7 +266,7 @@ export class TypstWriter {
                         }
                     });
                 });
-                this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
+                this.queue.push(TYPST_RIGHT_PARENTHESIS);
                 this.insideFunctionDepth--;
                 break;
             }
@@ -292,9 +295,9 @@ export class TypstWriter {
         }
 
         if (need_to_wrap) {
-            this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
+            this.queue.push(TYPST_LEFT_PARENTHESIS);
             this.serialize(node);
-            this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
+            this.queue.push(TYPST_RIGHT_PARENTHESIS);
         } else {
             this.serialize(node);
         }
