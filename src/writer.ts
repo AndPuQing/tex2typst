@@ -220,7 +220,11 @@ export class TypstWriter {
                 this.queue.push(new TypstNode('symbol', 'mat'));
                 this.insideFunctionDepth++;
                 this.queue.push(new TypstNode('atom', '('));
-                this.queue.push(new TypstNode('symbol', 'delim: #none, '));
+                if (node.options) {
+                    for (const [key, value] of Object.entries(node.options)) {
+                        this.queue.push(new TypstNode('symbol', `${key}: ${value}, `));
+                    }
+                }
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         // There is a leading & in row
@@ -493,7 +497,9 @@ export function convertTree(node: TexNode): TypstNode {
                 // align, align*, alignat, alignat*, aligned, etc.
                 return new TypstNode( 'align', '', [], data);
             } else {
-                return new TypstNode('matrix', 'mat', [], data);
+                const res = new TypstNode('matrix', '', [], data);
+                res.setOptions({'delim': '#none'});
+                return res;
             }
         }
         case 'unknownMacro':
