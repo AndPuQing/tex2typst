@@ -123,7 +123,8 @@ export class TypstWriter {
         this.buffer += str;
     }
 
-    public append(node: TypstNode) {
+    // Serialize a tree of TypstNode into a list of TypstToken
+    public serialize(node: TypstNode) {
         switch (node.type) {
             case 'empty':
                 break;
@@ -157,7 +158,7 @@ export class TypstWriter {
                 break;
             case 'group':
                 for (const item of node.args!) {
-                    this.append(item);
+                    this.serialize(item);
                 }
                 break;
             case 'supsub': {
@@ -193,9 +194,9 @@ export class TypstWriter {
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
                 this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
-                this.append(arg0);
+                this.serialize(arg0);
                 this.queue.push(new TypstToken(TypstTokenType.ATOM, ','));
-                this.append(arg1);
+                this.serialize(arg1);
                 this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
                 this.insideFunctionDepth--;
                 break;
@@ -206,7 +207,7 @@ export class TypstWriter {
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
                 this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
-                this.append(arg0);
+                this.serialize(arg0);
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
                         this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `, ${key}: ${value}`));
@@ -223,7 +224,7 @@ export class TypstWriter {
                         if (j > 0) {
                             this.queue.push(new TypstToken(TypstTokenType.ATOM, '&'));
                         }
-                        this.append(cell);
+                        this.serialize(cell);
                     });
                     if (i < matrix.length - 1) {
                         this.queue.push(new TypstToken(TypstTokenType.SYMBOL, '\\'));
@@ -251,7 +252,7 @@ export class TypstWriter {
                         // if (j == 0 && cell.type === 'newline' && cell.content === '\n') {
                         // return;
                         // }
-                        this.append(cell);
+                        this.serialize(cell);
                         // cell.args!.forEach((n) => this.append(n));
                         if (j < row.length - 1) {
                             this.queue.push(new TypstToken(TypstTokenType.ATOM, ','));
@@ -292,10 +293,10 @@ export class TypstWriter {
 
         if (need_to_wrap) {
             this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
-            this.append(node);
+            this.serialize(node);
             this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
         } else {
-            this.append(node);
+            this.serialize(node);
         }
 
         return !need_to_wrap;
