@@ -1,4 +1,4 @@
-import { parseTex } from "./parser";
+import { parseTex } from "./tex-parser";
 import { Tex2TypstOptions } from "./types";
 import { convertTree, TypstWriter } from "./writer";
 import { symbolMap } from "./map";
