@@ -64,6 +64,26 @@ export class TexNode {
     }
 }
 
+export enum TypstTokenType {
+    SYMBOL,
+    ATOM,
+    TEXT,
+    COMMENT,
+    SPACE,
+    SOFT_SPACE,
+    NEWLINE,
+}
+
+export class TypstToken {
+    type: TypstTokenType;
+    content: string;
+
+    constructor(type: TypstTokenType, content: string) {
+        this.type = type;
+        this.content = content;
+    }
+}
+
 export interface TypstSupsubData {
     base: TypstNode;
     sup?: TypstNode;

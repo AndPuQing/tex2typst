@@ -1,5 +1,5 @@
 import { symbolMap } from "./map";
-import { TexNode, TexSqrtData, TexSupsubData, TypstNode, TypstSupsubData } from "./types";
+import { TexNode, TexSqrtData, TexSupsubData, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 
 
 // symbols that are supported by Typst but not by KaTeX
@@ -63,9 +63,9 @@ function convert_overset(node: TexNode): TypstNode {
 }
 
 export class TypstWriterError extends Error {
-    node: TexNode | TypstNode;
+    node: TexNode | TypstNode | TypstToken;
 
-    constructor(message: string, node: TexNode | TypstNode) {
+    constructor(message: string, node: TexNode | TypstNode | TypstToken) {
         super(message);
         this.name = "TypstWriterError";
         this.node = node;
@@ -78,7 +78,7 @@ export class TypstWriter {
     private keepSpaces: boolean;
 
     protected buffer: string = "";
-    protected queue: TypstNode[] = [];
+    protected queue: TypstToken[] = [];
 
     private needSpaceAfterSingleItemScript = false;
     private insideFunctionDepth = 0;
@@ -129,17 +129,31 @@ export class TypstWriter {
                 break;
             case 'atom': {
                 if (node.content === ',' && this.insideFunctionDepth > 0) {
-                    this.queue.push(new TypstNode('symbol', 'comma'));
+                    this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'comma'));
                 } else {
-                    this.queue.push(new TypstNode('atom', node.content));
+                    this.queue.push(new TypstToken(TypstTokenType.ATOM, node.content));
                 }
                 break;
             }
             case 'symbol':
+                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content));
+                break;
             case 'text':
+                this.queue.push(new TypstToken(TypstTokenType.TEXT, node.content));
+                break;
             case 'comment':
+                this.queue.push(new TypstToken(TypstTokenType.COMMENT, node.content));
+                break;
             case 'whitespace':
-                this.queue.push(node);
+                for (const c of node.content) {
+                    if (c === ' ') {
+                        this.queue.push(new TypstToken(TypstTokenType.SPACE, c));
+                    } else if (c === '\n') {
+                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, c));
+                    } else {
+                        throw new TypstWriterError(`Unexpected whitespace character: ${c}`, node);
+                    }
+                }
                 break;
             case 'group':
                 for (const item of node.args!) {
@@ -157,48 +171,48 @@ export class TypstWriter {
                     // e.g. 
                     // y_1' -> y'_1
                     // y_{a_1}' -> y'_{a_1}
-                    this.queue.push(new TypstNode('atom', '\''));
+                    this.queue.push(new TypstToken(TypstTokenType.ATOM, '\''));
                     trailing_space_needed = false;
                 }
                 if (sub) {
-                    this.queue.push(new TypstNode('atom', '_'));
+                    this.queue.push(new TypstToken(TypstTokenType.ATOM, '_'));
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sub);
                 }
                 if (sup && !has_prime) {
-                    this.queue.push(new TypstNode('atom', '^'));
+                    this.queue.push(new TypstToken(TypstTokenType.ATOM, '^'));
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sup);
                 }
                 if (trailing_space_needed) {
-                    this.queue.push(new TypstNode('softSpace', ''));
+                    this.queue.push(new TypstToken(TypstTokenType.SOFT_SPACE, ''));
                 }
                 break;
             }
             case 'binaryFunc': {
-                const func_symbol: TypstNode = new TypstNode('symbol', node.content);
+                const func_symbol: TypstToken = new TypstToken(TypstTokenType.SYMBOL, node.content);
                 const [arg0, arg1] = node.args!;
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
-                this.queue.push(new TypstNode('atom', '('));
+                this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
                 this.append(arg0);
-                this.queue.push(new TypstNode('atom', ','));
+                this.queue.push(new TypstToken(TypstTokenType.ATOM, ','));
                 this.append(arg1);
-                this.queue.push(new TypstNode('atom', ')'));
+                this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
                 this.insideFunctionDepth--;
                 break;
             }
             case 'unaryFunc': {
-                const func_symbol: TypstNode = new TypstNode('symbol', node.content);
+                const func_symbol: TypstToken = new TypstToken(TypstTokenType.SYMBOL, node.content);
                 const arg0 = node.args![0];
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
-                this.queue.push(new TypstNode('atom', '('));
+                this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
                 this.append(arg0);
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
-                        this.queue.push(new TypstNode('symbol', `, ${key}: ${value}`));
+                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `, ${key}: ${value}`));
                     }
                 }
-                this.queue.push(new TypstNode('atom', ')'));
+                this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
                 this.insideFunctionDepth--;
                 break;
             }
@@ -207,24 +221,24 @@ export class TypstWriter {
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         if (j > 0) {
-                            this.queue.push(new TypstNode('atom', '&'));
+                            this.queue.push(new TypstToken(TypstTokenType.ATOM, '&'));
                         }
                         this.append(cell);
                     });
                     if (i < matrix.length - 1) {
-                        this.queue.push(new TypstNode('symbol', '\\'));
+                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, '\\'));
                     }
                 });
                 break;
             }
             case 'matrix': {
                 const matrix = node.data as TypstNode[][];
-                this.queue.push(new TypstNode('symbol', 'mat'));
+                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'mat'));
                 this.insideFunctionDepth++;
-                this.queue.push(new TypstNode('atom', '('));
+                this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
-                        this.queue.push(new TypstNode('symbol', `${key}: ${value}, `));
+                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `${key}: ${value}, `));
                     }
                 }
                 matrix.forEach((row, i) => {
@@ -240,21 +254,21 @@ export class TypstWriter {
                         this.append(cell);
                         // cell.args!.forEach((n) => this.append(n));
                         if (j < row.length - 1) {
-                            this.queue.push(new TypstNode('atom', ','));
+                            this.queue.push(new TypstToken(TypstTokenType.ATOM, ','));
                         } else {
                             if (i < matrix.length - 1) {
-                                this.queue.push(new TypstNode('atom', ';'));
+                                this.queue.push(new TypstToken(TypstTokenType.ATOM, ';'));
                             }
                         }
                     });
                 });
-                this.queue.push(new TypstNode('atom', ')'));
+                this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
                 this.insideFunctionDepth--;
                 break;
             }
             case 'unknown': {
                 if (this.nonStrict) {
-                    this.queue.push(new TypstNode('symbol', node.content));
+                    this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content));
                 } else {
                     throw new TypstWriterError(`Unknown macro: ${node.content}`, node);
                 }
@@ -277,9 +291,9 @@ export class TypstWriter {
         }
 
         if (need_to_wrap) {
-            this.queue.push(new TypstNode('atom', '('));
+            this.queue.push(new TypstToken(TypstTokenType.ATOM, '('));
             this.append(node);
-            this.queue.push(new TypstNode('atom', ')'));
+            this.queue.push(new TypstToken(TypstTokenType.ATOM, ')'));
         } else {
             this.append(node);
         }
@@ -291,25 +305,27 @@ export class TypstWriter {
         this.queue.forEach((node) => {
             let str = "";
             switch (node.type) {
-                case 'atom':
-                case 'symbol':
+                case TypstTokenType.ATOM:
+                case TypstTokenType.SYMBOL:
                     str = node.content;
                     break;
-                case 'text':
+                case TypstTokenType.TEXT:
                     str = `"${node.content}"`;
                     break;
-                case 'softSpace':
+                case TypstTokenType.SOFT_SPACE:
                     this.needSpaceAfterSingleItemScript = true;
                     str = '';
                     break;
-                case 'comment':
+                case TypstTokenType.COMMENT:
                     str = `//${node.content}`;
                     break;
-                case 'whitespace':
-                    str = node.content;
+                case TypstTokenType.SPACE:
                     if(!this.keepSpaces) {
-                        str = str.replace(' ', '');
+                        str = node.content;
                     }
+                    break;
+                case TypstTokenType.NEWLINE:
+                    str = node.content;
                     break;
                 default:
                     throw new TypstWriterError(`Unexpected node type to stringify: ${node.type}`, node)
