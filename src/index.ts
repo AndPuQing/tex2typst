@@ -8,6 +8,7 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
     const opt: Tex2TypstOptions = {
         nonStrict: true,
         preferTypstIntrinsic: true,
+        keepSpaces: false,
         customTexMacros: {}
     };
     if (options) {
@@ -23,7 +24,7 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
     }
     const texTree = parseTex(tex, opt.customTexMacros!);
     const typstTree = convertTree(texTree);
-    const writer = new TypstWriter(opt.nonStrict!, opt.preferTypstIntrinsic!);
+    const writer = new TypstWriter(opt.nonStrict!, opt.preferTypstIntrinsic!, opt.keepSpaces!);
     writer.append(typstTree);
     return writer.finalize();
 }

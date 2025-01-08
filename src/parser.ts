@@ -134,7 +134,7 @@ function isdigit(char: string): boolean {
 
 function eat_whitespaces(tokens: TexToken[], start: number): TexToken[] {
     let pos = start;
-    while (pos < tokens.length && [TexTokenType.WHITESPACE, TexTokenType.NEWLINE].includes(tokens[pos].type)) {
+    while (pos < tokens.length && [TexTokenType.SPACE, TexTokenType.NEWLINE].includes(tokens[pos].type)) {
         pos++;
     }
     return tokens.slice(start, pos);
@@ -285,7 +285,7 @@ export function tokenize(latex: string): TexToken[] {
                 while (newPos < latex.length && latex[newPos] === ' ') {
                     newPos += 1;
                 }
-                token = new TexToken(TexTokenType.WHITESPACE, latex.slice(pos, newPos));
+                token = new TexToken(TexTokenType.SPACE, latex.slice(pos, newPos));
                 pos = newPos;
                 break;
             }
@@ -379,11 +379,13 @@ export class LatexParser {
             while (pos < tokens.length) {
                 const [res, newPos] = this.parseNextExpr(tokens, pos);
                 pos = newPos;
-                if (!this.space_sensitive && res.type === 'whitespace') {
-                    continue;
-                }
-                if (!this.newline_sensitive && res.type === 'newline') {
-                    continue;
+                if(res.type === 'whitespace') {
+                    if (!this.space_sensitive && res.content.replace(/ /g, '').length === 0) {
+                        continue;
+                    }
+                    if (!this.newline_sensitive && res.content === '\n') {
+                        continue;
+                    }
                 }
                 if (res.type === 'control' && res.content === '&') {
                     throw new LatexParserError('Unexpected & outside of an alignment');
@@ -476,10 +478,9 @@ export class LatexParser {
                 return [new TexNode('text', firstToken.value), start + 1];
             case TexTokenType.COMMENT:
                 return [new TexNode('comment', firstToken.value), start + 1];
-            case TexTokenType.WHITESPACE:
-                return [new TexNode('whitespace', firstToken.value), start + 1];
+            case TexTokenType.SPACE:
             case TexTokenType.NEWLINE:
-                return [new TexNode('newline', firstToken.value), start + 1];
+                return [new TexNode('whitespace', firstToken.value), start + 1];
             case TexTokenType.COMMAND:
                 if (firstToken.eq(BEGIN_COMMAND)) {
                     return this.parseBeginEndExpr(tokens, start);
@@ -642,8 +643,8 @@ export class LatexParser {
         pos += 3;
     
         const exprInside = tokens.slice(exprInsideStart, exprInsideEnd);
-        // ignore whitespaces and '\n' before \end{envName}
-        while(exprInside.length > 0 && [TexTokenType.WHITESPACE, TexTokenType.NEWLINE].includes(exprInside[exprInside.length - 1].type)) {
+        // ignore spaces and '\n' before \end{envName}
+        while(exprInside.length > 0 && [TexTokenType.SPACE, TexTokenType.NEWLINE].includes(exprInside[exprInside.length - 1].type)) {
             exprInside.pop();
         }
         const body = this.parseAligned(exprInside);
@@ -662,11 +663,17 @@ export class LatexParser {
         while (pos < tokens.length) {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
+
             if (res.type === 'whitespace') {
-                continue;
-            } else if (res.type === 'newline' && !this.newline_sensitive) {
-                continue;
-            } else if (res.type === 'control' && res.content === '\\\\') {
+                if (!this.space_sensitive && res.content.replace(/ /g, '').length === 0) {
+                    continue;
+                }
+                if (!this.newline_sensitive && res.content === '\n') {
+                    continue;
+                }
+            }
+            
+            if (res.type === 'control' && res.content === '\\\\') {
                 row = [];
                 group = new TexNode('ordgroup', '', []);
                 row.push(group);
@@ -687,10 +694,10 @@ function passIgnoreWhitespaceBeforeScriptMark(tokens: TexToken[]): TexToken[] {
     const is_script_mark = (token: TexToken) => token.eq(SUB_SYMBOL) || token.eq(SUP_SYMBOL);
     let out_tokens: TexToken[] = [];
     for (let i = 0; i < tokens.length; i++) {
-        if (tokens[i].type === TexTokenType.WHITESPACE && i + 1 < tokens.length && is_script_mark(tokens[i + 1])) {
+        if (tokens[i].type === TexTokenType.SPACE && i + 1 < tokens.length && is_script_mark(tokens[i + 1])) {
             continue;
         }
-        if (tokens[i].type === TexTokenType.WHITESPACE && i - 1 >= 0 && is_script_mark(tokens[i - 1])) {
+        if (tokens[i].type === TexTokenType.SPACE && i - 1 >= 0 && is_script_mark(tokens[i - 1])) {
             continue;
         }
         out_tokens.push(tokens[i]);

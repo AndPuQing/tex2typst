@@ -318,3 +318,10 @@ cases:
   - title: overset, special case 2
     tex: \overset{def}{=}
     typst: eq.def
+  - title: newline
+    tex: |-
+      a + b \\
+      c + d
+    typst: |-
+      a + b \
+      c + d

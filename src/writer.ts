@@ -75,6 +75,7 @@ export class TypstWriterError extends Error {
 export class TypstWriter {
     private nonStrict: boolean;
     private preferTypstIntrinsic: boolean;
+    private keepSpaces: boolean;
 
     protected buffer: string = "";
     protected queue: TypstNode[] = [];
@@ -82,9 +83,10 @@ export class TypstWriter {
     private needSpaceAfterSingleItemScript = false;
     private insideFunctionDepth = 0;
 
-    constructor(nonStrict: boolean, preferTypstIntrinsic: boolean) {
+    constructor(nonStrict: boolean, preferTypstIntrinsic: boolean, keepSpaces: boolean) {
         this.nonStrict = nonStrict;
         this.preferTypstIntrinsic = preferTypstIntrinsic;
+        this.keepSpaces = keepSpaces;
     }
 
 
@@ -136,7 +138,7 @@ export class TypstWriter {
             case 'symbol':
             case 'text':
             case 'comment':
-            case 'newline':
+            case 'whitespace':
                 this.queue.push(node);
                 break;
             case 'group':
@@ -303,8 +305,11 @@ export class TypstWriter {
                 case 'comment':
                     str = `//${node.content}`;
                     break;
-                case 'newline':
-                    str = '\n';
+                case 'whitespace':
+                    str = node.content;
+                    if(!this.keepSpaces) {
+                        str = str.replace(' ', '');
+                    }
                     break;
                 default:
                     throw new TypstWriterError(`Unexpected node type to stringify: ${node.type}`, node)
@@ -350,8 +355,9 @@ export class TypstWriter {
 export function convertTree(node: TexNode): TypstNode {
     switch (node.type) {
         case 'empty':
-        case 'whitespace':
             return new TypstNode('empty', '');
+        case 'whitespace':
+            return new TypstNode('whitespace', node.content);
         case 'ordgroup':
             return new TypstNode(
                 'group',
@@ -487,8 +493,6 @@ export function convertTree(node: TexNode): TypstNode {
                 node.args!.map(convertTree),
             );
         }
-        case 'newline':
-            return new TypstNode('newline', '\n');
         case 'beginend': {
             const matrix = node.data as TexNode[][];
             const data = matrix.map((row) => row.map(convertTree));

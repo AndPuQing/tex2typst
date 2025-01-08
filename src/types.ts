@@ -3,7 +3,7 @@ export enum TexTokenType {
     COMMAND,
     TEXT,
     COMMENT,
-    WHITESPACE,
+    SPACE,
     NEWLINE,
     CONTROL,
     UNKNOWN,
@@ -21,7 +21,16 @@ export type TexSqrtData = TexNode;
 
 export type TexArrayData = TexNode[][];
 
-type TexNodeType = 'element' | 'text' | 'comment' | 'whitespace' | 'newline' | 'control' | 'ordgroup' | 'supsub'
+/**
+ * element: 0-9, a-z, A-Z, punctuations such as +-/*,:; etc.
+ * symbol: LaTeX macro with no parameter. e.g. \sin \cos \int \sum
+ * unaryFunc: LaTeX macro with 1 parameter. e.g. \sqrt{3} \log{x} \exp{x}
+ * binaryFunc: LaTeX macro with 2 parameters. e.g. \frac{1}{2}
+ * text: text enclosed by braces. e.g. \text{hello world}
+ * empty: special type when something is empty. e.g. the base of _{a} or ^{a}
+ * whitespace: space, tab, newline
+ */
+type TexNodeType = 'element' | 'text' | 'comment' | 'whitespace' | 'control' | 'ordgroup' | 'supsub'
              | 'unaryFunc' | 'binaryFunc' | 'leftright' | 'beginend' | 'symbol' | 'empty' | 'unknownMacro';
 
 export class TexNode {
@@ -63,7 +72,7 @@ export interface TypstSupsubData {
 
 export type TypstArrayData = TypstNode[][];
 
-type TypstNodeType = 'atom' | 'symbol' | 'text' | 'softSpace' | 'comment' | 'newline'
+type TypstNodeType = 'atom' | 'symbol' | 'text' | 'softSpace' | 'comment' | 'whitespace'
             | 'empty' | 'group' | 'supsub' | 'unaryFunc' | 'binaryFunc' | 'align' | 'matrix' | 'unknown';
 
 
@@ -93,8 +102,9 @@ export class TypstNode {
 }
 
 export interface Tex2TypstOptions {
-    nonStrict?: boolean; // default is false
-    preferTypstIntrinsic?: boolean; // default is false,
+    nonStrict?: boolean; // default is true
+    preferTypstIntrinsic?: boolean; // default is true,
+    keepSpaces?: boolean; // default is false
     customTexMacros?: { [key: string]: string };
     // TODO: custom typst functions
 }
