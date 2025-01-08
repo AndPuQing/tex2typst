@@ -140,10 +140,10 @@ export class TypstWriter {
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content));
                 break;
             case 'text':
-                this.queue.push(new TypstToken(TypstTokenType.TEXT, node.content));
+                this.queue.push(new TypstToken(TypstTokenType.TEXT, `"${node.content}"`));
                 break;
             case 'comment':
-                this.queue.push(new TypstToken(TypstTokenType.COMMENT, node.content));
+                this.queue.push(new TypstToken(TypstTokenType.COMMENT, `//${node.content}`));
                 break;
             case 'whitespace':
                 for (const c of node.content) {
@@ -304,32 +304,12 @@ export class TypstWriter {
 
     protected flushQueue() {
         this.queue.forEach((node) => {
-            let str = "";
-            switch (node.type) {
-                case TypstTokenType.ATOM:
-                case TypstTokenType.SYMBOL:
-                    str = node.content;
-                    break;
-                case TypstTokenType.TEXT:
-                    str = `"${node.content}"`;
-                    break;
-                case TypstTokenType.SOFT_SPACE:
-                    this.needSpaceAfterSingleItemScript = true;
-                    str = '';
-                    break;
-                case TypstTokenType.COMMENT:
-                    str = `//${node.content}`;
-                    break;
-                case TypstTokenType.SPACE:
-                    if(!this.keepSpaces) {
-                        str = node.content;
-                    }
-                    break;
-                case TypstTokenType.NEWLINE:
-                    str = node.content;
-                    break;
-                default:
-                    throw new TypstWriterError(`Unexpected node type to stringify: ${node.type}`, node)
+            let str = node.content;
+            if (node.type === TypstTokenType.SOFT_SPACE) {
+                this.needSpaceAfterSingleItemScript = true;
+                str = '';
+            } else if (node.type === TypstTokenType.SPACE && !this.keepSpaces) {
+                str = '';
             }
             if (str !== '') {
                 this.writeBuffer(str);
