@@ -30,7 +30,7 @@ export class TexNode {
     args?: TexNode[];
     // For type="sqrt", it's additional argument wrapped square bracket. e.g. 3 in \sqrt[3]{x}
     // For type="supsub", it's base, sup, and sub.
-    // For type="array", it's the 2-dimensional matrix.
+    // For type="beginend", it's the 2-dimensional matrix.
     data?: TexSqrtData | TexSupsubData | TexArrayData;
 
     constructor(type: TexNodeType, content: string, args?: TexNode[],
