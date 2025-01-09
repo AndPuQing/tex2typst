@@ -46,7 +46,7 @@ function convert_overset(node: TexNode): TypstNode {
         return new TypstNode('symbol', 'eq.def');
     }
     const op_call = new TypstNode(
-        'unaryFunc',
+        'funcCall',
         'op',
         [convertTree(base)]
     );
@@ -194,26 +194,17 @@ export class TypstWriter {
                 }
                 break;
             }
-            case 'binaryFunc': {
+            case 'funcCall': {
                 const func_symbol: TypstToken = new TypstToken(TypstTokenType.SYMBOL, node.content);
-                const [arg0, arg1] = node.args!;
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
-                this.serialize(arg0);
-                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
-                this.serialize(arg1);
-                this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                this.insideFunctionDepth--;
-                break;
-            }
-            case 'unaryFunc': {
-                const func_symbol: TypstToken = new TypstToken(TypstTokenType.SYMBOL, node.content);
-                const arg0 = node.args![0];
-                this.queue.push(func_symbol);
-                this.insideFunctionDepth++;
-                this.queue.push(TYPST_LEFT_PARENTHESIS);
-                this.serialize(arg0);
+                for (let i = 0; i < node.args!.length; i++) {
+                    this.serialize(node.args![i]);
+                    if (i < node.args!.length - 1) {
+                        this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+                    }
+                }
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
                         this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `, ${key}: ${value}`));
@@ -388,13 +379,13 @@ export function convertTree(node: TexNode): TypstNode {
             // Special logic for overbrace
             if (base && base.type === 'unaryFunc' && base.content === '\\overbrace' && sup) {
                 return new TypstNode(
-                    'binaryFunc',
+                    'funcCall',
                     'overbrace',
                     [convertTree(base.args![0]), convertTree(sup)],
                 );
             } else if (base && base.type === 'unaryFunc' && base.content === '\\underbrace' && sub) {
                 return new TypstNode(
-                    'binaryFunc',
+                    'funcCall',
                     'underbrace',
                     [convertTree(base.args![0]), convertTree(sub)],
                 );
@@ -434,7 +425,7 @@ export function convertTree(node: TexNode): TypstNode {
                 return group;
             }
             return new TypstNode(
-                'unaryFunc',
+                'funcCall',
                 'lr',
                 [group],
             );
@@ -444,7 +435,7 @@ export function convertTree(node: TexNode): TypstNode {
                 return convert_overset(node);
             }
             return new TypstNode(
-                'binaryFunc',
+                'funcCall',
                 convertToken(node.content),
                 node.args!.map(convertTree),
             );
@@ -455,7 +446,7 @@ export function convertTree(node: TexNode): TypstNode {
             if (node.content === '\\sqrt' && node.data) {
                 const data = convertTree(node.data as TexSqrtData); // the number of times to take the root
                 return new TypstNode(
-                    'binaryFunc',
+                    'funcCall',
                     'root',
                     [data, arg0],
                 );
@@ -463,12 +454,12 @@ export function convertTree(node: TexNode): TypstNode {
             // \mathbf{a} -> upright(mathbf(a))
             if (node.content === '\\mathbf') {
                 const inner: TypstNode = new TypstNode(
-                    'unaryFunc',
+                    'funcCall',
                     'bold',
                     [arg0],
                 );
                 return new TypstNode(
-                    'unaryFunc',
+                    'funcCall',
                     'upright',
                     [inner],
                 );
@@ -489,7 +480,7 @@ export function convertTree(node: TexNode): TypstNode {
                     return new TypstNode('symbol', text);
                 } else {
                     return new TypstNode(
-                        'unaryFunc',
+                        'funcCall',
                         'op',
                         [new TypstNode('text', text)],
                     );
@@ -498,7 +489,7 @@ export function convertTree(node: TexNode): TypstNode {
 
             // generic case
             return new TypstNode(
-                'unaryFunc',
+                'funcCall',
                 convertToken(node.content),
                 node.args!.map(convertTree),
             );
