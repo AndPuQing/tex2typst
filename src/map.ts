@@ -1075,4 +1075,10 @@ for(const [key, value] of map_from_official_docs) {
     }
 }
 
-export {symbolMap};
+
+const reverseSymbolMap = new Map<string, string>();
+for(const [key, value] of symbolMap) {
+    reverseSymbolMap.set(value, key);
+}
+
+export {symbolMap, reverseSymbolMap};

@@ -1,5 +1,7 @@
+import assert from "assert";
 import { symbolMap } from "./map";
 import { TexNode, TexSupsubData, TexTokenType } from "./types";
+import { isalpha, isdigit } from "./util";
 
 
 const UNARY_COMMANDS = [
@@ -61,12 +63,6 @@ export class TexToken {
 
 const EMPTY_NODE: TexNode = new TexNode('empty', '');
 
-function assert(condition: boolean, message: string = ''): void {
-    if (!condition) {
-        throw new LatexParserError(message);
-    }
-}
-
 function get_command_param_num(command: string): number {
     if (UNARY_COMMANDS.includes(command)) {
         return 1;
@@ -123,14 +119,6 @@ function find_closing_square_bracket(tokens: TexToken[], start: number): number 
     return pos - 1;
 }
 
-
-function isalpha(char: string): boolean {
-    return 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(char);
-}
-
-function isdigit(char: string): boolean {
-    return '0123456789'.includes(char);
-}
 
 function eat_whitespaces(tokens: TexToken[], start: number): TexToken[] {
     let pos = start;
@@ -297,6 +285,7 @@ export function tokenize(latex: string): TexToken[] {
                 if (['\\\\', '\\,'].includes(firstTwoChars)) {
                     token = new TexToken(TexTokenType.CONTROL, firstTwoChars);
                 } else if (['\\{','\\}', '\\%', '\\$', '\\&', '\\#', '\\_', '\\|'].includes(firstTwoChars)) {
+                    // \| is double vertical bar, not the same as just |
                     token = new TexToken(TexTokenType.ELEMENT, firstTwoChars);
                 } else {
                     const command = eat_command_name(latex, pos + 1);
@@ -502,12 +491,9 @@ export class LatexParser {
                         return [new TexNode('control', '\\\\'), start + 1];
                     case '\\,':
                         return [new TexNode('control', '\\,'), start + 1];
-                    case '_': {
+                    case '_':
+                    case '^':
                         return [ EMPTY_NODE, start];
-                    }
-                    case '^': {
-                        return [ EMPTY_NODE, start];
-                    }
                     case '&':
                         return [new TexNode('control', '&'), start + 1];
                     default:

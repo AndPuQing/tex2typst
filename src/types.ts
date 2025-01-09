@@ -66,7 +66,7 @@ export class TexNode {
 
 export enum TypstTokenType {
     SYMBOL,
-    ATOM,
+    ELEMENT,
     TEXT,
     COMMENT,
     SPACE,
@@ -77,15 +77,15 @@ export enum TypstTokenType {
 
 export class TypstToken {
     type: TypstTokenType;
-    content: string;
+    value: string;
 
     constructor(type: TypstTokenType, content: string) {
         this.type = type;
-        this.content = content;
+        this.value = content;
     }
 
     eq(other: TypstToken): boolean {
-        return this.type === other.type && this.content === other.content;
+        return this.type === other.type && this.value === other.value;
     }
 
     isOneOf(tokens: TypstToken[]): boolean {
@@ -108,7 +108,7 @@ export interface TypstSupsubData {
 
 export type TypstArrayData = TypstNode[][];
 
-type TypstNodeType = 'atom' | 'symbol' | 'text' | 'softSpace' | 'comment' | 'whitespace'
+type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
             | 'empty' | 'group' | 'supsub' | 'unaryFunc' | 'binaryFunc' | 'align' | 'matrix' | 'unknown';
 
 

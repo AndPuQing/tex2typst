@@ -62,9 +62,9 @@ function convert_overset(node: TexNode): TypstNode {
     );
 }
 
-const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ATOM, '(');
-const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ATOM, ')');
-const TYPST_COMMA: TypstToken = new TypstToken(TypstTokenType.ATOM, ',');
+const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
+const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ')');
+const TYPST_COMMA: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ',');
 const TYPST_NEWLINE: TypstToken = new TypstToken(TypstTokenType.SYMBOL, '\n');
 
 export class TypstWriterError extends Error {
@@ -95,7 +95,7 @@ export class TypstWriter {
 
 
     private writeBuffer(token: TypstToken) {
-        const str = token.content;
+        const str = token.value;
 
         if (str === '') {
             return;
@@ -136,7 +136,7 @@ export class TypstWriter {
                 if (node.content === ',' && this.insideFunctionDepth > 0) {
                     this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'comma'));
                 } else {
-                    this.queue.push(new TypstToken(TypstTokenType.ATOM, node.content));
+                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, node.content));
                 }
                 break;
             }
@@ -178,15 +178,15 @@ export class TypstWriter {
                     // e.g. 
                     // y_1' -> y'_1
                     // y_{a_1}' -> y'_{a_1}
-                    this.queue.push(new TypstToken(TypstTokenType.ATOM, '\''));
+                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '\''));
                     trailing_space_needed = false;
                 }
                 if (sub) {
-                    this.queue.push(new TypstToken(TypstTokenType.ATOM, '_'));
+                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '_'));
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sub);
                 }
                 if (sup && !has_prime) {
-                    this.queue.push(new TypstToken(TypstTokenType.ATOM, '^'));
+                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '^'));
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sup);
                 }
                 if (trailing_space_needed) {
@@ -201,7 +201,7 @@ export class TypstWriter {
                 this.insideFunctionDepth++;
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
                 this.serialize(arg0);
-                this.queue.push(new TypstToken(TypstTokenType.ATOM, ','));
+                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
                 this.serialize(arg1);
                 this.queue.push(TYPST_RIGHT_PARENTHESIS);
                 this.insideFunctionDepth--;
@@ -228,7 +228,7 @@ export class TypstWriter {
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         if (j > 0) {
-                            this.queue.push(new TypstToken(TypstTokenType.ATOM, '&'));
+                            this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '&'));
                         }
                         this.serialize(cell);
                     });
@@ -261,10 +261,10 @@ export class TypstWriter {
                         this.serialize(cell);
                         // cell.args!.forEach((n) => this.append(n));
                         if (j < row.length - 1) {
-                            this.queue.push(new TypstToken(TypstTokenType.ATOM, ','));
+                            this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
                         } else {
                             if (i < matrix.length - 1) {
-                                this.queue.push(new TypstToken(TypstTokenType.ATOM, ';'));
+                                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ';'));
                             }
                         }
                     });
@@ -316,9 +316,9 @@ export class TypstWriter {
             let token = this.queue[i];
             if (token.eq(SOFT_SPACE)) {
                 if (i === this.queue.length - 1) {
-                    this.queue[i].content = '';
+                    this.queue[i].value = '';
                 } else if (this.queue[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE])) {
-                    this.queue[i].content = '';
+                    this.queue[i].value = '';
                 }
             }
         }
