@@ -102,7 +102,7 @@ export class TypstWriter {
         }
 
         let no_need_space = false;
-        // starting clause
+        // putting the first token in clause
         no_need_space ||= /[\(\|]$/.test(this.buffer) && /^\w/.test(str);
         // putting punctuation
         no_need_space ||= /^[}()_^,;!\|]$/.test(str);

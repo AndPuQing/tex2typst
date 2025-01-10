@@ -5,6 +5,7 @@ export default defineConfig({
       forceRerunTriggers : [
         './test/math.yml',
         './test/symbol.yml',
+        './test/integration-cases.yml',
         './test/cheat-sheet.toml',
       ],
     }

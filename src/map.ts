@@ -977,6 +977,7 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['barV', 'tack.b.double'],
     ['shortdowntack', 'tack.b.short'],
     ['dashVdash', 'tack.l.r'],
+    /*
     ['mupalpha', 'alpha'],
     ['mupbeta', 'beta'],
     ['mupchi', 'chi'],
@@ -1033,6 +1034,7 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['mupUpsilon', 'Upsilon'],
     ['mupXi', 'Xi'],
     ['mupZeta', 'Zeta'],
+    */
     ['BbbA', 'AA'],
     ['BbbB', 'BB'],
     ['BbbC', 'CC'],
@@ -1079,6 +1081,18 @@ for(const [key, value] of map_from_official_docs) {
 const reverseSymbolMap = new Map<string, string>();
 for(const [key, value] of symbolMap) {
     reverseSymbolMap.set(value, key);
+}
+reverseSymbolMap.set('dif', 'mathrm{d}');
+
+// force override some one-to-multiple mappings
+const typst_to_tex_map = new Map<string, string>([
+    ['frac', 'frac'],
+    ['upright', 'mathrm'],
+    ['bold', 'boldsymbol'],
+]);
+
+for(const [key, value] of typst_to_tex_map) {
+    reverseSymbolMap.set(key, value);
 }
 
 export {symbolMap, reverseSymbolMap};

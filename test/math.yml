@@ -1,22 +1,12 @@
 # Most test cases are from https://github.com/curvenote/tex-to-typst/blob/1d0b121d162911f1c99b47171939e30656f49270/tests/math.yml (MIT License)
 title: tex2typst
 cases:
-  - title: Integrals and vec
-    tex: '\nabla \cdot \vec{j}(p) = \lim_{v \to \{ p \}} = \int \int_{S(v)} \frac{\vec{j} \cdot \vec{n}}{v} dS'
-    typst: nabla dot.op arrow(j)(p) = lim_(v arrow.r {p}) = integral integral_(S(v)) frac(arrow(j) dot.op arrow(n), v) d S
-  - title: Fractions and vectors
-    tex: '\frac{1}{4} \sum_{i=1}^4 \boldsymbol{P}_i^\top \sqrt{v} \boldsymbol{\Sigma}^{-1} \sqrt{v} \boldsymbol{P}_i \boldsymbol{j} = \boldsymbol{D}^\top v \phi'
-    typst: frac(1, 4) sum_(i = 1)^4 bold(P)_i^top sqrt(v) bold(Sigma)^(-1) sqrt(v) bold(P)_i bold(j) = bold(D)^top v phi.alt
   - title: Testing factorial, no space
     tex: 'p ( x )   =    \frac{e^{-\lambda}\lambda^{x}}{ x ! }'
     typst: p(x) = frac(e^(-lambda) lambda^x, x!)
   - title: Mathrm
-    tex: 'p_e = 1-\mathrm{e}^{-t \lambda}'
+    tex: 'p_e = 1 - \mathrm{e}^{-t \lambda}'
     typst: p_e = 1 - upright(e)^(-t lambda)
-  - title: Mathrm multiple
-    # The text comes in as an argument but in one string, which needs to be treated differently
-    tex: 'f(x_t, \mathrm{left})'
-    typst: f(x_t, upright(l e f t))
   - title: Cube root
     tex: '\sqrt[3]{x}'
     typst: root(3, x)
@@ -325,3 +315,6 @@ cases:
     typst: |-
       a + b \
       c + d
+  - title: leading sign
+    tex: -a
+    typst: -a

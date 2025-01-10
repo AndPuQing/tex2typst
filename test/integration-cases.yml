@@ -1,0 +1,39 @@
+# Most test cases are from https://github.com/curvenote/tex-to-typst/blob/1d0b121d162911f1c99b47171939e30656f49270/tests/math.yml (MIT License)
+title: integration-cases
+cases:
+  - title: Integrals and vec
+    tex: '\nabla \cdot \vec{j}(p) = \lim_{v \to \{p\}} = \int \int_{S(v)} \frac{\vec{j} \cdot \vec{n}}{v} d S'
+    typst: nabla dot.op arrow(j)(p) = lim_(v arrow.r {p}) = integral integral_(S(v)) frac(arrow(j) dot.op arrow(n), v) d S
+  - title: Fractions and vectors
+    tex: '\frac{1}{4} \sum_{i = 1}^4 \boldsymbol{P}_i^\top \sqrt{v} \boldsymbol{\Sigma}^{-1} \sqrt{v} \boldsymbol{P}_i \boldsymbol{j} = \boldsymbol{D}^\top v \phi'
+    typst: frac(1, 4) sum_(i = 1)^4 bold(P)_i^top sqrt(v) bold(Sigma)^(-1) sqrt(v) bold(P)_i bold(j) = bold(D)^top v phi.alt
+  - title: Mathrm
+    tex: 'p_e = 1 - \mathrm{e}^{-t \lambda}'
+    typst: p_e = 1 - upright(e)^(-t lambda)
+  - title: Cube root
+    tex: '\sqrt[3]{x}'
+    typst: root(3, x)
+  - title: Simplified brackets f(x)
+    tex: 'e_{f(x)}'
+    typst: e_(f(x))
+  - title: Text Functions
+    tex: '\text{diag}(\boldsymbol{v}) \boldsymbol{D} \boldsymbol{M}_f (\sigma^{-1})^{-1} \boldsymbol{D}^\top \text{diag}(\boldsymbol{v}) \phi = \boldsymbol{q}'
+    typst: '"diag"(bold(v)) bold(D) bold(M)_f (sigma^(-1))^(-1) bold(D)^top "diag"(bold(v)) phi.alt = bold(q)'
+  - title: Single Char Text
+    tex: \text{a}
+    typst: '"a"'
+  - title: Plus minus
+    tex: 'q = \pm I'
+    typst: q = plus.minus I
+  - title: Comma inside function
+    tex: '\boldsymbol{j_x, j_y}'
+    typst: 'bold(j_x comma j_y)'
+  - title: Nested scripts
+    tex: 'r_{s^+}'
+    typst: 'r_(s^+)'
+  - title: Nested functions
+    tex: '\boldsymbol{m}_\text{ref}'
+    typst: 'bold(m)_"ref"'
+  - title: left and right brackets
+    tex: '\left[\boldsymbol{A} \right) \left\{b \right)'
+    typst: 'lr([bold(A))) lr({b))'

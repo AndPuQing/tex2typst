@@ -1,7 +1,6 @@
-import assert from "assert";
 import { symbolMap } from "./map";
 import { TexNode, TexSupsubData, TexTokenType } from "./types";
-import { isalpha, isdigit } from "./util";
+import { isalpha, isdigit, assert } from "./util";
 
 
 const UNARY_COMMANDS = [
@@ -76,49 +75,9 @@ function get_command_param_num(command: string): number {
 const LEFT_CURLY_BRACKET: TexToken = new TexToken(TexTokenType.CONTROL, '{');
 const RIGHT_CURLY_BRACKET: TexToken = new TexToken(TexTokenType.CONTROL, '}');
 
-function find_closing_curly_bracket(tokens: TexToken[], start: number): number {
-    assert(tokens[start].eq(LEFT_CURLY_BRACKET));
-    let count = 1;
-    let pos = start + 1;
-
-    while (count > 0) {
-        if (pos >= tokens.length) {
-            throw new LatexParserError('Unmatched curly brackets');
-        }
-        if (tokens[pos].eq(LEFT_CURLY_BRACKET)) {
-            count += 1;
-        } else if (tokens[pos].eq(RIGHT_CURLY_BRACKET)) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    return pos - 1;
-}
 
 const LEFT_SQUARE_BRACKET: TexToken = new TexToken(TexTokenType.ELEMENT, '[');
 const RIGHT_SQUARE_BRACKET: TexToken = new TexToken(TexTokenType.ELEMENT, ']');
-
-function find_closing_square_bracket(tokens: TexToken[], start: number): number {
-    assert(tokens[start].eq(LEFT_SQUARE_BRACKET));
-    let count = 1;
-    let pos = start + 1;
-
-    while (count > 0) {
-        if (pos >= tokens.length) {
-            throw new LatexParserError('Unmatched square brackets');
-        }
-        if (tokens[pos].eq(LEFT_SQUARE_BRACKET)) {
-            count += 1;
-        } else if (tokens[pos].eq(RIGHT_SQUARE_BRACKET)) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    return pos - 1;
-}
-
 
 function eat_whitespaces(tokens: TexToken[], start: number): TexToken[] {
     let pos = start;
@@ -155,6 +114,27 @@ function eat_command_name(latex: string, start: number): string {
         pos += 1;
     }
     return latex.substring(start, pos);
+}
+
+
+export function find_closing_match(tokens: TexToken[], start: number, leftToken: TexToken, rightToken: TexToken): number {
+    assert(tokens[start].eq(leftToken));
+    let count = 1;
+    let pos = start + 1;
+
+    while (count > 0) {
+        if (pos >= tokens.length) {
+            throw new Error('Unmatched brackets');
+        }
+        if (tokens[pos].eq(leftToken)) {
+            count += 1;
+        } else if (tokens[pos].eq(rightToken)) {
+            count -= 1;
+        }
+        pos += 1;
+    }
+
+    return pos - 1;
 }
 
 
@@ -482,7 +462,7 @@ export class LatexParser {
                 const controlChar = firstToken.value;
                 switch (controlChar) {
                     case '{':
-                        const posClosingBracket = find_closing_curly_bracket(tokens, start);
+                        const posClosingBracket = find_closing_match(tokens, start, LEFT_CURLY_BRACKET, RIGHT_CURLY_BRACKET);
                         const exprInside = tokens.slice(start + 1, posClosingBracket);
                         return [this.parse(exprInside), posClosingBracket + 1];
                     case '}':
@@ -526,7 +506,7 @@ export class LatexParser {
             case 1: {
                 if (command === '\\sqrt' && pos < tokens.length && tokens[pos].eq(LEFT_SQUARE_BRACKET)) {
                     const posLeftSquareBracket = pos;
-                    const posRightSquareBracket = find_closing_square_bracket(tokens, pos);
+                    const posRightSquareBracket = find_closing_match(tokens, pos, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET);
                     const exprInside = tokens.slice(posLeftSquareBracket + 1, posRightSquareBracket);
                     const exponent = this.parse(exprInside);
                     const [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, posRightSquareBracket + 1);

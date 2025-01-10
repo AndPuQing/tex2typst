@@ -1,18 +1,6 @@
 
-import { assert } from "console";
 import { TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
-import { isalpha, isdigit } from "./util";
-import { reverseSymbolMap } from "./map";
-
-const TYPST_UNARY_FUNCTIONS: string[] = [
-    'sqrt',
-    'bold',
-];
-
-const TYPST_BINARY_FUNCTIONS: string[] = [
-    'frac',
-    'root',
-];
+import { assert, isalpha, isdigit } from "./util";
 
 function eat_primes(tokens: TypstToken[], start: number): number {
     let pos = start;
@@ -34,17 +22,8 @@ function eat_identifier_name(typst: string, start: number): string {
 
 const TYPST_EMPTY_NODE = new TypstNode('empty', '');
 
-function get_function_param_num(identifier: string): number {
-    if (TYPST_UNARY_FUNCTIONS.includes(identifier)) {
-        return 1;
-    } else if (TYPST_BINARY_FUNCTIONS.includes(identifier)) {
-        return 2;
-    } else {
-        return 0;
-    }
-}
 
-function tokenize_typst(typst: string): TypstToken[] {
+export function tokenize_typst(typst: string): TypstToken[] {
     const tokens: TypstToken[] = [];
 
     let pos = 0;
@@ -142,18 +121,40 @@ function tokenize_typst(typst: string): TypstToken[] {
                     token = new TypstToken(TypstTokenType.ELEMENT, typst.slice(pos, newPos));
                 } else if ('+-*/=\'<>!.,;?()[]|'.includes(firstChar)) {
                     token = new TypstToken(TypstTokenType.ELEMENT, firstChar)
+                } else if (isalpha(firstChar)) {
+                    const identifier = eat_identifier_name(typst, pos);
+                    const _type = identifier.length === 1 ? TypstTokenType.ELEMENT : TypstTokenType.SYMBOL;
+                    token = new TypstToken(_type, identifier);
                 } else {
-                    token = new TypstToken(TypstTokenType.SYMBOL, eat_identifier_name(typst, pos));
+                    token = new TypstToken(TypstTokenType.ELEMENT, firstChar);
                 }
                 pos += token.value.length;
             }
         }
         tokens.push(token);
-
     }
 
-
     return tokens;
+}
+
+export function find_closing_match(tokens: TypstToken[], start: number): number {
+    assert(tokens[start].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET]));
+    let count = 1;
+    let pos = start + 1;
+
+    while (count > 0) {
+        if (pos >= tokens.length) {
+            throw new Error('Unmatched brackets');
+        }
+        if (tokens[pos].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET])) {
+            count += 1;
+        } else if (tokens[pos].isOneOf([RIGHT_PARENTHESES, RIGHT_BRACKET, RIGHT_CURLY_BRACKET])) {
+            count -= 1;
+        }
+        pos += 1;
+    }
+
+    return pos - 1;
 }
 
 
@@ -169,12 +170,20 @@ type TypstParseResult = [TypstNode, number];
 
 const SUB_SYMBOL: TypstToken = new TypstToken(TypstTokenType.CONTROL, '_');
 const SUP_SYMBOL: TypstToken = new TypstToken(TypstTokenType.CONTROL, '^');
+const LEFT_PARENTHESES: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
+const RIGHT_PARENTHESES: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ')');
+const LEFT_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '[');
+const RIGHT_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ']');
+const LEFT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '{');
+const RIGHT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '}');
+const COMMA = new TypstToken(TypstTokenType.ELEMENT, ',');
+const SINGLE_SPACE = new TypstToken(TypstTokenType.SPACE, ' ');
 
-class TypstParser {
+export class TypstParser {
     space_sensitive: boolean;
     newline_sensitive: boolean;
 
-    constructor(space_sensitive: boolean = false, newline_sensitive: boolean = true) {
+    constructor(space_sensitive: boolean = true, newline_sensitive: boolean = true) {
         this.space_sensitive = space_sensitive;
         this.newline_sensitive = newline_sensitive;
     }
@@ -193,8 +202,8 @@ class TypstParser {
                 if (!this.newline_sensitive && res.content === '\n') {
                     continue;
                 }
-                results.push(res);
             }
+            results.push(res);
         }
 
         if (results.length === 0) {
@@ -215,7 +224,7 @@ class TypstParser {
         num_prime += eat_primes(tokens, pos);
         pos += num_prime;
         if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
-            [sub, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
+            [sub, pos] = this.parseSupOrSub(tokens, pos + 1);
             num_prime += eat_primes(tokens, pos);
             pos += num_prime;
             if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
@@ -225,7 +234,7 @@ class TypstParser {
                 }
             }
         } else if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
-            [sup, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
+            [sup, pos] = this.parseSupOrSub(tokens, pos + 1);
             if (eat_primes(tokens, pos) > 0) {
                 throw new TypstParserError('Double superscript');
             }
@@ -262,12 +271,31 @@ class TypstParser {
         }
     }
 
+    parseSupOrSub(tokens: TypstToken[], start: number): TypstParseResult {
+        if(tokens[start].eq(LEFT_PARENTHESES)) {
+            const end = find_closing_match(tokens, start);
+            let node = new TypstNode('group', '', []);
+            let pos = start + 1;
+            while(pos < end) {
+                let [res, newPos] = this.parseNextExpr(tokens, pos);
+                pos = newPos;
+                node.args!.push(res);
+            }
+            if (node.args!.length === 0) {
+                node = TYPST_EMPTY_NODE;
+            } else if (node.args!.length === 1) {
+                node = node.args![0];
+            }
+            return [node, end + 1];
+        } else {
+            return this.parseNextExprWithoutSupSub(tokens, start);
+        }
+    }
+
     parseNextExprWithoutSupSub(tokens: TypstToken[], start: number): TypstParseResult {
         const firstToken = tokens[start];
         const tokenType = firstToken.type;
         switch (tokenType) {
-            case TypstTokenType.ELEMENT:
-                return [new TypstNode('atom', firstToken.value), start + 1];
             case TypstTokenType.TEXT:
                 return [new TypstNode('text', firstToken.value), start + 1];
             case TypstTokenType.COMMENT:
@@ -275,8 +303,17 @@ class TypstParser {
             case TypstTokenType.SPACE:
             case TypstTokenType.NEWLINE:
                 return [new TypstNode('whitespace', firstToken.value), start + 1];
+            case TypstTokenType.ELEMENT:
             case TypstTokenType.SYMBOL: {
-                return this.parseFunctionExpr(tokens, start);
+                if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
+                    const [args, newPos] = this.parseArguments(tokens, start + 1);
+                    const func_call = new TypstNode('funcCall', firstToken.value);
+                    func_call.args = args;
+                    return [func_call, newPos];
+                } else {
+                    const identifier_type = tokenType === TypstTokenType.ELEMENT ? 'atom' : 'symbol';
+                    return [new TypstNode(identifier_type, firstToken.value), start + 1];
+                }
             }
             case TypstTokenType.CONTROL: {
                 const controlChar = firstToken.value;
@@ -298,32 +335,35 @@ class TypstParser {
         }
     }
 
-    parseFunctionExpr(tokens: TypstToken[], start: number): TypstParseResult {
-        assert(tokens[start].type === TypstTokenType.SYMBOL);
-
-        const identifier = tokens[start].value;
-
+    parseArguments(tokens: TypstToken[], start: number): [TypstNode[], number] {
+        const end = find_closing_match(tokens, start);
+        
+        const args: TypstNode[] = [];
         let pos = start + 1;
+        while (pos < end) {
+            let arg = new TypstNode('group', '', []);
 
-        const paramNum = get_function_param_num(identifier);
-        switch (paramNum) {
-            case 0:
-                if (!reverseSymbolMap.has(identifier)) {
-                    return [new TypstNode('unknown', identifier), pos];
+            while(pos < end) {
+                if(tokens[pos].eq(COMMA)) {
+                    pos += 1;
+                    break;
+                } else if(tokens[pos].eq(SINGLE_SPACE)) {
+                    pos += 1;
+                    continue;
                 }
-                return [new TypstNode('symbol', identifier), pos];
-            case 1: {
-                let [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, pos);
-                return [new TypstNode('unaryFunc', identifier, [arg1]), newPos];
+                const [argItem, newPos] = this.parseNextExpr(tokens, pos);
+                pos = newPos;
+                arg.args!.push(argItem);
             }
-            case 2: {
-                let [arg1, pos1] = this.parseNextExprWithoutSupSub(tokens, pos);
-                let [arg2, pos2] = this.parseNextExprWithoutSupSub(tokens, pos1);
-                return [new TypstNode('binaryFunc', identifier, [arg1, arg2]), pos2];
+
+            if(arg.args!.length === 0) {
+                arg = TYPST_EMPTY_NODE;
+            } else if (arg.args!.length === 1) {
+                arg = arg.args![0];
             }
-            default:
-                throw new TypstParserError('Invalid number of parameters');
+            args.push(arg);
         }
+        return [args, end + 1];
     }
 }
 
