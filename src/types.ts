@@ -9,6 +9,19 @@ export enum TexTokenType {
     UNKNOWN,
 }
 
+export class TexToken {
+    type: TexTokenType;
+    value: string;
+
+    constructor(type: TexTokenType, value: string) {
+        this.type = type;
+        this.value = value;
+    }
+
+    public eq(token: TexToken): boolean {
+        return this.type === token.type && this.value === token.value;
+    }
+}
 
 
 export interface TexSupsubData {

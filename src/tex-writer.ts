@@ -1,6 +1,5 @@
 import { reverseSymbolMap } from "./map";
-import { TexToken } from "./tex-parser";
-import { TexNode, TexSqrtData, TexSupsubData, TexTokenType, TypstNode, TypstSupsubData } from "./types";
+import { TexNode, TexToken, TexSqrtData, TexSupsubData, TexTokenType, TypstNode, TypstSupsubData } from "./types";
 
 const TYPST_UNARY_FUNCTIONS: string[] = [
     'sqrt',

@@ -1,5 +1,5 @@
 import { symbolMap } from "./map";
-import { TexNode, TexSupsubData, TexTokenType } from "./types";
+import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
 import { isalpha, isdigit, assert } from "./util";
 
 
@@ -46,19 +46,6 @@ const BINARY_COMMANDS = [
 ]
 
 
-export class TexToken {
-    type: TexTokenType;
-    value: string;
-
-    constructor(type: TexTokenType, value: string) {
-        this.type = type;
-        this.value = value;
-    }
-
-    public eq(token: TexToken): boolean {
-        return this.type === token.type && this.value === token.value;
-    }
-}
 
 const EMPTY_NODE: TexNode = new TexNode('empty', '');
 
