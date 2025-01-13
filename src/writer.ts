@@ -120,6 +120,8 @@ export class TypstWriter {
         no_need_space ||= this.buffer === "";
         // str is starting with a space itself
         no_need_space ||= /^\s/.test(str);
+        // "&=" instead of "& ="
+        no_need_space ||= this.buffer.endsWith('&') && str === '=';
         // other cases
         no_need_space ||= /[\s_^{\(]$/.test(this.buffer);
         if (!no_need_space) {

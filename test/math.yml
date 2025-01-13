@@ -181,8 +181,8 @@ cases:
       c &= d
       \end{align*}
     typst: |-
-      a & = b \
-      c & = d
+      a &= b \
+      c &= d
   - title: Aligned
     tex: |-
       \begin{aligned}
@@ -190,8 +190,8 @@ cases:
       c &= d
       \end{aligned}
     typst: |-
-      a & = b \
-      c & = d
+      a &= b \
+      c &= d
   - title: Aligned2
     tex: |-
       \begin{aligned}
@@ -199,8 +199,8 @@ cases:
       &c &= d
       \end{aligned}
     typst: |-
-      & a & = b \
-      & c & = d
+      & a &= b \
+      & c &= d
   - title: Matrix
     tex: |-
       m = \begin{matrix}

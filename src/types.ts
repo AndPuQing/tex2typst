@@ -187,6 +187,28 @@ export class TexNode {
             case 'control': {
                 return [new TexToken(TexTokenType.CONTROL, this.content)];
             }
+            case 'beginend': {
+                let tokens: TexToken[] = [];
+                const matrix = this.data as TexArrayData;
+                tokens.push(new TexToken(TexTokenType.COMMAND, `\\begin{${this.content}}`));
+                tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
+                for (let i = 0; i < matrix.length; i++) {
+                    const row = matrix[i];
+                    for (let j = 0; j < row.length; j++) {
+                        const cell = row[j];
+                        tokens = tokens.concat(cell.serialize());
+                        if (j !== row.length - 1) {
+                            tokens.push(new TexToken(TexTokenType.CONTROL, '&'));
+                        }
+                    }
+                    if (i !== matrix.length - 1) {
+                        tokens.push(new TexToken(TexTokenType.CONTROL, '\\\\'));
+                    }
+                }
+                tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
+                tokens.push(new TexToken(TexTokenType.COMMAND, `\\end{${this.content}}`));
+                return tokens;
+            }
             default:
                 throw new Error('[TexNode.serialize] Unimplemented type: ' + this.type);
         }

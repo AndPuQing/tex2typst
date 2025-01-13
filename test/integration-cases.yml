@@ -58,3 +58,12 @@ cases:
       bold(D)
       \
       bold(G)_z
+  - title: Aligned
+    tex: |-
+      \begin{aligned}
+      a &= b \\
+      c &= d
+      \end{aligned}
+    typst: |-
+      a &= b \
+      c &= d
