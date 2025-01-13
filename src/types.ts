@@ -1,3 +1,5 @@
+import { isalpha } from "./util";
+
 export enum TexTokenType {
     ELEMENT,
     COMMAND,
@@ -226,6 +228,50 @@ export class TypstToken {
             }
         }
         return found;
+    }
+
+    public toNode(): TypstNode {
+        switch(this.type) {
+            case TypstTokenType.TEXT:
+                return new TypstNode('text', this.value);
+            case TypstTokenType.COMMENT:
+                return new TypstNode('comment', this.value);
+            case TypstTokenType.SPACE:
+            case TypstTokenType.NEWLINE:
+                return new TypstNode('whitespace', this.value);
+            case TypstTokenType.ELEMENT:
+                return new TypstNode('atom', this.value);
+            case TypstTokenType.SYMBOL:
+                return new TypstNode('symbol', this.value);
+            case TypstTokenType.CONTROL: {
+                const controlChar = this.value;
+                switch (controlChar) {
+                    case '':
+                    case '_':
+                    case '^':
+                        return new TypstNode('empty', '');
+                    case '&':
+                        return new TypstNode('control', '&');
+                    case '\\':
+                        return new TypstNode('control', '\\');
+                    default:
+                        throw new Error(`Unexpected control character ${controlChar}`);
+                }
+            }
+            default:
+                throw new Error(`Unexpected token type ${this.type}`);
+        }
+    }
+
+    public toString(): string {
+        switch (this.type) {
+            case TypstTokenType.TEXT:
+                return `"${this.value}"`;
+            case TypstTokenType.COMMENT:
+                return `//${this.value}`;
+            default:
+                return this.value;
+        }
     }
 }
 

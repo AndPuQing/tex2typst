@@ -95,7 +95,7 @@ export class TypstWriter {
 
 
     private writeBuffer(token: TypstToken) {
-        const str = token.value;
+        const str = token.toString();
 
         if (str === '') {
             return;
@@ -146,10 +146,10 @@ export class TypstWriter {
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content));
                 break;
             case 'text':
-                this.queue.push(new TypstToken(TypstTokenType.TEXT, `"${node.content}"`));
+                this.queue.push(new TypstToken(TypstTokenType.TEXT, node.content));
                 break;
             case 'comment':
-                this.queue.push(new TypstToken(TypstTokenType.COMMENT, `//${node.content}`));
+                this.queue.push(new TypstToken(TypstTokenType.COMMENT, node.content));
                 break;
             case 'whitespace':
                 for (const c of node.content) {

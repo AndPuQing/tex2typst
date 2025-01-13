@@ -294,49 +294,19 @@ export class TypstParser {
 
     parseNextExprWithoutSupSub(tokens: TypstToken[], start: number): TypstParseResult {
         const firstToken = tokens[start];
-        const tokenType = firstToken.type;
-        switch (tokenType) {
-            case TypstTokenType.TEXT:
-                return [new TypstNode('text', firstToken.value), start + 1];
-            case TypstTokenType.COMMENT:
-                return [TYPST_EMPTY_NODE, start + 1];
-            case TypstTokenType.SPACE:
-            case TypstTokenType.NEWLINE:
-                return [new TypstNode('whitespace', firstToken.value), start + 1];
-            case TypstTokenType.ELEMENT:
-                if(!isalpha(firstToken.value[0])) {
-                    return [new TypstNode('atom', firstToken.value), start + 1];
-                }
-                // fall through
-            case TypstTokenType.SYMBOL: {
-                if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
-                    const [args, newPos] = this.parseArguments(tokens, start + 1);
-                    const func_call = new TypstNode('funcCall', firstToken.value);
-                    func_call.args = args;
-                    return [func_call, newPos];
-                } else {
-                    const identifier_type = tokenType === TypstTokenType.ELEMENT ? 'atom' : 'symbol';
-                    return [new TypstNode(identifier_type, firstToken.value), start + 1];
-                }
-            }
-            case TypstTokenType.CONTROL: {
-                const controlChar = firstToken.value;
-                switch (controlChar) {
-                    case '':
-                    case '_':
-                    case '^':
-                        return [TYPST_EMPTY_NODE, start + 1];
-                    case '&':
-                        return [new TypstNode('control', '&'), start + 1];
-                    case '\\':
-                        return [new TypstNode('control', '\\'), start + 1];
-                    default:
-                        throw new TypstParserError(`Unexpected control character ${controlChar}`);
-                }
-            }
-            default:
-                throw new TypstParserError(`Unexpected token type ${tokenType}`);
+        const node = firstToken.toNode();
+        if(firstToken.type === TypstTokenType.ELEMENT && !isalpha(firstToken.value[0])) {
+            return [node, start + 1];
         }
+        if ([TypstTokenType.ELEMENT, TypstTokenType.SYMBOL].includes(firstToken.type)) {
+            if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
+                const [args, newPos] = this.parseArguments(tokens, start + 1);
+                const func_call = new TypstNode('funcCall', firstToken.value);
+                func_call.args = args;
+                return [func_call, newPos];
+            }
+        }
+        return [node, start + 1];
     }
 
     parseArguments(tokens: TypstToken[], start: number): [TypstNode[], number] {
