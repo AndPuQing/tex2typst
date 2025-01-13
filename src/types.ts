@@ -1,5 +1,3 @@
-import { isalpha } from "./util";
-
 export enum TexTokenType {
     ELEMENT,
     COMMAND,
