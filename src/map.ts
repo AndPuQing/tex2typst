@@ -23,6 +23,8 @@ const symbolMap = new Map<string, string>([
     ['dfrac', 'frac'],
     ['tfrac', 'frac'],
 
+    ['operatorname', 'op'],
+
     ['boldsymbol', 'bold'],
     ['mathbb', 'bb'],
     ['mathbf', 'bold'],

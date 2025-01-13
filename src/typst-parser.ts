@@ -304,6 +304,10 @@ export class TypstParser {
             case TypstTokenType.NEWLINE:
                 return [new TypstNode('whitespace', firstToken.value), start + 1];
             case TypstTokenType.ELEMENT:
+                if(!isalpha(firstToken.value[0])) {
+                    return [new TypstNode('atom', firstToken.value), start + 1];
+                }
+                // fall through
             case TypstTokenType.SYMBOL: {
                 if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
                     const [args, newPos] = this.parseArguments(tokens, start + 1);

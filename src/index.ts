@@ -2,6 +2,8 @@ import { parseTex } from "./tex-parser";
 import { Tex2TypstOptions } from "./types";
 import { convertTree, TypstWriter } from "./writer";
 import { symbolMap } from "./map";
+import { parseTypst } from "./typst-parser";
+import { convert_typst_node_to_tex, TexWriter } from "./tex-writer";
 
 
 export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
@@ -26,6 +28,14 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
     const typstTree = convertTree(texTree);
     const writer = new TypstWriter(opt.nonStrict!, opt.preferTypstIntrinsic!, opt.keepSpaces!);
     writer.serialize(typstTree);
+    return writer.finalize();
+}
+
+export function typst2tex(typst: string): string {
+    const typstTree = parseTypst(typst);
+    const texTree = convert_typst_node_to_tex(typstTree);
+    const writer = new TexWriter();
+    writer.serialize(texTree);
     return writer.finalize();
 }
 

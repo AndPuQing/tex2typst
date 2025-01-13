@@ -8,6 +8,7 @@ const TYPST_UNARY_FUNCTIONS: string[] = [
     'arrow',
     'upright',
     'lr',
+    'op',
 ];
 
 const TYPST_BINARY_FUNCTIONS: string[] = [
@@ -42,10 +43,10 @@ export class TexWriter {
             no_need_space ||= ['\\{', '\\}'].includes(str);
             // putting a subscript or superscript
             no_need_space ||= this.buffer.endsWith('_') || this.buffer.endsWith('^');
-            // buffer ends with a space
-            no_need_space ||= this.buffer.endsWith(' ');
+            // buffer ends with a whitespace
+            no_need_space ||= /\s$/.test(this.buffer);
             // token starts with a space
-            no_need_space ||= str.startsWith(' ');
+            no_need_space ||= /^\s/.test(str);
             // buffer is empty
             no_need_space ||= this.buffer === '';
             // leading sign. e.g. produce "+1" instead of " +1"
@@ -69,7 +70,7 @@ export class TexWriter {
                 break;
             }
             case 'symbol':
-                this.queue.push(new TexToken(TexTokenType.COMMAND, typst_token_to_tex(node.content)));
+                this.queue.push(new TexToken(TexTokenType.COMMAND, node.content));
                 break;
             case 'text':
                 this.queue.push(new TexToken(TexTokenType.TEXT, `\\text{${node.content}}`));
@@ -89,13 +90,21 @@ export class TexWriter {
                 }
                 break;
             case 'unaryFunc':
-                this.queue.push(new TexToken(TexTokenType.COMMAND, typst_token_to_tex(node.content)));
+                this.queue.push(new TexToken(TexTokenType.COMMAND, node.content));
 
-                // special hook for sqrt
-                if (node.content === 'sqrt' && node.data) {
+                // special hook for \sqrt
+                if (node.content === '\\sqrt' && node.data) {
                     this.queue.push(new TexToken(TexTokenType.ELEMENT, '['));
                     this.serialize(node.data! as TexSqrtData);
                     this.queue.push(new TexToken(TexTokenType.ELEMENT, ']'));
+                }
+                // special hook for \operatorname
+                if (node.content === '\\operatorname' && node.args!.length === 1 && node.args![0].type === 'text') {
+                    const text = node.args![0].content;
+                    this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                    this.serialize(new TexNode('symbol', text));
+                    this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                    return;
                 }
 
                 this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
@@ -103,7 +112,7 @@ export class TexWriter {
                 this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
                 break;
             case 'binaryFunc':
-                this.queue.push(new TexToken(TexTokenType.COMMAND, typst_token_to_tex(node.content)));
+                this.queue.push(new TexToken(TexTokenType.COMMAND, node.content));
                 this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
                 this.serialize(node.args![0]);
                 this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
@@ -134,6 +143,10 @@ export class TexWriter {
                         this.serialize(sup);
                     }
                 }
+                break;
+            }
+            case 'control': {
+                this.queue.push(new TexToken(TexTokenType.CONTROL, node.content));
                 break;
             }
             default:
@@ -167,7 +180,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if (node.content === 'comma') {
                 return new TexNode('element', ',');
             }
-            return new TexNode('symbol', node.content);
+            return new TexNode('symbol', typst_token_to_tex(node.content));
         case 'text':
             return new TexNode('text', node.content);
         case 'comment':
@@ -178,7 +191,6 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if (TYPST_UNARY_FUNCTIONS.includes(node.content)) {
                 // special hook for lr
                 if (node.content === 'lr') {
-                    console.log(node);
                     const body = node.args![0];
                     if (body.type === 'group') {
                         let left_delim = body.args![0].content;
@@ -192,16 +204,17 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                         ]);
                     }
                 }
-                return new TexNode('unaryFunc', node.content, node.args!.map(convert_typst_node_to_tex));
+                const command = typst_token_to_tex(node.content);
+                return new TexNode('unaryFunc', command, node.args!.map(convert_typst_node_to_tex));
             } else if (TYPST_BINARY_FUNCTIONS.includes(node.content)) {
                 // special hook for root
                 if (node.content === 'root') {
                     const [degree, radicand] = node.args!;
                     const data: TexSqrtData = convert_typst_node_to_tex(degree);
-                    return new TexNode('unaryFunc', 'sqrt', [convert_typst_node_to_tex(radicand)], data);
+                    return new TexNode('unaryFunc', '\\sqrt', [convert_typst_node_to_tex(radicand)], data);
                 }
-
-                return new TexNode('binaryFunc', node.content, node.args!.map(convert_typst_node_to_tex));
+                const command = typst_token_to_tex(node.content);
+                return new TexNode('binaryFunc', command, node.args!.map(convert_typst_node_to_tex));
             } else {
                 return new TexNode('ordgroup', '', [
                     new TexNode('symbol', typst_token_to_tex(node.content)),
@@ -228,6 +241,16 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 sub: sub_tex
             });
             return res;
+        }
+        case 'control': {
+            switch (node.content) {
+                case '\\':
+                    return new TexNode('control', '\\\\');
+                case '&':
+                    return new TexNode('control', '&');
+                default:
+                    throw new Error('[convert_typst_node_to_tex] Unimplemented control: ' + node.content);
+            }
         }
         default:
             throw new Error('[convert_typst_node_to_tex] Unimplemented type: ' + node.type);

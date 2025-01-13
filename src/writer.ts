@@ -103,9 +103,11 @@ export class TypstWriter {
 
         let no_need_space = false;
         // putting the first token in clause
-        no_need_space ||= /[\(\|]$/.test(this.buffer) && /^\w/.test(str);
+        no_need_space ||= /[\(\[\|]$/.test(this.buffer) && /^\w/.test(str);
+        // closing a clause
+        no_need_space ||= /^[})\]\|]$/.test(str);
         // putting punctuation
-        no_need_space ||= /^[}()_^,;!\|]$/.test(str);
+        no_need_space ||= /^[(_^,;!]$/.test(str);
         // putting a prime
         no_need_space ||= str === "'";
         // continue a number
