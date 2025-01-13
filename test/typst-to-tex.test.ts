@@ -27,7 +27,7 @@ describe('examples', () => {
         const typst_node = parseTypst('a + b');
         const tex_node = convert_typst_node_to_tex(typst_node);
         const writer = new TexWriter();
-        writer.serialize(tex_node);
+        writer.append(tex_node);
         const res = writer.finalize();
         expect(res).toEqual('a + b');
     });
@@ -36,7 +36,7 @@ describe('examples', () => {
         const typst_node = parseTypst('sqrt(x)');
         const tex_node = convert_typst_node_to_tex(typst_node);
         const writer = new TexWriter();
-        writer.serialize(tex_node);
+        writer.append(tex_node);
         const res = writer.finalize();
         expect(res).toEqual('\\sqrt{x}');
     });
@@ -45,7 +45,7 @@ describe('examples', () => {
         const typst_node = parseTypst('integral_a^b f(x) dif x');
         const tex_node = convert_typst_node_to_tex(typst_node);
         const writer = new TexWriter();
-        writer.serialize(tex_node);
+        writer.append(tex_node);
         const res = writer.finalize();
         expect(res).toEqual('\\int_a^b f(x) \\mathrm{d} x');
     });
@@ -54,7 +54,7 @@ describe('examples', () => {
         const typst_node = parseTypst('lr({a))');
         const tex_node = convert_typst_node_to_tex(typst_node);
         const writer = new TexWriter();
-        writer.serialize(tex_node);
+        writer.append(tex_node);
         const res = writer.finalize();
         expect(res).toEqual('\\left\\{a \\right)');
     });
@@ -72,7 +72,7 @@ describe('integration-cases.yaml', function () {
             const typst_node = parseTypst(c.typst);
             const tex_node = convert_typst_node_to_tex(typst_node);
             const writer = new TexWriter();
-            writer.serialize(tex_node);
+            writer.append(tex_node);
             const res = writer.finalize();
             expect(res).toEqual(c.tex);
         });

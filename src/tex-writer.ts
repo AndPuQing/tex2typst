@@ -24,10 +24,10 @@ function apply_escape_if_needed(c: string) {
 
 export class TexWriter {
     protected buffer: string = "";
-    protected queue: TexToken[] = [];
+    queue: TexToken[] = [];
 
     private writeBuffer(token: TexToken) {
-        const str = token.value;
+        const str = token.toString();
 
         let no_need_space = false;
         if (token.type === TexTokenType.SPACE) {
@@ -55,102 +55,11 @@ export class TexWriter {
         if (!no_need_space) {
             this.buffer += ' ';
         }
-        this.buffer += token.value;
+        this.buffer += str;
     }
 
-    public serialize(node: TexNode) {
-        switch (node.type) {
-            case 'empty':
-                break;
-            case 'element': {
-                let c = node.content;
-                c = apply_escape_if_needed(c);
-                this.queue.push(new TexToken(TexTokenType.ELEMENT, c));
-                break;
-            }
-            case 'symbol':
-                this.queue.push(new TexToken(TexTokenType.COMMAND, node.content));
-                break;
-            case 'text':
-                this.queue.push(new TexToken(TexTokenType.TEXT, `\\text{${node.content}}`));
-                break;
-            case 'comment':
-                this.queue.push(new TexToken(TexTokenType.COMMENT, `%${node.content}`));
-                break;
-            case 'whitespace':
-                for (const c of node.content) {
-                    const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
-                    this.queue.push(new TexToken(token_type, c));
-                }
-                break;
-            case 'ordgroup':
-                for (const item of node.args!) {
-                    this.serialize(item);
-                }
-                break;
-            case 'unaryFunc':
-                this.queue.push(new TexToken(TexTokenType.COMMAND, node.content));
-
-                // special hook for \sqrt
-                if (node.content === '\\sqrt' && node.data) {
-                    this.queue.push(new TexToken(TexTokenType.ELEMENT, '['));
-                    this.serialize(node.data! as TexSqrtData);
-                    this.queue.push(new TexToken(TexTokenType.ELEMENT, ']'));
-                }
-                // special hook for \operatorname
-                if (node.content === '\\operatorname' && node.args!.length === 1 && node.args![0].type === 'text') {
-                    const text = node.args![0].content;
-                    this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                    this.serialize(new TexNode('symbol', text));
-                    this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                    return;
-                }
-
-                this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                this.serialize(node.args![0]);
-                this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                break;
-            case 'binaryFunc':
-                this.queue.push(new TexToken(TexTokenType.COMMAND, node.content));
-                this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                this.serialize(node.args![0]);
-                this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                this.serialize(node.args![1]);
-                this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                break;
-            case 'supsub': {
-                const { base, sup, sub } = node.data! as TexSupsubData;
-                this.serialize(base);
-                if (sub) {
-                    this.queue.push(new TexToken(TexTokenType.CONTROL, '_'));
-                    if (sub.type === 'ordgroup' || sub.type === 'supsub') {
-                        this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                        this.serialize(sub);
-                        this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                    } else {
-                        this.serialize(sub);
-                    }
-                }
-                if (sup) {
-                    this.queue.push(new TexToken(TexTokenType.CONTROL, '^'));
-                    if (sup.type === 'ordgroup' || sup.type === 'supsub') {
-                        this.queue.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                        this.serialize(sup);
-                        this.queue.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                    } else {
-                        this.serialize(sup);
-                    }
-                }
-                break;
-            }
-            case 'control': {
-                this.queue.push(new TexToken(TexTokenType.CONTROL, node.content));
-                break;
-            }
-            default:
-                throw new Error('[TexWriter.serialize] Unimplemented type: ' + node.type);
-        }
+    public append(node: TexNode) {
+        this.queue = this.queue.concat(node.serialize());
     }
 
     protected flushQueue() {

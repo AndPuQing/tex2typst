@@ -21,6 +21,17 @@ export class TexToken {
     public eq(token: TexToken): boolean {
         return this.type === token.type && this.value === token.value;
     }
+
+    public toString(): string {
+        switch (this.type) {
+            case TexTokenType.TEXT:
+                return `\\text{${this.value}}`;
+            case TexTokenType.COMMENT:
+                return `%${this.value}`;
+            default:
+                return this.value;
+        }
+    }
 }
 
 
@@ -45,6 +56,14 @@ export type TexArrayData = TexNode[][];
  */
 type TexNodeType = 'element' | 'text' | 'comment' | 'whitespace' | 'control' | 'ordgroup' | 'supsub'
              | 'unaryFunc' | 'binaryFunc' | 'leftright' | 'beginend' | 'symbol' | 'empty' | 'unknownMacro';
+
+
+function apply_escape_if_needed(c: string) {
+    if (['{', '}', '%'].includes(c)) {
+        return '\\' + c;
+    }
+    return c;
+}
 
 export class TexNode {
     type: TexNodeType;
@@ -73,6 +92,103 @@ export class TexNode {
                 return `\\text{${this.content}}`;
             default:
                 throw new Error(`toString() is not implemented for type ${this.type}`);
+        }
+    }
+
+
+    public serialize(): TexToken[] {
+        switch (this.type) {
+            case 'empty':
+                return [];
+            case 'element': {
+                let c = this.content;
+                c = apply_escape_if_needed(c);
+                return [new TexToken(TexTokenType.ELEMENT, c)];
+            }
+            case 'symbol':
+                return [new TexToken(TexTokenType.COMMAND, this.content)];
+            case 'text':
+                return [new TexToken(TexTokenType.TEXT, this.content)];
+            case 'comment':
+                return [new TexToken(TexTokenType.COMMENT, this.content)];
+            case 'whitespace': {
+                const tokens: TexToken[] = [];
+                for (const c of this.content) {
+                    const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
+                    tokens.push(new TexToken(token_type, c));
+                }
+                return tokens;
+            }
+            case 'ordgroup':
+                return this.args!.map((n) => n.serialize()).flat();
+            case 'unaryFunc': {
+                let tokens: TexToken[] = [];
+                tokens.push(new TexToken(TexTokenType.COMMAND, this.content));
+
+                // special hook for \sqrt
+                if (this.content === '\\sqrt' && this.data) {
+                    tokens.push(new TexToken(TexTokenType.ELEMENT, '['));
+                    tokens = tokens.concat((this.data! as TexSqrtData).serialize());
+                    tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
+                }
+                // special hook for \operatorname
+                if (this.content === '\\operatorname' && this.args!.length === 1 && this.args![0].type === 'text') {
+                    const text = this.args![0].content;
+                    tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                    // this.serialize(new TexNode('symbol', text));
+                    tokens.push(new TexToken(TexTokenType.COMMAND, text));
+                    tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                    return tokens;
+                }
+
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                tokens = tokens.concat(this.args![0].serialize());
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+
+                return tokens;
+            }
+            case 'binaryFunc': {
+                let tokens: TexToken[] = [];
+                tokens.push(new TexToken(TexTokenType.COMMAND, this.content));
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                tokens = tokens.concat(this.args![0].serialize());
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                tokens = tokens.concat(this.args![1].serialize());
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                return tokens;
+            }
+            case 'supsub': {
+                let tokens: TexToken[] = [];
+                const { base, sup, sub } = this.data! as TexSupsubData;
+                tokens = tokens.concat(base.serialize());
+                if (sub) {
+                    tokens.push(new TexToken(TexTokenType.CONTROL, '_'));
+                    if (sub.type === 'ordgroup' || sub.type === 'supsub') {
+                        tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                        tokens = tokens.concat(sub.serialize());
+                        tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                    } else {
+                        tokens = tokens.concat(sub.serialize());
+                    }
+                }
+                if (sup) {
+                    tokens.push(new TexToken(TexTokenType.CONTROL, '^'));
+                    if (sup.type === 'ordgroup' || sup.type === 'supsub') {
+                        tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                        tokens = tokens.concat(sup.serialize());
+                        tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                    } else {
+                        tokens = tokens.concat(sup.serialize());
+                    }
+                }
+                return tokens;
+            }
+            case 'control': {
+                return [new TexToken(TexTokenType.CONTROL, this.content)];
+            }
+            default:
+                throw new Error('[TexNode.serialize] Unimplemented type: ' + this.type);
         }
     }
 }

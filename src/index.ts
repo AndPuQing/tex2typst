@@ -35,7 +35,7 @@ export function typst2tex(typst: string): string {
     const typstTree = parseTypst(typst);
     const texTree = convert_typst_node_to_tex(typstTree);
     const writer = new TexWriter();
-    writer.serialize(texTree);
+    writer.append(texTree);
     return writer.finalize();
 }
 
