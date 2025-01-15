@@ -6,7 +6,6 @@ const symbolMap = new Map<string, string>([
     ['ddot', 'dot.double'],
     ['doteq', 'dot(eq)'],
     ['dots', 'dots.h'],
-    ['ldots', 'dots.h'],
     ['vdots', 'dots.v'],
     ['ddots', 'dots.down'],
     ['widehat', 'hat'], // Ideally, the result of \widehat should be longer than \hat. But it is not implemented now.
@@ -185,7 +184,7 @@ const symbolMap = new Map<string, string>([
     ['langle', 'angle.l'], 
     ['lbrace', 'brace.l'], 
     ['lbrack', 'bracket.l'], 
-    ['ldots', 'dots.l'], 
+    ['ldots', 'dots.h'], 
     ['le', 'lt.eq'], 
     ['leadsto', 'arrow.squiggly'], 
     ['leftarrow', 'arrow.l'], 
