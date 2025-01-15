@@ -66,9 +66,9 @@ describe('typst-parser', () => {
         expect(res).toEqual(new TypstNode('group', '', [
             new TypstNode('atom', 'a'),
             new TypstNode('whitespace', ' '),
-            new TypstNode('atom', '('),
-            new TypstNode('atom', 'x'),
-            new TypstNode('atom', ')'),
+            new TypstNode('group', 'parenthesis', [
+                new TypstNode('atom', 'x'),
+            ])
         ]));
     });
 

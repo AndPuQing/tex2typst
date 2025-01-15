@@ -300,7 +300,7 @@ export interface TypstSupsubData {
 export type TypstArrayData = TypstNode[][];
 
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
-            | 'empty' | 'group' | 'supsub' | 'funcCall' | 'align' | 'matrix' | 'unknown';
+            | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'unknown';
 
 
 export class TypstNode {

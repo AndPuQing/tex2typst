@@ -105,7 +105,7 @@ cases:
               "diag"(bold(G) bold(psi)^(n + 1))
               frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
               - bold(D)
-              "diag"(bold(k)_(A v)(bold(psi)^(n + 1) comma bold(m)))
+              "diag"(bold(k)_(A v)(bold(psi)^(n + 1), bold(m)))
               bold(G)
               - bold(G)_z
               frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
@@ -277,3 +277,27 @@ cases:
   - title: colon
     tex: a \colon b
     typst: "a : b"
+  - title: fraction1
+    tex: \frac{1}{2}
+    typst: 1/2
+  - title: fraction2
+    tex: \frac{1}{2} + 3
+    typst: 1 / 2 + 3
+  - title: fraction3
+    tex: 1 + \frac{1}{2} + 3
+    typst: 1 + 1 / 2 + 3
+  - title: fraction4
+    tex: \frac{5 + 6}{4} + 8
+    typst: (5 + 6) / 4 + 8
+  - title: fraction5
+    tex: \frac{1 + 4}{5 + 6 + 7}
+    typst: (1 + 4)/(5 + 6 + 7)
+  - title: fraction6
+    tex: \sin x = \frac{e^{i x} - e^{-i x}}{2 i}
+    typst: sin x = (e^(i x) - e^(-i x))/(2 i)
+  - title: fraction7
+    tex: \frac{1}{\frac{1}{2}}
+    typst: 1/(1/2)
+  - title: parenthesis1
+    tex: \text{diag}(\boldsymbol{k}_{A v}(\boldsymbol{\psi}^{n + 1}, \boldsymbol{m}))
+    typst: '"diag"(bold(k)_(A v)(bold(psi)^(n + 1), bold(m)))'

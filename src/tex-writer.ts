@@ -135,8 +135,14 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return new TexNode('text', node.content);
         case 'comment':
             return new TexNode('comment', node.content);
-        case 'group':
-            return new TexNode('ordgroup', '', node.args!.map(convert_typst_node_to_tex));
+        case 'group': {
+            const args = node.args!.map(convert_typst_node_to_tex);
+            if(node.content === 'parenthesis') {
+                args.unshift(new TexNode('element', '('));
+                args.push(new TexNode('element', ')'));
+            }
+            return new TexNode('ordgroup', '', args);
+        }
         case 'funcCall': {
             if (TYPST_UNARY_FUNCTIONS.includes(node.content)) {
                 // special hook for lr
@@ -219,6 +225,12 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 default:
                     throw new Error('[convert_typst_node_to_tex] Unimplemented control: ' + node.content);
             }
+        }
+        case 'fraction': {
+            const [numerator, denominator] = node.args!;
+            const num_tex = convert_typst_node_to_tex(numerator);
+            const den_tex = convert_typst_node_to_tex(denominator);
+            return new TexNode('binaryFunc', '\\frac', [num_tex, den_tex]);
         }
         default:
             throw new Error('[convert_typst_node_to_tex] Unimplemented type: ' + node.type);

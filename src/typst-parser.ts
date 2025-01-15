@@ -161,12 +161,150 @@ function find_closing_match(tokens: TypstToken[], start: number): number {
 }
 
 
+function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
+    const left_parenthesis = new TypstNode('atom', '(');
+    const right_parenthesis = new TypstNode('atom', ')');
+
+    assert(nodes[start].eq(left_parenthesis));
+
+    let count = 1;
+    let pos = start + 1;
+
+    while (count > 0) {
+        if (pos >= nodes.length) {
+            throw new Error('Unmatched brackets');
+        }
+        if (nodes[pos].eq(left_parenthesis)) {
+            count += 1;
+        } else if (nodes[pos].eq(right_parenthesis)) {
+            count -= 1;
+        }
+        pos += 1;
+    }
+
+    return pos - 1;
+}
+
 function primes(num: number): TypstNode[] {
     const res: TypstNode[] = [];
     for (let i = 0; i < num; i++) {
         res.push(new TypstNode('atom', "'"));
     }
     return res;
+}
+
+const DIV = new TypstNode('atom', '/');
+
+
+
+function next_non_whitespace(nodes: TypstNode[], start: number): TypstNode {
+    let pos = start;
+    while (pos < nodes.length && nodes[pos].type === 'whitespace') {
+        pos++;
+    }
+    return pos === nodes.length ? TYPST_EMPTY_NODE : nodes[pos];
+}
+
+function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
+    let after_operator = false;
+    const res: TypstNode[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+        const current = nodes[i];
+        if (current.type === 'whitespace') {
+            if(after_operator) {
+                continue;
+            }
+            if(next_non_whitespace(nodes, i + 1).eq(DIV)) {
+                continue;
+            }
+        }
+        if (current.eq(DIV)) {
+            after_operator = true;
+        } else {
+            after_operator = false;
+        }
+        res.push(current);
+    }
+    return res;
+}
+
+function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
+    nodes = trim_whitespace_around_operators(nodes);
+
+    const opening_bracket = new TypstNode('atom', '(');
+    const closing_bracket = new TypstNode('atom', ')');
+
+    const stack: TypstNode[] = [];
+
+    const args: TypstNode[] = [];
+    let pos = 0;
+    while (pos < nodes.length) {
+        const current = nodes[pos];
+        if(current.eq(opening_bracket)) {
+            const pos_closing = find_closing_parenthesis(nodes, pos);
+            const node_inside = process_operators(nodes.slice(pos + 1, pos_closing), true);
+            // if (node_inside.type === 'group') {
+                // node_inside.content = 'parenthesis';
+            // }
+            pos = pos_closing + 1;
+            if(stack.length > 0 && stack[stack.length - 1].eq(DIV)) {
+                const denominator = node_inside;
+                if(args.length === 0) {
+                    throw new TypstParserError("Unexpected '/' operator, no numerator before it");
+                }
+
+                const numerator = args.pop()!;
+                if(denominator.type === 'group' && denominator.content === 'parenthesis') {
+                    denominator.content = '';
+                }
+                if(numerator.type === 'group' && numerator.content === 'parenthesis') {
+                    numerator.content = '';
+                }
+
+                args.push(new TypstNode('fraction', '', [numerator, denominator]));
+                stack.pop(); // drop the '/' operator
+            } else {
+                args.push(node_inside);
+            }
+        } else if (current.eq(closing_bracket)) {
+            throw new TypstParserError("Unexpected ')'");
+        } else if(current.eq(DIV)) {
+            stack.push(current);
+            pos++;
+        } else {
+            if(stack.length > 0 && stack[stack.length-1].eq(DIV)) {
+                const denominator = current;
+                if(args.length === 0) {
+                    throw new TypstParserError("Unexpected '/' operator, no numerator before it");
+                }
+                const numerator = args.pop()!;
+
+                if(denominator.type === 'group' && denominator.content === 'parenthesis') {
+                    denominator.content = '';
+                }
+                if(numerator.type === 'group' && numerator.content === 'parenthesis') {
+                    numerator.content = '';
+                }
+
+                args.push(new TypstNode('fraction', '', [numerator, denominator]));
+                stack.pop(); // drop the '/' operator
+            } else {
+                args.push(current);
+            }
+            pos++;
+        }
+    }
+    if(parenthesis) {
+        return new TypstNode('group', 'parenthesis', args);
+    } else {
+        if(args.length === 0) {
+            return TYPST_EMPTY_NODE;
+        } else if(args.length === 1) {
+            return args[0];
+        } else {
+            return new TypstNode('group', '', args);
+        }
+    }
 }
 
 export class TypstParserError extends Error {
@@ -205,7 +343,7 @@ export class TypstParser {
         return tree;
     }
 
-    parseGroup(tokens: TypstToken[], start: number, end: number): TypstParseResult {
+    parseGroup(tokens: TypstToken[], start: number, end: number, parentheses = false): TypstParseResult {
         const results: TypstNode[] = [];
         let pos = start;
 
@@ -224,12 +362,16 @@ export class TypstParser {
         }
 
         let node: TypstNode;
-        if (results.length === 0) {
-            node = TYPST_EMPTY_NODE;
-        } else if (results.length === 1) {
-            node = results[0];
+        if(parentheses) {
+            node = process_operators(results, true);
         } else {
-            node = new TypstNode('group', '', results);
+            if (results.length === 0) {
+                node = TYPST_EMPTY_NODE;
+            } else if (results.length === 1) {
+                node = results[0];
+            } else {
+                node = process_operators(results);
+            }
         }
         return [node, end + 1];
     }
@@ -290,6 +432,10 @@ export class TypstParser {
     parseNextExprWithoutSupSub(tokens: TypstToken[], start: number): TypstParseResult {
         const firstToken = tokens[start];
         const node = firstToken.toNode();
+        if(firstToken.eq(LEFT_PARENTHESES)) {
+            const pos_closing = find_closing_match(tokens, start);
+            return this.parseGroup(tokens, start + 1, pos_closing, true);
+        }
         if(firstToken.type === TypstTokenType.ELEMENT && !isalpha(firstToken.value[0])) {
             return [node, start + 1];
         }
@@ -306,6 +452,7 @@ export class TypstParser {
                 return [func_call, newPos];
             }
         }
+
         return [node, start + 1];
     }
 
