@@ -104,14 +104,14 @@ function eat_command_name(latex: string, start: number): string {
 }
 
 
-export function find_closing_match(tokens: TexToken[], start: number, leftToken: TexToken, rightToken: TexToken): number {
+function find_closing_match(tokens: TexToken[], start: number, leftToken: TexToken, rightToken: TexToken): number {
     assert(tokens[start].eq(leftToken));
     let count = 1;
     let pos = start + 1;
 
     while (count > 0) {
         if (pos >= tokens.length) {
-            throw new Error('Unmatched brackets');
+            return -1;
         }
         if (tokens[pos].eq(leftToken)) {
             count += 1;
@@ -129,22 +129,7 @@ const LEFT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\left');
 const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
 
 function find_closing_right_command(tokens: TexToken[], start: number): number {
-    let count = 1;
-    let pos = start;
-
-    while (count > 0) {
-        if (pos >= tokens.length) {
-            return -1;
-        }
-        if (tokens[pos].eq(LEFT_COMMAND)) {
-            count += 1;
-        } else if (tokens[pos].eq(RIGHT_COMMAND)) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    return pos - 1;
+    return find_closing_match(tokens, start, LEFT_COMMAND, RIGHT_COMMAND);
 }
 
 
@@ -153,22 +138,7 @@ const END_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\end');
 
 
 function find_closing_end_command(tokens: TexToken[], start: number): number {
-    let count = 1;
-    let pos = start;
-
-    while (count > 0) {
-        if (pos >= tokens.length) {
-            return -1;
-        }
-        if (tokens[pos].eq(BEGIN_COMMAND)) {
-            count += 1;
-        } else if (tokens[pos].eq(END_COMMAND)) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    return pos - 1;
+    return find_closing_match(tokens, start, BEGIN_COMMAND, END_COMMAND);
 }
 
 function find_closing_curly_bracket_char(latex: string, start: number): number {
@@ -537,7 +507,7 @@ export class LatexParser {
         }
         pos++;
         const exprInsideStart = pos;
-        const idx = find_closing_right_command(tokens, pos);
+        const idx = find_closing_right_command(tokens, start);
         if (idx === -1) {
             throw new LatexParserError('No matching \\right');
         }
@@ -580,7 +550,7 @@ export class LatexParser {
         
         const exprInsideStart = pos;
 
-        const endIdx = find_closing_end_command(tokens, pos);
+        const endIdx = find_closing_end_command(tokens, start);
         if (endIdx === -1) {
             throw new LatexParserError('No matching \\end');
         }

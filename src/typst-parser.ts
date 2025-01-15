@@ -137,7 +137,7 @@ export function tokenize_typst(typst: string): TypstToken[] {
     return tokens;
 }
 
-export function find_closing_match(tokens: TypstToken[], start: number): number {
+function find_closing_match(tokens: TypstToken[], start: number): number {
     assert(tokens[start].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET]));
     let count = 1;
     let pos = start + 1;
