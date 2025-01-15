@@ -3,6 +3,8 @@ import { array_find } from "./generic";
 import { TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha, isdigit } from "./util";
 
+// TODO: In Typst, y' ' is not the same as y''.
+// The parser should be able to parse the former correctly.
 function eat_primes(tokens: TypstToken[], start: number): number {
     let pos = start;
     while (pos < tokens.length && tokens[pos].eq(new TypstToken(TypstTokenType.ELEMENT, "'"))) {
@@ -159,6 +161,14 @@ function find_closing_match(tokens: TypstToken[], start: number): number {
 }
 
 
+function primes(num: number): TypstNode[] {
+    const res: TypstNode[] = [];
+    for (let i = 0; i < num; i++) {
+        res.push(new TypstNode('atom', "'"));
+    }
+    return res;
+}
+
 export class TypstParserError extends Error {
     constructor(message: string) {
         super(message);
@@ -221,50 +231,30 @@ export class TypstParser {
         let [base, pos] = this.parseNextExprWithoutSupSub(tokens, start);
         let sub: TypstNode | null = null;
         let sup: TypstNode | null = null;
-        let num_prime = 0;
 
-        num_prime += eat_primes(tokens, pos);
-        pos += num_prime;
+        const num_base_prime = eat_primes(tokens, pos);
+        if (num_base_prime > 0) {
+            base = new TypstNode('group', '', [base].concat(primes(num_base_prime)));
+            pos += num_base_prime;
+        }
         if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
             [sub, pos] = this.parseSupOrSub(tokens, pos + 1);
-            num_prime += eat_primes(tokens, pos);
-            pos += num_prime;
             if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
-                [sup, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
-                if (eat_primes(tokens, pos) > 0) {
-                    throw new TypstParserError('Double superscript');
-                }
+                [sup, pos] = this.parseSupOrSub(tokens, pos + 1);
             }
         } else if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
             [sup, pos] = this.parseSupOrSub(tokens, pos + 1);
-            if (eat_primes(tokens, pos) > 0) {
-                throw new TypstParserError('Double superscript');
-            }
             if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
-                [sub, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
-                if (eat_primes(tokens, pos) > 0) {
-                    throw new TypstParserError('Double superscript');
-                }
+                [sub, pos] = this.parseSupOrSub(tokens, pos + 1);
             }
         }
 
-        if (sub !== null || sup !== null || num_prime > 0) {
+        if (sub !== null || sup !== null) {
             const res: TypstSupsubData = { base };
             if (sub) {
                 res.sub = sub;
             }
-            if (num_prime > 0) {
-                res.sup = new TypstNode('group', '',  []);
-                for (let i = 0; i < num_prime; i++) {
-                    res.sup.args!.push(new TypstNode('atom', "'"));
-                }
-                if (sup) {
-                    res.sup.args!.push(sup);
-                }
-                if (res.sup.args!.length === 1) {
-                    res.sup = res.sup.args![0];
-                }
-            } else if (sup) {
+            if (sup) {
                 res.sup = sup;
             }
             return [new TypstNode('supsub', '', [], res), pos];
@@ -274,24 +264,33 @@ export class TypstParser {
     }
 
     parseSupOrSub(tokens: TypstToken[], start: number): TypstParseResult {
+        let node: TypstNode;
+        let end: number;
         if(tokens[start].eq(LEFT_PARENTHESES)) {
-            const end = find_closing_match(tokens, start);
-            let node = new TypstNode('group', '', []);
+            const pos_closing = find_closing_match(tokens, start);
+            let group = new TypstNode('group', '', []);
             let pos = start + 1;
-            while(pos < end) {
+            while(pos < pos_closing) {
                 let [res, newPos] = this.parseNextExpr(tokens, pos);
                 pos = newPos;
-                node.args!.push(res);
+                group.args!.push(res);
             }
-            if (node.args!.length === 0) {
-                node = TYPST_EMPTY_NODE;
-            } else if (node.args!.length === 1) {
-                node = node.args![0];
+            if (group.args!.length === 0) {
+                group = TYPST_EMPTY_NODE;
+            } else if (group.args!.length === 1) {
+                group = group.args![0];
             }
-            return [node, end + 1];
+            node = group;
+            end = pos_closing + 1;
         } else {
-            return this.parseNextExprWithoutSupSub(tokens, start);
+            [node, end] = this.parseNextExprWithoutSupSub(tokens, start);
         }
+        const num_prime = eat_primes(tokens, end);
+        if (num_prime > 0) {
+            node = new TypstNode('group', '', [node].concat(primes(num_prime)));
+            end += num_prime;
+        }
+        return [node, end];
     }
 
     parseNextExprWithoutSupSub(tokens: TypstToken[], start: number): TypstParseResult {

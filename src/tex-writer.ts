@@ -42,6 +42,8 @@ export class TexWriter {
             // putting a punctuation
             no_need_space ||= /^[\.,;:!\?\(\)\]{}_^]$/.test(str);
             no_need_space ||= ['\\{', '\\}'].includes(str);
+            // putting a prime
+            no_need_space ||= str === "'";
             // putting a subscript or superscript
             no_need_space ||= this.buffer.endsWith('_') || this.buffer.endsWith('^');
             // buffer ends with a whitespace
