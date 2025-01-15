@@ -9,6 +9,13 @@ const TYPST_UNARY_FUNCTIONS: string[] = [
     'upright',
     'lr',
     'op',
+    'macron',
+    'dot',
+    'dot.double',
+    'hat',
+    'tilde',
+    'overline',
+    'underline',
 ];
 
 const TYPST_BINARY_FUNCTIONS: string[] = [

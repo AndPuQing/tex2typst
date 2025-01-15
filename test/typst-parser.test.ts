@@ -35,6 +35,15 @@ describe('typst-tokenizer', () => {
             new TypstToken(TypstTokenType.ELEMENT, ')'),
         ]);
     });
+
+    it('comment', function() {
+        const res = tokenize_typst('a // comment');
+        expect(res).toEqual([
+            new TypstToken(TypstTokenType.ELEMENT, 'a'),
+            new TypstToken(TypstTokenType.SPACE, ' '),
+            new TypstToken(TypstTokenType.COMMENT, ' comment'),
+        ]);
+    })
 });
 
 describe('typst-parser', () => {

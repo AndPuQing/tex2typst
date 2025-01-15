@@ -1081,14 +1081,17 @@ for(const [key, value] of map_from_official_docs) {
 
 
 const reverseSymbolMap = new Map<string, string>();
-for(const [key, value] of symbolMap) {
+for(const [key, value] of Array.from(symbolMap.entries()).reverse()) {
     reverseSymbolMap.set(value, key);
 }
 reverseSymbolMap.set('dif', 'mathrm{d}');
 
 // force override some one-to-multiple mappings
 const typst_to_tex_map = new Map<string, string>([
+    ['top', 'top'],
     ['frac', 'frac'],
+    ['tilde', 'tilde'],
+    ['hat', 'hat'],
     ['upright', 'mathrm'],
     ['bold', 'boldsymbol'],
 ]);

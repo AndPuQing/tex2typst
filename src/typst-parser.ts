@@ -66,17 +66,17 @@ export function tokenize_typst(typst: string): TypstToken[] {
             }
             case '/': {
                 if (pos < typst.length && typst[pos + 1] === '/') {
-                    token = new TypstToken(TypstTokenType.COMMENT, '//');
-                    pos += 2;
-                } else {
-                    let newPos = pos + 1;
+                    let newPos = pos + 2;
                     while (newPos < typst.length && typst[newPos] !== '\n') {
-                        newPos += 1;
+                        newPos++;
                     }
-                    token = new TypstToken(TypstTokenType.COMMENT, typst.slice(pos + 1, newPos));
+                    token = new TypstToken(TypstTokenType.COMMENT, typst.slice(pos + 2, newPos));
                     pos = newPos;
-                    break;
+                } else {
+                    token = new TypstToken(TypstTokenType.ELEMENT, '/');
+                    pos++;
                 }
+                break;
             }
             case '\\': {
                 if (pos + 1 >= typst.length) {
