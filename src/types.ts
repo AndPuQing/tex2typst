@@ -1,3 +1,5 @@
+import { array_includes } from "./generic";
+
 export enum TexTokenType {
     ELEMENT,
     COMMAND,
@@ -241,14 +243,7 @@ export class TypstToken {
     }
 
     isOneOf(tokens: TypstToken[]): boolean {
-        let found = false;
-        for (const token of tokens) {
-            if (this.eq(token)) {
-                found = true;
-                break;
-            }
-        }
-        return found;
+        return array_includes(tokens, this);
     }
 
     public toNode(): TypstNode {
