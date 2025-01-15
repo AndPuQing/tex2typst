@@ -301,3 +301,54 @@ cases:
   - title: parenthesis1
     tex: \text{diag}(\boldsymbol{k}_{A v}(\boldsymbol{\psi}^{n + 1}, \boldsymbol{m}))
     typst: '"diag"(bold(k)_(A v)(bold(psi)^(n + 1), bold(m)))'
+  - title: base of natural logarithm
+    tex: e \overset{\text{def}}{=} \lim_{n \rightarrow \infty} (1 + \frac{1}{n})^n
+    typst: e eq.def lim_(n arrow.r infinity) (1 + frac(1, n))^n
+  - title: Euler's product formula
+    tex: \prod_p \frac{1}{1 - p^{-s}} = \sum_{n = 1}^\infty \frac{1}{n^s}
+    typst: product_p frac(1, 1 - p^(-s)) = sum_(n = 1)^(infinity) frac(1, n^s)
+  - title: Fermat's little theorem
+    tex: a^{p - 1} \equiv 1 \mod p
+    typst: a^(p - 1) equiv 1 mod p
+  - title: Maxwell's equations
+    tex: |-
+      \begin{aligned}
+      \nabla \times \boldsymbol{H} &= \boldsymbol{J} + \frac{\partial \boldsymbol{D}}{\partial t} \\
+      \nabla \times \boldsymbol{E} &= - \frac{\partial \boldsymbol{B}}{\partial t} \\
+      \nabla \cdot \boldsymbol{B} &= 0 \\
+      \nabla \cdot \boldsymbol{D} &= \rho
+      \end{aligned}
+    typst: |-
+      nabla times bold(H) &= bold(J) + frac(diff bold(D), diff t) \
+      nabla times bold(E) &= - frac(diff bold(B), diff t) \
+      nabla dot.op bold(B) &= 0 \
+      nabla dot.op bold(D) &= rho
+  - title: Chen's inequality
+    tex: \yen 2000 > \$ 3000
+    typst: yen 2000 > \$ 3000
+  - title: harmonic series
+    tex: \sum_{k = 1}^n \frac{1}{k} = \ln n + \gamma + O(\frac{1}{n})
+    typst: sum_(k = 1)^n frac(1, k) = ln n + gamma + O(frac(1, n))
+  - title: Euler's complex exponential formula
+    tex: e^{i x} = \cos x + i \sin x
+    typst: e^(i x) = cos x + i sin x
+  - title: Gauss's divergence theorem
+    tex: \iiint_\Omega \operatorname{div}(\vec{F}) \mathrm{d} V = \oiint_{\partial \Omega} \vec{F} \cdot \mathrm{d} \vec{S}
+    typst: integral.triple_Omega op("div")(arrow(F)) dif V = integral.surf_(diff Omega) arrow(F) dot.op dif arrow(S)
+  - title: Stokes' theorem
+    tex: \iint_\Sigma \operatorname{curl}(\vec{F}) \cdot \mathrm{d} \vec{S} = \oint_{\partial \Sigma} \vec{F} \times \mathrm{d} \vec{l}
+    typst: integral.double_Sigma op("curl")(arrow(F)) dot.op dif arrow(S) = integral.cont_(diff Sigma) arrow(F) times dif arrow(l)
+  # - title: Black-Scholes formula for option pricing
+  #   tex: |-
+  #     \begin{aligned}
+  #     C &= N(d_1) S_t - N(d_2) K e^{-r t} \\
+  #     d_1 &= \frac{\ln \frac{S_t}{K} + (r + \frac{\sigma^2}{2}) t}{\sigma \sqrt{t}} \\
+  #     d_2 &= d_1 - \sigma \sqrt{t}
+  #     \end{aligned}
+  #   typst: |-
+  #     C &= N(d_1) S_t - N(d_2) K e^(-r t) \
+  #     d_1 &= frac(ln frac(S_t, K) + (r + frac(sigma^2, 2)) t, sigma sqrt(t)) \
+  #     d_2 &= d_1 - sigma sqrt(t)
+  - title: Cauchy's integral formula
+    tex: f(z_0) = \frac{1}{2 \pi \mathrm{i}} \oint_C \frac{f(z)}{z - z_0} \mathrm{d} z
+    typst: f(z_0) = frac(1, 2 pi upright(i)) integral.cont_C frac(f(z), z - z_0) dif z
