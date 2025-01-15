@@ -58,6 +58,24 @@ cases:
       bold(D)
       \
       bold(G)_z
+  - title: Underscore with no content
+    tex: 'P_{}^1'
+    typst: 'P_()^1'
+  - title: Simple overbrace
+    tex: '\overbrace{a}^b'
+    typst: 'overbrace(a, b)'
+  - title: underbrace
+    tex: '\underbrace{a}_b'
+    typst: underbrace(a, b)
+  - title: Test
+    tex: a^{b^{n + 1}}
+    typst: a^(b^(n + 1))
+  - title: Test2
+    tex: a + b^1 + \frac{2}{3} + \overbrace{123}^b
+    typst: a + b^1 + frac(2, 3) + overbrace(123, b)
+  - title: Symbols
+    tex: '\alpha \nabla \partial'
+    typst: alpha nabla diff
   - title: Aligned
     tex: |-
       \begin{aligned}

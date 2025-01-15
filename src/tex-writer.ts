@@ -21,6 +21,8 @@ const TYPST_UNARY_FUNCTIONS: string[] = [
 const TYPST_BINARY_FUNCTIONS: string[] = [
     'frac',
     'root',
+    'overbrace',
+    'underbrace',
 ];
 
 function apply_escape_if_needed(c: string) {
@@ -157,6 +159,14 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                     const [degree, radicand] = node.args!;
                     const data: TexSqrtData = convert_typst_node_to_tex(degree);
                     return new TexNode('unaryFunc', '\\sqrt', [convert_typst_node_to_tex(radicand)], data);
+                }
+                // special hook for overbrace and underbrace
+                if (node.content === 'overbrace' || node.content === 'underbrace') {
+                    const [body, label] = node.args!;
+                    const base = new TexNode('unaryFunc', '\\' + node.content, [convert_typst_node_to_tex(body)]);
+                    const script = convert_typst_node_to_tex(label);
+                    const data = node.content === 'overbrace' ? { base, sup: script } : { base, sub: script };
+                    return new TexNode('supsub', '', [], data);
                 }
                 const command = typst_token_to_tex(node.content);
                 return new TexNode('binaryFunc', command, node.args!.map(convert_typst_node_to_tex));

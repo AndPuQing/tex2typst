@@ -165,7 +165,7 @@ export class TexNode {
                 tokens = tokens.concat(base.serialize());
                 if (sub) {
                     tokens.push(new TexToken(TexTokenType.CONTROL, '_'));
-                    if (sub.type === 'ordgroup' || sub.type === 'supsub') {
+                    if (sub.type === 'ordgroup' || sub.type === 'supsub' || sub.type === 'empty') {
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
                         tokens = tokens.concat(sub.serialize());
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
@@ -175,7 +175,7 @@ export class TexNode {
                 }
                 if (sup) {
                     tokens.push(new TexToken(TexTokenType.CONTROL, '^'));
-                    if (sup.type === 'ordgroup' || sup.type === 'supsub') {
+                    if (sup.type === 'ordgroup' || sup.type === 'supsub' || sup.type === 'empty') {
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
                         tokens = tokens.concat(sup.serialize());
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
