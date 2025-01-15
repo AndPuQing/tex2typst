@@ -312,6 +312,10 @@ export class TypstParser {
     parseArguments(tokens: TypstToken[], start: number): [TypstNode[], number] {
         const end = find_closing_match(tokens, start);
         
+        return this.parseCommaSeparatedArguments(tokens, start, end);
+    }
+
+    parseCommaSeparatedArguments(tokens: TypstToken[], start: number, end: number): [TypstNode[], number] {
         const args: TypstNode[] = [];
         let pos = start + 1;
         while (pos < end) {
