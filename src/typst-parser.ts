@@ -240,40 +240,26 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
     let pos = 0;
     while (pos < nodes.length) {
         const current = nodes[pos];
-        if(current.eq(opening_bracket)) {
-            const pos_closing = find_closing_parenthesis(nodes, pos);
-            const node_inside = process_operators(nodes.slice(pos + 1, pos_closing), true);
-            // if (node_inside.type === 'group') {
-                // node_inside.content = 'parenthesis';
-            // }
-            pos = pos_closing + 1;
-            if(stack.length > 0 && stack[stack.length - 1].eq(DIV)) {
-                const denominator = node_inside;
-                if(args.length === 0) {
-                    throw new TypstParserError("Unexpected '/' operator, no numerator before it");
-                }
-
-                const numerator = args.pop()!;
-                if(denominator.type === 'group' && denominator.content === 'parenthesis') {
-                    denominator.content = '';
-                }
-                if(numerator.type === 'group' && numerator.content === 'parenthesis') {
-                    numerator.content = '';
-                }
-
-                args.push(new TypstNode('fraction', '', [numerator, denominator]));
-                stack.pop(); // drop the '/' operator
-            } else {
-                args.push(node_inside);
-            }
-        } else if (current.eq(closing_bracket)) {
+        if (current.eq(closing_bracket)) {
             throw new TypstParserError("Unexpected ')'");
         } else if(current.eq(DIV)) {
             stack.push(current);
             pos++;
         } else {
+            let current_tree: TypstNode;
+            if(current.eq(opening_bracket)) {
+                // the expression is a group wrapped in parenthesis
+                const pos_closing = find_closing_parenthesis(nodes, pos);
+                current_tree = process_operators(nodes.slice(pos + 1, pos_closing), true);
+                pos = pos_closing + 1;
+            } else {
+                // the expression is just a single item
+                current_tree = current;
+                pos++;
+            }
+
             if(stack.length > 0 && stack[stack.length-1].eq(DIV)) {
-                const denominator = current;
+                const denominator = current_tree;
                 if(args.length === 0) {
                     throw new TypstParserError("Unexpected '/' operator, no numerator before it");
                 }
@@ -289,9 +275,8 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                 args.push(new TypstNode('fraction', '', [numerator, denominator]));
                 stack.pop(); // drop the '/' operator
             } else {
-                args.push(current);
+                args.push(current_tree);
             }
-            pos++;
         }
     }
     if(parenthesis) {
