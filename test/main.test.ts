@@ -21,17 +21,17 @@ type TestCaseFile = {
   cases: TestCase[];
 };
 
-const caseFiles: TestCaseFile[] = fs
-  .readdirSync(__dirname)
-  .filter((file) => file.endsWith('.yml'))
-  .map((file) => {
-    const content = fs.readFileSync(path.join(__dirname, file), { encoding: 'utf-8' });
-    return yaml.load(content) as TestCaseFile;
-  });
+function loadTestCases(filename: string): TestCaseFile {
+  const content = fs.readFileSync(path.join(__dirname, filename), { encoding: 'utf-8' });
+  return yaml.load(content) as TestCaseFile;
+}
 
-caseFiles.forEach(({ title, cases }) => {
-  describe(title, () => {
-    cases.forEach((c: TestCase) => {
+const caseFiles = ["math.yml", "symbol.yml"];
+
+caseFiles.forEach((ymlFilename) => {
+  const suite = loadTestCases(ymlFilename);
+  describe(ymlFilename, () => {
+    suite.cases.forEach((c: TestCase) => {
       test(c.title, function() {
         const {tex, typst} = c;
         let tokens: null | TexToken[] = null;

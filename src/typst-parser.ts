@@ -1,4 +1,5 @@
 
+import { array_find } from "./generic";
 import { TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha, isdigit } from "./util";
 
@@ -177,6 +178,7 @@ const RIGHT_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ']');
 const LEFT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '{');
 const RIGHT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '}');
 const COMMA = new TypstToken(TypstTokenType.ELEMENT, ',');
+const SEMICOLON = new TypstToken(TypstTokenType.ELEMENT, ';');
 const SINGLE_SPACE = new TypstToken(TypstTokenType.SPACE, ' ');
 
 export class TypstParser {
@@ -300,6 +302,11 @@ export class TypstParser {
         }
         if ([TypstTokenType.ELEMENT, TypstTokenType.SYMBOL].includes(firstToken.type)) {
             if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
+                if(firstToken.value === 'mat') {
+                    const [matrix, newPos] = this.parseGroupsOfArguments(tokens, start + 1);
+                    const mat = new TypstNode('matrix', '', [], matrix);
+                    return [mat, newPos];
+                }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
                 const func_call = new TypstNode('funcCall', firstToken.value);
                 func_call.args = args;
@@ -309,15 +316,38 @@ export class TypstParser {
         return [node, start + 1];
     }
 
+    // start: the position of the left parentheses
     parseArguments(tokens: TypstToken[], start: number): [TypstNode[], number] {
         const end = find_closing_match(tokens, start);
         
-        return this.parseCommaSeparatedArguments(tokens, start, end);
+        return [this.parseCommaSeparatedArguments(tokens, start + 1, end), end + 1];
     }
 
-    parseCommaSeparatedArguments(tokens: TypstToken[], start: number, end: number): [TypstNode[], number] {
-        const args: TypstNode[] = [];
+    // start: the position of the left parentheses
+    parseGroupsOfArguments(tokens: TypstToken[], start: number): [TypstNode[][], number] {
+        const end = find_closing_match(tokens, start);
+
+        const matrix: TypstNode[][] = [];
         let pos = start + 1;
+        while (pos < end) {
+            while(pos < end) {
+                let next_stop = array_find(tokens, SEMICOLON, pos);
+                if (next_stop === -1) {
+                    next_stop = end;
+                }
+                const row = this.parseCommaSeparatedArguments(tokens, pos, next_stop);
+                matrix.push(row);
+                pos = next_stop + 1;
+            }
+        }
+        
+        return [matrix, end + 1];
+    }
+
+    // start: the position of the first token of arguments
+    parseCommaSeparatedArguments(tokens: TypstToken[], start: number, end: number): TypstNode[] {
+        const args: TypstNode[] = [];
+        let pos = start;
         while (pos < end) {
             let arg = new TypstNode('group', '', []);
 
@@ -341,7 +371,7 @@ export class TypstParser {
             }
             args.push(arg);
         }
-        return [args, end + 1];
+        return args;
     }
 }
 

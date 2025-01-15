@@ -67,3 +67,14 @@ cases:
     typst: |-
       a &= b \
       c &= d
+  - title: Matrix wrapped with delimiters 
+    tex: |-
+      \left(\begin{matrix}
+      a & b \\
+      c & d \\
+      e & f
+      \end{matrix} \right)
+    typst: |-
+      mat(a, b;
+      c, d;
+      e, f)

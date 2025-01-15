@@ -189,6 +189,16 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             });
             return res;
         }
+        case 'matrix': {
+            const typst_data = node.data as TypstNode[][];
+            const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
+            const matrix = new TexNode('beginend', 'matrix', [], tex_data);
+            return new TexNode('ordgroup', '', [
+                new TexNode('element', '\\left('),
+                matrix,
+                new TexNode('element', '\\right)')
+            ]);
+        }
         case 'control': {
             switch (node.content) {
                 case '\\':
