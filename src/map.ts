@@ -183,7 +183,7 @@ const symbolMap = new Map<string, string>([
     ['langle', 'angle.l'], 
     ['lbrace', 'brace.l'], 
     ['lbrack', 'bracket.l'], 
-    ['ldots', 'dots.l'], 
+    ['ldots', 'dots.h'], 
     ['le', 'lt.eq'], 
     ['leadsto', 'arrow.squiggly'], 
     ['leftarrow', 'arrow.l'], 
