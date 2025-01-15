@@ -478,6 +478,8 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['stareq', 'eq.star'],
     ['circledequal', 'eq.circle'],
     ['eqcolon', 'eq.colon'],
+    // \usepackage{mathtools} defines \eqdef
+    // https://tex.stackexchange.com/questions/28836/typesetting-the-define-equals-symbol
     ['eqdef', 'eq.def'],
     ['triangleq', 'eq.delta'],
     ['veeeq', 'eq.equi'],

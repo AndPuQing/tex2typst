@@ -43,7 +43,7 @@ export class TexWriter {
             no_need_space = true;
         } else {
             // putting the first token in clause
-            no_need_space ||= /[{\(\[\|]$/.test(this.buffer) && /^[\w\\\-\+]/.test(str);
+            no_need_space ||= /[{\(\[\|]$/.test(this.buffer);
             // opening a optional [] parameter for a command
             no_need_space ||= /\\\w+$/.test(this.buffer) && str === '[';
             // putting a punctuation
@@ -102,6 +102,13 @@ export class TexWriter {
 }
 
 export function convert_typst_node_to_tex(node: TypstNode): TexNode {
+    // special hook for eq.def
+    if(node.eq(new TypstNode('symbol', 'eq.def'))) {
+        return new TexNode('binaryFunc', '\\overset', [
+            new TexNode('text', 'def'),
+            new TexNode('element', '=')
+        ]);
+    }
     switch (node.type) {
         case 'empty':
             return new TexNode('empty', '');
@@ -204,6 +211,8 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
 export function typst_token_to_tex(token: string): string {
     if (/^[a-zA-Z0-9]$/.test(token)) {
         return token;
+    } else if (token === 'thin') {
+        return '\\,';
     } else if (reverseSymbolMap.has(token)) {
         return '\\' + reverseSymbolMap.get(token)!;
     }
