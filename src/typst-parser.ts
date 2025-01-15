@@ -201,10 +201,15 @@ export class TypstParser {
     }
 
     parse(tokens: TypstToken[]): TypstNode {
-        const results: TypstNode[] = [];
-        let pos = 0;
+        const [tree, _] = this.parseGroup(tokens, 0, tokens.length);
+        return tree;
+    }
 
-        while (pos < tokens.length) {
+    parseGroup(tokens: TypstToken[], start: number, end: number): TypstParseResult {
+        const results: TypstNode[] = [];
+        let pos = start;
+
+        while (pos < end) {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
             if (res.type === 'whitespace') {
@@ -218,13 +223,15 @@ export class TypstParser {
             results.push(res);
         }
 
+        let node: TypstNode;
         if (results.length === 0) {
-            return TYPST_EMPTY_NODE;
+            node = TYPST_EMPTY_NODE;
         } else if (results.length === 1) {
-            return results[0];
+            node = results[0];
         } else {
-            return new TypstNode('group', '', results);
+            node = new TypstNode('group', '', results);
         }
+        return [node, end + 1];
     }
 
     parseNextExpr(tokens: TypstToken[], start: number): TypstParseResult {
@@ -268,20 +275,7 @@ export class TypstParser {
         let end: number;
         if(tokens[start].eq(LEFT_PARENTHESES)) {
             const pos_closing = find_closing_match(tokens, start);
-            let group = new TypstNode('group', '', []);
-            let pos = start + 1;
-            while(pos < pos_closing) {
-                let [res, newPos] = this.parseNextExpr(tokens, pos);
-                pos = newPos;
-                group.args!.push(res);
-            }
-            if (group.args!.length === 0) {
-                group = TYPST_EMPTY_NODE;
-            } else if (group.args!.length === 1) {
-                group = group.args![0];
-            }
-            node = group;
-            end = pos_closing + 1;
+            [node, end] = this.parseGroup(tokens, start + 1, pos_closing);
         } else {
             [node, end] = this.parseNextExprWithoutSupSub(tokens, start);
         }
