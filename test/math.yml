@@ -318,3 +318,6 @@ cases:
   - title: leading sign
     tex: -a
     typst: -a
+  - title: colon
+    tex: a\colon b
+    typst: "a : b"
