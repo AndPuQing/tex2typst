@@ -155,3 +155,16 @@ cases:
   - title: overset, special case 1
     tex: \overset{\text{def}}{=}
     typst: eq.def
+  - title: newline
+    tex: |-
+      a + b \\
+      c + d
+    typst: |-
+      a + b \
+      c + d
+  - title: leading sign
+    tex: -a
+    typst: -a
+  - title: colon
+    tex: a \colon b
+    typst: "a : b"

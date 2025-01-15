@@ -115,6 +115,10 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         case 'whitespace':
             return new TexNode('whitespace', node.content);
         case 'atom':
+            // special hook for colon
+            if (node.content === ':') {
+                return new TexNode('symbol', '\\colon');
+            }
             return new TexNode('element', node.content);
         case 'symbol':
             // special hook for comma
