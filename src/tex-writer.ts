@@ -1,3 +1,4 @@
+import { array_includes, array_split } from "./generic";
 import { reverseSymbolMap } from "./map";
 import { TexNode, TexToken, TexSqrtData, TexSupsubData, TexTokenType, TypstNode, TypstSupsubData } from "./types";
 
@@ -22,29 +23,6 @@ function apply_escape_if_needed(c: string) {
     return c;
 }
 
-function TexNode_array_includes(arr: TexNode[], item: TexNode): boolean {
-    for (const i of arr) {
-        if (i.eq_shallow(item)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function TexNode_array_split(arr: TexNode[], sep: TexNode): TexNode[][] {
-    const res: TexNode[][] = [];
-    let current_slice: TexNode[] = [];
-    for (const i of arr) {
-        if (i.eq_shallow(sep)) {
-            res.push(current_slice);
-            current_slice = [];
-        } else {
-            current_slice.push(i);
-        }
-    }
-    res.push(current_slice);
-    return res;
-}
 
 export class TexWriter {
     protected buffer: string = "";
@@ -88,12 +66,12 @@ export class TexWriter {
         const alignment_char = new TexNode('control', '&');
         const newline_char = new TexNode('control', '\\\\');
 
-        if (node.type === 'ordgroup' && TexNode_array_includes(node.args!, alignment_char)) {
+        if (node.type === 'ordgroup' && array_includes(node.args!, alignment_char)) {
             // wrap the whole math formula with \begin{aligned} and \end{aligned}
-            const rows = TexNode_array_split(node.args!, newline_char);
+            const rows = array_split(node.args!, newline_char);
             const data: TexNode[][] = [];
             for(const row of rows) {
-                const cells = TexNode_array_split(row, alignment_char);
+                const cells = array_split(row, alignment_char);
                 data.push(cells.map(cell => new TexNode('ordgroup', '', cell)));
             }
             node = new TexNode('beginend', 'aligned', [], data);

@@ -26,7 +26,7 @@ function convert_overset(node: TexNode): TypstNode {
     const [sup, base] = node.args!;
 
     const is_def = (n: TexNode): boolean => {
-        if (n.eq_shallow(new TexNode('text', 'def'))) {
+        if (n.eq(new TexNode('text', 'def'))) {
             return true;
         }
         // \overset{def}{=} is also considered as eq.def
@@ -35,13 +35,13 @@ function convert_overset(node: TexNode): TypstNode {
             const d = new TexNode('element', 'd');
             const e = new TexNode('element', 'e');
             const f = new TexNode('element', 'f');
-            if (a1.eq_shallow(d) && a2.eq_shallow(e) && a3.eq_shallow(f)) {
+            if (a1.eq(d) && a2.eq(e) && a3.eq(f)) {
                 return true;
             }
         }
         return false;
     };
-    const is_eq = (n: TexNode): boolean => n.eq_shallow(new TexNode('element', '='));
+    const is_eq = (n: TexNode): boolean => n.eq(new TexNode('element', '='));
     if (is_def(sup) && is_eq(base)) {
         return new TypstNode('symbol', 'eq.def');
     }

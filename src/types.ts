@@ -82,7 +82,8 @@ export class TexNode {
         this.data = data;
     }
 
-    public eq_shallow(other: TexNode): boolean {
+    // Note that this is only shallow equality.
+    public eq(other: TexNode): boolean {
         return this.type === other.type && this.content === other.content;
     }
 
@@ -327,7 +328,8 @@ export class TypstNode {
         this.options = options;
     }
 
-    public eq_shallow(other: TypstNode): boolean {
+    // Note that this is only shallow equality.
+    public eq(other: TypstNode): boolean {
         return this.type === other.type && this.content === other.content;
     }
 }
