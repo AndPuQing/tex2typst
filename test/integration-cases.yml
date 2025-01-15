@@ -58,6 +58,97 @@ cases:
       bold(D)
       \
       bold(G)_z
+  - title: Complex equations with nested over/under braces
+    tex: |-
+      \begin{aligned}
+      \overbrace{
+          [
+              \frac{1}{\Delta t}
+              \frac{\partial \boldsymbol{\theta}^{n + 1}}{\partial \boldsymbol{\psi}^{n + 1}}
+              - \boldsymbol{D}
+              \text{diag}(\boldsymbol{G} \boldsymbol{\psi}^{n + 1})
+              \frac{\partial \boldsymbol{k}_{A v}}{\partial \boldsymbol{\psi}^{n + 1}}
+              - \boldsymbol{D}
+              \text{diag}(\boldsymbol{k}_{A v}(\boldsymbol{\psi}^{n + 1}, \boldsymbol{m}))
+              \boldsymbol{G}
+              - \boldsymbol{G}_z
+              \frac{\partial \boldsymbol{k}_{A v}}{\partial \boldsymbol{\psi}^{n + 1}}
+          ]
+      }^{\boldsymbol{A}_0(\boldsymbol{\psi}^{n + 1})}
+      \frac{\partial \boldsymbol{\psi}^{n + 1}}{\partial \boldsymbol{m}}
+      \\
+      +
+      \underbrace{
+          [
+              -\frac{1}{\Delta t}
+              \frac{\partial \boldsymbol{\theta}^n}{\partial \boldsymbol{\psi}^n}
+          ]
+      }_{\boldsymbol{A}_{-1}(\boldsymbol{\psi}^n)}
+      \frac{\partial \boldsymbol{\psi}^n}{\partial \boldsymbol{m}}
+      =
+      \underbrace{
+          [
+              -\boldsymbol{D}
+              \text{diag}(\boldsymbol{G} \boldsymbol{\psi}^{n + 1})
+              \frac{\partial \boldsymbol{k}_{A v}}{\partial \boldsymbol{m}}
+              - \boldsymbol{G}_z
+              \frac{\partial \boldsymbol{k}_{A v}}{\partial \boldsymbol{m}}
+          ]
+      }_{\boldsymbol{B}(\psi^{n + 1})} &
+      \end{aligned}
+    typst: |-
+      overbrace(
+          [
+              frac(1, Delta t)
+              frac(diff bold(theta)^(n + 1), diff bold(psi)^(n + 1))
+              - bold(D)
+              "diag"(bold(G) bold(psi)^(n + 1))
+              frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
+              - bold(D)
+              "diag"(bold(k)_(A v)(bold(psi)^(n + 1) comma bold(m)))
+              bold(G)
+              - bold(G)_z
+              frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
+          ]
+      , bold(A)_0 (bold(psi)^(n + 1)))
+      frac(diff bold(psi)^(n + 1), diff bold(m))
+      \
+      +
+      underbrace(
+          [
+              -frac(1, Delta t)
+              frac(diff bold(theta)^n, diff bold(psi)^n)
+          ]
+      , bold(A)_(-1)(bold(psi)^n))
+      frac(diff bold(psi)^n, diff bold(m))
+      =
+      underbrace(
+          [
+              -bold(D)
+              "diag"(bold(G) bold(psi)^(n + 1))
+              frac(diff bold(k)_(A v), diff bold(m))
+              - bold(G)_z
+              frac(diff bold(k)_(A v), diff bold(m))
+          ]
+      , bold(B)(psi^(n + 1))) &
+  # - title: leading underscore
+  #   tex: _2
+  #   typst: '""_2'
+  # - title: leading power
+  #   tex: '^{\text{st}}'
+  #   typst: '""^"st"'
+  - title: greater than
+    tex: 'a \ge b'
+    typst: a gt.eq b
+  - title: ddot
+    tex: 'q, \dot{q}, \ddot{q}'
+    typst: q, dot(q), dot.double(q)
+  - title: brackets
+    tex: '\frac{1}{\tau(X_2)}'
+    typst: 'frac(1, tau(X_2))'
+  - title: bar and nested bb
+    tex: '\mathbb{\bar{R}}'
+    typst: 'bb(macron(R))'
   - title: Underscore with no content
     tex: 'P_{}^1'
     typst: 'P_()^1'

@@ -16,6 +16,9 @@ const TYPST_UNARY_FUNCTIONS: string[] = [
     'tilde',
     'overline',
     'underline',
+    'bb',
+    'cal',
+    'frak',
 ];
 
 const TYPST_BINARY_FUNCTIONS: string[] = [
