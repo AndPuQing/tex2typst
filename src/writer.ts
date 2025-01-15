@@ -540,6 +540,8 @@ function convertToken(token: string): string {
     } else if (token === '\\|') {
         // \| in LaTeX is double vertical bar looks like ||
         return 'parallel';
+    } else if (token === '\\colon') {
+        return ':';
     } else if (token === '\\\\') {
         return '\\';
     } else if (['\\$', '\\#', '\\&', '\\_'].includes(token)) {

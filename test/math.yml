@@ -325,3 +325,6 @@ cases:
     typst: |-
       a + b \
       c + d
+  - title: colon
+    tex: a\colon b
+    typst: "a : b"
