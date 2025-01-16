@@ -240,7 +240,7 @@ export function tokenize(latex: string): TexToken[] {
                     token = new TexToken(TexTokenType.ELEMENT, latex.slice(pos, newPos));
                 } else if (isalpha(firstChar)) {
                     token = new TexToken(TexTokenType.ELEMENT, firstChar);
-                } else if ('+-*/=\'<>!.,;?()[]|'.includes(firstChar)) {
+                } else if ('+-*/=\'<>!.,;:?()[]|'.includes(firstChar)) {
                     token = new TexToken(TexTokenType.ELEMENT, firstChar)
                 } else {
                     token = new TexToken(TexTokenType.UNKNOWN, firstChar);
