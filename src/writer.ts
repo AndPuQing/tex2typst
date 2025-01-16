@@ -428,6 +428,15 @@ export function convertTree(node: TexNode): TypstNode {
             ].includes(left.content + right.content)) {
                 return group;
             }
+            // "\left\{ A \right." -> "{A"
+            // "\left. A \right\}" -> "lr( A} )"
+            if(right.content === '.') {
+                group.args!.pop();
+                return group;
+            } else if(left.content === '.') {
+                group.args!.shift();
+                return new TypstNode( 'funcCall', 'lr', [group]); 
+            }
             return new TypstNode(
                 'funcCall',
                 'lr',
