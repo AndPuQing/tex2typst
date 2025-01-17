@@ -420,6 +420,9 @@ export class LatexParser {
                 switch (controlChar) {
                     case '{':
                         const posClosingBracket = find_closing_match(tokens, start, LEFT_CURLY_BRACKET, RIGHT_CURLY_BRACKET);
+                        if(posClosingBracket === -1) {
+                            throw new LatexParserError("Unmatched '{'");
+                        }
                         const exprInside = tokens.slice(start + 1, posClosingBracket);
                         return [this.parse(exprInside), posClosingBracket + 1];
                     case '}':
@@ -464,6 +467,9 @@ export class LatexParser {
                 if (command === '\\sqrt' && pos < tokens.length && tokens[pos].eq(LEFT_SQUARE_BRACKET)) {
                     const posLeftSquareBracket = pos;
                     const posRightSquareBracket = find_closing_match(tokens, pos, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET);
+                    if (posRightSquareBracket === -1) {
+                        throw new LatexParserError('No matching right square bracket for [');
+                    }
                     const exprInside = tokens.slice(posLeftSquareBracket + 1, posRightSquareBracket);
                     const exponent = this.parse(exprInside);
                     const [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, posRightSquareBracket + 1);
