@@ -464,6 +464,11 @@ export class LatexParser {
                 }
                 return [new TexNode('symbol', command), pos];
             case 1: {
+                // TODO: JavaScript gives undefined instead of throwing an error when accessing an index out of bounds,
+                // so index checking like this should be everywhere. This is rough.
+                if(pos >= tokens.length) {
+                    throw new LatexParserError('Expecting argument for ' + command);
+                }
                 if (command === '\\sqrt' && pos < tokens.length && tokens[pos].eq(LEFT_SQUARE_BRACKET)) {
                     const posLeftSquareBracket = pos;
                     const posRightSquareBracket = find_closing_match(tokens, pos, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET);
