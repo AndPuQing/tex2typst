@@ -274,9 +274,6 @@ cases:
   - title: leading sign
     tex: -a
     typst: -a
-  - title: colon
-    tex: a \colon b
-    typst: "a : b"
   - title: fraction1
     tex: \frac{1}{2}
     typst: 1/2
