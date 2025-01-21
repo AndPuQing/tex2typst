@@ -122,11 +122,17 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         case 'atom':
             return new TexNode('element', node.content);
         case 'symbol':
-            // special hook for comma
-            if (node.content === 'comma') {
-                return new TexNode('element', ',');
+            switch(node.content) {
+                // special hook for comma
+                case 'comma':
+                    return new TexNode('element', ',');
+                // special hook for hyph and hyph.minus
+                case 'hyph':
+                case 'hyph.minus':
+                    return new TexNode('text', '-');
+                default:
+                    return new TexNode('symbol', typst_token_to_tex(node.content));
             }
-            return new TexNode('symbol', typst_token_to_tex(node.content));
         case 'text':
             return new TexNode('text', node.content);
         case 'comment':

@@ -408,7 +408,7 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['mathquestion', 'quest'],
     ['Question', 'quest.double'],
     ['mathoctothorpe', 'hash'],
-    ['mathhyphen', 'hyph'],
+    // ['mathhyphen', 'hyph'],
     ['mathpercent', 'percent'],
     ['mathparagraph', 'pilcrow'],
     ['mathsection', 'section'],
@@ -1095,6 +1095,8 @@ const typst_to_tex_map = new Map<string, string>([
     ['hat', 'hat'],
     ['upright', 'mathrm'],
     ['bold', 'boldsymbol'],
+
+    ['hyph.minus', '\\text{-}'],
 ]);
 
 for(const [key, value] of typst_to_tex_map) {
