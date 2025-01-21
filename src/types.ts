@@ -302,6 +302,7 @@ export type TypstArrayData = TypstNode[][];
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
             | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'unknown';
 
+export type TypstNamedParams = { [key: string]: string };
 
 export class TypstNode {
     type: TypstNodeType;
@@ -309,7 +310,7 @@ export class TypstNode {
     args?: TypstNode[];
     data?: TypstSupsubData | TypstArrayData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
-    options?: { [key: string]: string };
+    options?: TypstNamedParams;
 
     constructor(type: TypstNodeType, content: string, args?: TypstNode[],
             data?: TypstSupsubData | TypstArrayData) {

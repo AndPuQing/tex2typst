@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha, isdigit } from "./util";
 
 // TODO: In Typst, y' ' is not the same as y''.
@@ -427,8 +427,9 @@ export class TypstParser {
         if ([TypstTokenType.ELEMENT, TypstTokenType.SYMBOL].includes(firstToken.type)) {
             if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
                 if(firstToken.value === 'mat') {
-                    const [matrix, newPos] = this.parseGroupsOfArguments(tokens, start + 1);
+                    const [matrix, named_params, newPos] = this.parseGroupsOfArguments(tokens, start + 1);
                     const mat = new TypstNode('matrix', '', [], matrix);
+                    mat.setOptions(named_params);
                     return [mat, newPos];
                 }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
@@ -449,10 +450,12 @@ export class TypstParser {
     }
 
     // start: the position of the left parentheses
-    parseGroupsOfArguments(tokens: TypstToken[], start: number): [TypstNode[][], number] {
+    parseGroupsOfArguments(tokens: TypstToken[], start: number): [TypstNode[][], TypstNamedParams, number] {
         const end = find_closing_match(tokens, start);
 
         const matrix: TypstNode[][] = [];
+        let named_params: TypstNamedParams = {};
+
         let pos = start + 1;
         while (pos < end) {
             while(pos < end) {
@@ -460,13 +463,60 @@ export class TypstParser {
                 if (next_stop === -1) {
                     next_stop = end;
                 }
-                const row = this.parseCommaSeparatedArguments(tokens, pos, next_stop);
+
+                let row = this.parseCommaSeparatedArguments(tokens, pos, next_stop);
+                let np: TypstNamedParams = {};
+
+                function extract_named_params(arr: TypstNode[]): [TypstNode[], TypstNamedParams] {
+                    const COLON = new TypstNode('atom', ':');
+                    const np: TypstNamedParams = {};
+
+                    const to_delete: number[] = [];
+                    for(let i = 0; i < arr.length; i++) {
+                        if(arr[i].type !== 'group') {
+                            continue;
+                        }
+
+                        const g = arr[i];
+                        const pos_colon = array_find(g.args!, COLON);
+                        if(pos_colon === -1 || pos_colon === 0) {
+                            continue;
+                        }
+                        to_delete.push(i);
+                        const param_name = g.args![pos_colon - 1];
+                        if(param_name.eq(new TypstNode('symbol', 'delim'))) {
+                            if(g.args![pos_colon + 1].type === 'text') {
+                                np['delim'] = g.args![pos_colon + 1].content;
+                                if(g.args!.length !== 3) {
+                                    throw new TypstParserError('Invalid number of arguments for delim');
+                                }
+                            } else if(g.args![pos_colon + 1].eq(new TypstNode('atom', '#'))) {
+                                // TODO: should parse #none properly
+                                if(g.args!.length !== 4 || !g.args![pos_colon + 2].eq(new TypstNode('symbol', 'none'))) { 
+                                    throw new TypstParserError('Invalid number of arguments for delim');
+                                }
+                                np['delim'] = "#none";
+                            } else {
+                                throw new TypstParserError('Not implemented for other types of delim');
+                            }
+                        } else {
+                            throw new TypstParserError('Not implemented for other named parameters');
+                        }
+                    }
+                    for(let i = to_delete.length - 1; i >= 0; i--) {
+                        arr.splice(to_delete[i], 1);
+                    }
+                    return [arr, np];
+                }
+
+                [row, np] = extract_named_params(row);
                 matrix.push(row);
+                Object.assign(named_params, np);
                 pos = next_stop + 1;
             }
         }
         
-        return [matrix, end + 1];
+        return [matrix, named_params, end + 1];
     }
 
     // start: the position of the first token of arguments

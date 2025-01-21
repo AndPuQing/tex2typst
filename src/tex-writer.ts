@@ -206,10 +206,48 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             const typst_data = node.data as TypstNode[][];
             const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
             const matrix = new TexNode('beginend', 'matrix', [], tex_data);
+            let left_delim = "\\left(";
+            let right_delim = "\\right)";
+            if (node.options) {
+                if('delim' in node.options) {
+                    switch (node.options.delim) {
+                        case '#none':
+                            return matrix;
+                        case '[':
+                            left_delim = "\\left[";
+                            right_delim = "\\right]";
+                            break;
+                        case ']':
+                            left_delim = "\\left]";
+                            right_delim = "\\right[";
+                            break;
+                        case '{':
+                            left_delim = "\\left\\{";
+                            right_delim = "\\right\\}";
+                            break;
+                        case '}':
+                            left_delim = "\\left\\}";
+                            right_delim = "\\right\\{";
+                            break;
+                        case '|':
+                            left_delim = "\\left|";
+                            right_delim = "\\right|";
+                            break;
+                        case ')':
+                            left_delim = "\\left)";
+                            right_delim = "\\right(";
+                        case '(':
+                        default:
+                            left_delim = "\\left(";
+                            right_delim = "\\right)";
+                            break;
+                    }
+                }
+            }
             return new TexNode('ordgroup', '', [
-                new TexNode('element', '\\left('),
+                new TexNode('element', left_delim),
                 matrix,
-                new TexNode('element', '\\right)')
+                new TexNode('element', right_delim)
             ]);
         }
         case 'control': {

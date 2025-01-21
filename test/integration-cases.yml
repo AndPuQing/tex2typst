@@ -196,6 +196,28 @@ cases:
       mat(a, b;
       c, d;
       e, f)
+  - title: Matrix wrapped with custom delimiters 
+    tex: |-
+      \left[\begin{matrix}
+      a & b \\
+      c & d \\
+      e & f
+      \end{matrix} \right]
+    typst: |-
+      mat(delim: "[", a, b;
+      c, d;
+      e, f)
+  - title: Matrix wrapped with none delimiters 
+    tex: |-
+      \begin{matrix}
+      a & b \\
+      c & d \\
+      e & f
+      \end{matrix}
+    typst: |-
+      mat(delim: #none, a, b;
+      c, d;
+      e, f)
   - title: Test3
     tex: \boldsymbol{x}
     typst: bold(x)
@@ -349,3 +371,20 @@ cases:
   - title: Cauchy's integral formula
     tex: f(z_0) = \frac{1}{2 \pi \mathrm{i}} \oint_C \frac{f(z)}{z - z_0} \mathrm{d} z
     typst: f(z_0) = frac(1, 2 pi upright(i)) integral.cont_C frac(f(z), z - z_0) dif z
+  - title: determinant of a Vandermonde matrix
+    tex: |-
+      \left|\begin{matrix}
+      1 & 1 & \dots & 1 \\
+      x_1 & x_2 & \dots & x_n \\
+      x_1^2 & x_2^2 & \dots & x_n^2 \\
+      \vdots & \vdots & \ddots & \vdots \\
+      x_1^{n - 1} & x_2^{n - 1} & \dots & x_n^{n - 1}
+      \end{matrix} \right|
+      = \prod_{1 \le i < j \le n} (x_j - x_i)
+    typst: |-
+      mat(delim: "|", 1, 1, dots.h, 1;
+      x_1, x_2, dots.h, x_n;
+      x_1^2, x_2^2, dots.h, x_n^2;
+      dots.v, dots.v, dots.down, dots.v;
+      x_1^(n - 1), x_2^(n - 1), dots.h, x_n^(n - 1))
+      = product_(1 lt.eq i < j lt.eq n) (x_j - x_i)
