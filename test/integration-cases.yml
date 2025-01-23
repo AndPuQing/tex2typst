@@ -397,3 +397,6 @@ cases:
   - title: backslash not in the end
     tex: a \\ b
     typst: a \ b
+  - title: number
+    tex: 134 + 3.14
+    typst: 134 + 3.14

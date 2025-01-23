@@ -120,6 +120,12 @@ export function tokenize_typst(typst: string): TypstToken[] {
                     while (newPos < typst.length && isdigit(typst[newPos])) {
                         newPos += 1;
                     }
+                    if(newPos < typst.length && typst[newPos] === '.') {
+                        newPos += 1;
+                        while (newPos < typst.length && isdigit(typst[newPos])) {
+                            newPos += 1;
+                        }
+                    }
                     token = new TypstToken(TypstTokenType.ELEMENT, typst.slice(pos, newPos));
                 } else if ('+-*/=\'<>!.,;?()[]|'.includes(firstChar)) {
                     token = new TypstToken(TypstTokenType.ELEMENT, firstChar)
