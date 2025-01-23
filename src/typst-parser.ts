@@ -86,10 +86,9 @@ export function tokenize_typst(typst: string): TypstToken[] {
                 if (['\\$', '\\&', '\\#', '\\_'].includes(firstTwoChars)) {
                     token = new TypstToken(TypstTokenType.ELEMENT, firstTwoChars);
                     pos += 2;
-                } else if (firstTwoChars === '\\\n') {
+                } else if (['\\\n', '\\ '].includes(firstTwoChars)) {
                     token = new TypstToken(TypstTokenType.CONTROL, '\\');
                     pos += 1;
-
                 } else {
                     // this backslash is dummy and will be ignored in later stages
                     token = new TypstToken(TypstTokenType.CONTROL, '');

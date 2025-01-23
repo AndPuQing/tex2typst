@@ -394,3 +394,6 @@ cases:
   - title: hyph.minus
     tex: a \text{-} b
     typst: a hyph.minus b
+  - title: backslash not in the end
+    tex: a \\ b
+    typst: a \ b
