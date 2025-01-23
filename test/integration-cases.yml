@@ -406,3 +406,12 @@ cases:
   - title: number in superscript
     tex: a^{23}
     typst: a^(23)
+  - title: matrixes
+    tex: |-
+      \left[\begin{matrix}
+      a_x & a_1 \\ a_1 & a_x
+      \end{matrix} \right] + \left[\begin{matrix}
+      a_y & a_2 \\ a_2 & a_y
+      \end{matrix} \right]
+    typst: |-
+      mat(delim: "[", a_x , a_1 ; a_1 , a_x) + mat(delim: "[", a_y, a_2; a_2, a_y)

@@ -457,6 +457,7 @@ export class TypstParser {
     // start: the position of the left parentheses
     parseGroupsOfArguments(tokens: TypstToken[], start: number): [TypstNode[][], TypstNamedParams, number] {
         const end = find_closing_match(tokens, start);
+        tokens = tokens.slice(0, end);
 
         const matrix: TypstNode[][] = [];
         let named_params: TypstNamedParams = {};
