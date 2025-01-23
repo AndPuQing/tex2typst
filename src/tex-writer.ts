@@ -139,11 +139,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return new TexNode('comment', node.content);
         case 'group': {
             const args = node.args!.map(convert_typst_node_to_tex);
-            if(node.content === 'parenthesis') {
-                args.unshift(new TexNode('element', '('));
-                args.push(new TexNode('element', ')'));
-            }
-            return new TexNode('ordgroup', '', args);
+            return new TexNode('ordgroup', node.content, args);
         }
         case 'funcCall': {
             if (TYPST_UNARY_FUNCTIONS.includes(node.content)) {

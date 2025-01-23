@@ -281,7 +281,7 @@ cases:
     tex: i_D = \mu_n C_\text{ox} \frac{W}{L} [ (v_\text{GS} - V_t) v_\text{DS} - \frac{1}{2} v_\text{DS}^2 ]
     typst: i_D = mu_n C_"ox" frac(W, L) [ (v_"GS" - V_t) v_"DS" - frac(1, 2) v_"DS"^2 ]
   - title: base is group wrapped in brackets
-    tex: e = \lim_{n \rightarrow \infty} (1 + \frac{1}{n})^n
+    tex: e = \lim_{n \rightarrow \infty} \left(1 + \frac{1}{n} \right)^n
     typst: e = lim_(n arrow.r infinity) (1 + frac(1, n))^n
   - title: overset, special case 1
     tex: \overset{\text{def}}{=}
@@ -321,7 +321,7 @@ cases:
     tex: \text{diag}(\boldsymbol{k}_{A v}(\boldsymbol{\psi}^{n + 1}, \boldsymbol{m}))
     typst: '"diag"(bold(k)_(A v)(bold(psi)^(n + 1), bold(m)))'
   - title: base of natural logarithm
-    tex: e \overset{\text{def}}{=} \lim_{n \rightarrow \infty} (1 + \frac{1}{n})^n
+    tex: e \overset{\text{def}}{=} \lim_{n \rightarrow \infty} \left(1 + \frac{1}{n} \right)^n
     typst: e eq.def lim_(n arrow.r infinity) (1 + frac(1, n))^n
   - title: Euler's product formula
     tex: \prod_p \frac{1}{1 - p^{-s}} = \sum_{n = 1}^\infty \frac{1}{n^s}
