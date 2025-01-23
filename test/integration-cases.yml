@@ -400,3 +400,9 @@ cases:
   - title: number
     tex: 134 + 3.14
     typst: 134 + 3.14
+  - title: number in subscript
+    tex: a_{23}
+    typst: a_(23)
+  - title: number in superscript
+    tex: a^{23}
+    typst: a^(23)

@@ -165,9 +165,22 @@ export class TexNode {
                 let tokens: TexToken[] = [];
                 const { base, sup, sub } = this.data! as TexSupsubData;
                 tokens = tokens.concat(base.serialize());
+
+                // TODO: should return true for more cases e.g. a_{\theta} instead of a_\theta
+                function should_wrap_in_braces(node: TexNode): boolean {
+                    if(node.type === 'ordgroup' || node.type === 'supsub' || node.type === 'empty') {
+                        return true;
+                    } else if(node.type === 'element' && /\d+(\.\d+)?/.test(node.content) && node.content.length > 1) {
+                        // a number with more than 1 digit as a subscript/superscript should be wrapped in braces
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+
                 if (sub) {
                     tokens.push(new TexToken(TexTokenType.CONTROL, '_'));
-                    if (sub.type === 'ordgroup' || sub.type === 'supsub' || sub.type === 'empty') {
+                    if (should_wrap_in_braces(sub)) {
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
                         tokens = tokens.concat(sub.serialize());
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
@@ -177,7 +190,7 @@ export class TexNode {
                 }
                 if (sup) {
                     tokens.push(new TexToken(TexTokenType.CONTROL, '^'));
-                    if (sup.type === 'ordgroup' || sup.type === 'supsub' || sup.type === 'empty') {
+                    if (should_wrap_in_braces(sup)) {
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
                         tokens = tokens.concat(sup.serialize());
                         tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
