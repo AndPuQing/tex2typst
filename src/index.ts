@@ -25,6 +25,9 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
         if (options.customTexMacros) {
             opt.customTexMacros = options.customTexMacros;
         }
+        if (options.fracToSlash !== undefined) {
+            opt.fracToSlash = options.fracToSlash;
+        }
     }
     const texTree = parseTex(tex, opt.customTexMacros!);
     const typstTree = convert_tex_node_to_typst(texTree, opt);
