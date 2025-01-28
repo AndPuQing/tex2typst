@@ -63,8 +63,10 @@ export class TypstWriter {
         no_need_space ||= /[\(\[\|]$/.test(this.buffer) && /^\w/.test(str);
         // closing a clause
         no_need_space ||= /^[})\]\|]$/.test(str);
+        // putting the opening '(' for a function
+        no_need_space ||= /[^=]$/.test(this.buffer) && str === '(';
         // putting punctuation
-        no_need_space ||= /^[(_^,;!]$/.test(str);
+        no_need_space ||= /^[_^,;!]$/.test(str);
         // putting a prime
         no_need_space ||= str === "'";
         // continue a number
@@ -79,6 +81,8 @@ export class TypstWriter {
         no_need_space ||= /^\s/.test(str);
         // "&=" instead of "& ="
         no_need_space ||= this.buffer.endsWith('&') && str === '=';
+        // before or after a slash e.g. "a/b" instead of "a / b"
+        no_need_space ||= this.buffer.endsWith('/') || str === '/';
         // other cases
         no_need_space ||= /[\s_^{\(]$/.test(this.buffer);
         if (!no_need_space) {
@@ -173,6 +177,25 @@ export class TypstWriter {
                 }
                 this.queue.push(TYPST_RIGHT_PARENTHESIS);
                 this.insideFunctionDepth--;
+                break;
+            }
+            case 'fraction': {
+                const [numerator, denominator] = node.args!;
+                if(numerator.type === 'group') {
+                    this.queue.push(TYPST_LEFT_PARENTHESIS);
+                    this.serialize(numerator);
+                    this.queue.push(TYPST_RIGHT_PARENTHESIS);
+                } else {
+                    this.serialize(numerator);
+                }
+                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '/'));
+                if(denominator.type === 'group') {
+                    this.queue.push(TYPST_LEFT_PARENTHESIS);
+                    this.serialize(denominator);
+                    this.queue.push(TYPST_RIGHT_PARENTHESIS);
+                } else {
+                    this.serialize(denominator);
+                }
                 break;
             }
             case 'align': {

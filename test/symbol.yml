@@ -76,13 +76,13 @@ cases:
     typst: binom(n, k)
   - title: unpaired left and right floor,ceil
     tex: \rfloor \lceil \left\lceil \frac{1}{2} \right \rfloor
-    typst: floor.r ceil.l lr(ceil.l frac(1, 2) floor.r)
+    typst: floor.r ceil.l lr(ceil.l 1/2 floor.r)
   - title: paired left and right floor,ceil
     tex: \lfloor x \rfloor \lceil x \rceil \left\lceil \frac{1}{2} \right \rceil 
-    typst: floor(x) ceil(x) ceil(frac(1, 2))
+    typst: floor(x) ceil(x) ceil(1/2)
   - title: paired lfloor and rceil
     tex: \lfloor \rceil \lfloor x \rceil \left \lfloor \frac{1}{2} \right \rceil
-    typst: round("") round(x) round(frac(1, 2))
+    typst: round("") round(x) round(1/2)
   - title: trigonometric functions
     tex: \sin \cos \tan \cot \sec \csc
     typst: sin cos tan cot sec csc
@@ -117,7 +117,7 @@ cases:
     typst: upright(bold(A))
   - title: slash
     tex: 1/2
-    typst: 1 \/ 2
+    typst: 1 \/2
   - title: backslash |
     tex: \|
     typst: parallel

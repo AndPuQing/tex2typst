@@ -12,6 +12,7 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
         nonStrict: true,
         preferTypstIntrinsic: true,
         keepSpaces: false,
+        fracToSlash: true,
         customTexMacros: {}
     };
     if (options) {
@@ -26,7 +27,7 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
         }
     }
     const texTree = parseTex(tex, opt.customTexMacros!);
-    const typstTree = convert_tex_node_to_typst(texTree);
+    const typstTree = convert_tex_node_to_typst(texTree, opt);
     const writer = new TypstWriter(opt.nonStrict!, opt.preferTypstIntrinsic!, opt.keepSpaces!);
     writer.serialize(typstTree);
     return writer.finalize();

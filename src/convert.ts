@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions } from "./types";
 import { TypstWriterError, TYPST_INTRINSIC_SYMBOLS } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 
@@ -32,7 +32,7 @@ function tex_token_to_typst(token: string): string {
 
 // \overset{X}{Y} -> op(Y, limits: #true)^X
 // and with special case \overset{\text{def}}{=} -> eq.def
-function convert_overset(node: TexNode): TypstNode {
+function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     const [sup, base] = node.args!;
 
     const is_def = (n: TexNode): boolean => {
@@ -58,7 +58,7 @@ function convert_overset(node: TexNode): TypstNode {
     const op_call = new TypstNode(
         'funcCall',
         'op',
-        [convert_tex_node_to_typst(base)]
+        [convert_tex_node_to_typst(base, options)]
     );
     op_call.setOptions({ limits: '#true' });
     return new TypstNode(
@@ -67,13 +67,13 @@ function convert_overset(node: TexNode): TypstNode {
         [],
         {
             base: op_call,
-            sup: convert_tex_node_to_typst(sup),
+            sup: convert_tex_node_to_typst(sup, options),
         }
     );
 }
 
 
-export function convert_tex_node_to_typst(node: TexNode): TypstNode {
+export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptions = {}): TypstNode {
     switch (node.type) {
         case 'empty':
             return new TypstNode('empty', '');
@@ -83,7 +83,7 @@ export function convert_tex_node_to_typst(node: TexNode): TypstNode {
             return new TypstNode(
                 'group',
                 '',
-                node.args!.map(convert_tex_node_to_typst)
+                node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         case 'element':
             return new TypstNode('atom', tex_token_to_typst(node.content));
@@ -101,29 +101,29 @@ export function convert_tex_node_to_typst(node: TexNode): TypstNode {
                 return new TypstNode(
                     'funcCall',
                     'overbrace',
-                    [convert_tex_node_to_typst(base.args![0]), convert_tex_node_to_typst(sup)]
+                    [convert_tex_node_to_typst(base.args![0], options), convert_tex_node_to_typst(sup, options)]
                 );
             } else if (base && base.type === 'unaryFunc' && base.content === '\\underbrace' && sub) {
                 return new TypstNode(
                     'funcCall',
                     'underbrace',
-                    [convert_tex_node_to_typst(base.args![0]), convert_tex_node_to_typst(sub)]
+                    [convert_tex_node_to_typst(base.args![0], options), convert_tex_node_to_typst(sub, options)]
                 );
             }
 
             const data: TypstSupsubData = {
-                base: convert_tex_node_to_typst(base),
+                base: convert_tex_node_to_typst(base, options),
             };
             if (data.base.type === 'empty') {
                 data.base = new TypstNode('text', '');
             }
 
             if (sup) {
-                data.sup = convert_tex_node_to_typst(sup);
+                data.sup = convert_tex_node_to_typst(sup, options);
             }
 
             if (sub) {
-                data.sub = convert_tex_node_to_typst(sub);
+                data.sub = convert_tex_node_to_typst(sub, options);
             }
 
             return new TypstNode('supsub', '', [], data);
@@ -134,7 +134,7 @@ export function convert_tex_node_to_typst(node: TexNode): TypstNode {
             const group: TypstNode = new TypstNode(
                 'group',
                 '',
-                node.args!.map(convert_tex_node_to_typst)
+                node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
             if ([
                 "[]", "()", "\\{\\}",
@@ -161,19 +161,29 @@ export function convert_tex_node_to_typst(node: TexNode): TypstNode {
         }
         case 'binaryFunc': {
             if (node.content === '\\overset') {
-                return convert_overset(node);
+                return convert_overset(node, options);
+            }
+            // \frac{a}{b} -> a / b
+            if (node.content === '\\frac') {
+                if(options.fracToSlash) {
+                    return new TypstNode(
+                        'fraction',
+                        '',
+                        node.args!.map((n) => convert_tex_node_to_typst(n, options))
+                    );
+                }
             }
             return new TypstNode(
                 'funcCall',
                 tex_token_to_typst(node.content),
-                node.args!.map(convert_tex_node_to_typst)
+                node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         }
         case 'unaryFunc': {
-            const arg0 = convert_tex_node_to_typst(node.args![0]);
+            const arg0 = convert_tex_node_to_typst(node.args![0], options);
             // \sqrt{3}{x} -> root(3, x)
             if (node.content === '\\sqrt' && node.data) {
-                const data = convert_tex_node_to_typst(node.data as TexSqrtData); // the number of times to take the root
+                const data = convert_tex_node_to_typst(node.data as TexSqrtData, options); // the number of times to take the root
                 return new TypstNode(
                     'funcCall',
                     'root',
@@ -220,12 +230,12 @@ export function convert_tex_node_to_typst(node: TexNode): TypstNode {
             return new TypstNode(
                 'funcCall',
                 tex_token_to_typst(node.content),
-                node.args!.map(convert_tex_node_to_typst)
+                node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         }
         case 'beginend': {
             const matrix = node.data as TexNode[][];
-            const data = matrix.map((row) => row.map(convert_tex_node_to_typst));
+            const data = matrix.map((row) => row.map((n) => convert_tex_node_to_typst(n, options)));
 
             if (node.content!.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.

@@ -3,7 +3,7 @@ title: tex2typst
 cases:
   - title: Testing factorial, no space
     tex: 'p ( x )   =    \frac{e^{-\lambda}\lambda^{x}}{ x ! }'
-    typst: p(x) = frac(e^(-lambda) lambda^x, x!)
+    typst: p(x) = (e^(-lambda) lambda^x)/(x!)
   - title: Mathrm
     tex: 'p_e = 1 - \mathrm{e}^{-t \lambda}'
     typst: p_e = 1 - upright(e)^(-t lambda)
@@ -40,13 +40,13 @@ cases:
     typst: 'lr([bold(A))) lr({b))'
   - title: dot as right bracket
     tex: '\left\{ \frac{a}{b} \right.'
-    typst: '{frac(a, b)'
+    typst: '{a/b'
   - title: dot as left bracket
     tex: '\left. \frac{a}{b} \right\}'
-    typst: 'lr(frac(a, b)})'
+    typst: 'lr(a/b})'
   - title: lr
     tex: \left|a + \frac{1}{3} \right|^2
-    typst: lr(|a + frac(1, 3)|)^2
+    typst: lr(|a + 1/3|)^2
   - title: symmetry left right
     tex: \left\{ a \right\} \left( b \right) \left[ c \right]
     typst: '{a}(b) [c]'
@@ -109,36 +109,36 @@ cases:
     typst: |-
       overbrace(
       [
-      frac(1, Delta t)
-      frac(diff bold(theta)^(n + 1), diff bold(psi)^(n + 1))
+      1/(Delta t)
+      (diff bold(theta)^(n + 1))/(diff bold(psi)^(n + 1))
       - bold(D)
       "diag"(bold(G) bold(psi)^(n + 1))
-      frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
+      (diff bold(k)_(A v))/(diff bold(psi)^(n + 1))
       - bold(D)
       "diag"(bold(k)_(A v)(bold(psi)^(n + 1) comma bold(m)))
       bold(G)
       - bold(G)_z
-      frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
+      (diff bold(k)_(A v))/(diff bold(psi)^(n + 1))
       ]
       , bold(A)_0 (bold(psi)^(n + 1)))
-      frac(diff bold(psi)^(n + 1), diff bold(m))
+      (diff bold(psi)^(n + 1))/(diff bold(m))
       \
       +
       underbrace(
       [
-      -frac(1, Delta t)
-      frac(diff bold(theta)^n, diff bold(psi)^n)
+      -1/(Delta t)
+      (diff bold(theta)^n)/(diff bold(psi)^n)
       ]
       , bold(A)_(-1)(bold(psi)^n))
-      frac(diff bold(psi)^n, diff bold(m))
+      (diff bold(psi)^n)/(diff bold(m))
       =
       underbrace(
       [
       -bold(D)
       "diag"(bold(G) bold(psi)^(n + 1))
-      frac(diff bold(k)_(A v), diff bold(m))
+      (diff bold(k)_(A v))/(diff bold(m))
       - bold(G)_z
-      frac(diff bold(k)_(A v), diff bold(m))
+      (diff bold(k)_(A v))/(diff bold(m))
       ]
       , bold(B)(psi^(n + 1))) &
   - title: leading underscore
@@ -158,7 +158,7 @@ cases:
   #   typst: 'x(t) = [ mat(delim: #none, q(t), x; dot(q)(t), x) ]'
   - title: brackets
     tex: '\frac{1}{\tau(X_2)}'
-    typst: 'frac(1, tau(X_2))'
+    typst: '1/(tau(X_2))'
   - title: bar and nested bb
     tex: '\mathbb{\bar{R}}'
     typst: 'bb(macron(R))'
@@ -176,7 +176,7 @@ cases:
     typst: a^(b^(n + 1))
   - title: Test2
     tex: a+b^1 + \frac{2}{3} + \overbrace{123}^{b}
-    typst: a + b^1 + frac(2, 3) + overbrace(123, b)
+    typst: a + b^1 + 2/3 + overbrace(123, b)
   - title: Symbols
     tex: '\alpha \nabla \partial'
     typst: alpha nabla diff
@@ -245,7 +245,7 @@ cases:
     typst: e^(i theta) = cos theta + i sin theta
   - title: Euler Product
     tex: \prod_{p} \frac{1}{1-p^{-s}}= \sum_{n=1}^{\infty} \frac{1}{n^s}
-    typst: product_p frac(1, 1 - p^(-s)) = sum_(n = 1)^infinity frac(1, n^s)
+    typst: product_p 1/(1 - p^(-s)) = sum_(n = 1)^infinity 1/n^s
   - title: Test5
     tex: "{a+b}^2"
     typst: (a + b)^2
@@ -260,7 +260,7 @@ cases:
     typst: a^(-s)
   - title: Test8
     tex: \sqrt{\frac{1}{x^2 + y^2}}
-    typst: sqrt(frac(1, x^2 + y^2))
+    typst: sqrt(1/(x^2 + y^2))
   - title: basic prime case
     tex: y'
     typst: y'
@@ -301,10 +301,10 @@ cases:
     typst: lim_(x arrow.r 0) sum_(i = 1)^n
   - title: spaces around text
     tex: i_D = \mu_n C_\text{ox} \frac{W}{L} \left[ (v_\text{GS} - V_t)v_\text{DS} - \frac{1}{2} v_\text{DS}^2 \right]
-    typst: i_D = mu_n C_"ox" frac(W, L) [(v_"GS" - V_t) v_"DS" - frac(1, 2) v_"DS"^2 ]
+    typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2 ]
   - title: base is group wrapped in brackets
     tex: e = \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
-    typst: e = lim_(n arrow.r infinity)(1 + frac(1, n))^n
+    typst: e = lim_(n arrow.r infinity)(1 + 1/n)^n
   - title: overset
     tex: \overset{a}{+}
     typst: "op(+, limits: #true)^a"
