@@ -3,7 +3,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { describe, it, test, expect } from 'vitest';
 import { parseTypst } from '../src/typst-parser';
-import { convert_typst_node_to_tex, TexWriter } from '../src/tex-writer';
+import { TexWriter } from '../src/tex-writer';
+import { convert_typst_node_to_tex } from '../src/convert';
 
 
 type TestCase = {
