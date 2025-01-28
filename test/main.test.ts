@@ -4,7 +4,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { parseTex, tokenize } from '../src/tex-parser';
 import { tex2typst } from '../src/index';
-import { TypstWriterError } from '../src/writer';
+import { TypstWriterError } from '../src/typst-writer';
 import { Tex2TypstOptions, TexNode, TexToken } from '../src/types';
 
 type TestCase = {
