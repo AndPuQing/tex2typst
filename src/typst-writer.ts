@@ -58,6 +58,8 @@ export class TypstWriter {
             return;
         }
 
+        // TODO: "C \frac{xy}{z}" should translate to "C (x y)/z" instead of "C(x y)/z"
+
         let no_need_space = false;
         // putting the first token in clause
         no_need_space ||= /[\(\[\|]$/.test(this.buffer) && /^\w/.test(str);
