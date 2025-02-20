@@ -1,5 +1,4 @@
 import { array_includes, array_split } from "./generic";
-import { reverseSymbolMap } from "./map";
 import { TexNode, TexToken, TexSupsubData, TexTokenType } from "./types";
 
 

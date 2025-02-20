@@ -299,35 +299,21 @@ export class LatexParser {
         const results: TexNode[] = [];
         let pos = 0;
         while (pos < tokens.length) {
-            const results: TexNode[] = [];
-            let pos = 0;
-    
-            while (pos < tokens.length) {
-                const [res, newPos] = this.parseNextExpr(tokens, pos);
-                pos = newPos;
-                if(res.type === 'whitespace') {
-                    if (!this.space_sensitive && res.content.replace(/ /g, '').length === 0) {
-                        continue;
-                    }
-                    if (!this.newline_sensitive && res.content === '\n') {
-                        continue;
-                    }
+            const [res, newPos] = this.parseNextExpr(tokens, pos);
+            pos = newPos;
+            if(res.type === 'whitespace') {
+                if (!this.space_sensitive && res.content.replace(/ /g, '').length === 0) {
+                    continue;
                 }
-                if (res.type === 'control' && res.content === '&') {
-                    throw new LatexParserError('Unexpected & outside of an alignment');
+                if (!this.newline_sensitive && res.content === '\n') {
+                    continue;
                 }
-                results.push(res);
             }
-    
-            if (results.length === 0) {
-                return EMPTY_NODE;
-            } else if (results.length === 1) {
-                return results[0];
-            } else {
-                return new TexNode('ordgroup', '', results);
+            if (res.type === 'control' && res.content === '&') {
+                throw new LatexParserError('Unexpected & outside of an alignment');
             }
+            results.push(res);
         }
-
 
         if (results.length === 0) {
             return EMPTY_NODE;
@@ -453,7 +439,7 @@ export class LatexParser {
 
         if (['left', 'right', 'begin', 'end'].includes(command.slice(1))) {
             throw new LatexParserError('Unexpected command: ' + command);
-        } 
+        }
 
 
         const paramNum = get_command_param_num(command.slice(1));
@@ -529,7 +515,7 @@ export class LatexParser {
         if (pos >= tokens.length) {
             throw new LatexParserError('Expecting \\right after \\left');
         }
-        
+
         const rightDelimiter = eat_parenthesis(tokens, pos);
         if (rightDelimiter === null) {
             throw new LatexParserError('Invalid delimiter after \\right');
@@ -556,9 +542,9 @@ export class LatexParser {
         assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
         const envName = tokens[pos + 1].value;
         pos += 3;
-        
+
         pos += eat_whitespaces(tokens, pos).length; // ignore whitespaces and '\n' after \begin{envName}
-        
+
         const exprInsideStart = pos;
 
         const endIdx = find_closing_end_command(tokens, start);
@@ -567,7 +553,7 @@ export class LatexParser {
         }
         const exprInsideEnd = endIdx;
         pos = endIdx + 1;
-        
+
         assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
         assert(tokens[pos + 1].type === TexTokenType.TEXT);
         assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
@@ -575,7 +561,7 @@ export class LatexParser {
             throw new LatexParserError('Mismatched \\begin and \\end environments');
         }
         pos += 3;
-    
+
         const exprInside = tokens.slice(exprInsideStart, exprInsideEnd);
         // ignore spaces and '\n' before \end{envName}
         while(exprInside.length > 0 && [TexTokenType.SPACE, TexTokenType.NEWLINE].includes(exprInside[exprInside.length - 1].type)) {
@@ -606,7 +592,7 @@ export class LatexParser {
                     continue;
                 }
             }
-            
+
             if (res.type === 'control' && res.content === '\\\\') {
                 row = [];
                 group = new TexNode('ordgroup', '', []);
