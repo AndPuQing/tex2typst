@@ -296,9 +296,14 @@ export class LatexParser {
     }
 
     parse(tokens: TexToken[]): TexNode {
+        const [tree, _] = this.parseGroup(tokens, 0, tokens.length);
+        return tree;
+    }
+
+    parseGroup(tokens: TexToken[], start: number, end: number): ParseResult {
         const results: TexNode[] = [];
-        let pos = 0;
-        while (pos < tokens.length) {
+        let pos = start;
+        while (pos < end) {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
             if(res.type === 'whitespace') {
@@ -315,13 +320,15 @@ export class LatexParser {
             results.push(res);
         }
 
+        let node: TexNode;
         if (results.length === 0) {
-            return EMPTY_NODE;
+            node = EMPTY_NODE;
         } else if (results.length === 1) {
-            return results[0];
+            node = results[0];
         } else {
-            return new TexNode('ordgroup', '', results);
+            node = new TexNode('ordgroup', '', results);
         }
+        return [node, end + 1];
     }
 
     parseNextExpr(tokens: TexToken[], start: number): ParseResult {
@@ -409,8 +416,7 @@ export class LatexParser {
                         if(posClosingBracket === -1) {
                             throw new LatexParserError("Unmatched '{'");
                         }
-                        const exprInside = tokens.slice(start + 1, posClosingBracket);
-                        return [this.parse(exprInside), posClosingBracket + 1];
+                        return this.parseGroup(tokens, start + 1, posClosingBracket);
                     case '}':
                         throw new LatexParserError("Unmatched '}'");
                     case '\\\\':
@@ -461,8 +467,7 @@ export class LatexParser {
                     if (posRightSquareBracket === -1) {
                         throw new LatexParserError('No matching right square bracket for [');
                     }
-                    const exprInside = tokens.slice(posLeftSquareBracket + 1, posRightSquareBracket);
-                    const exponent = this.parse(exprInside);
+                    const [exponent, _] = this.parseGroup(tokens, posLeftSquareBracket + 1, posRightSquareBracket);
                     const [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, posRightSquareBracket + 1);
                     return [new TexNode('unaryFunc', command, [arg1], exponent), newPos];
                 } else if (command === '\\text') {
@@ -522,8 +527,7 @@ export class LatexParser {
         }
         pos++;
 
-        const exprInside = tokens.slice(exprInsideStart, exprInsideEnd);
-        const body = this.parse(exprInside);
+        const [body, _] = this.parseGroup(tokens, exprInsideStart, exprInsideEnd);
         const args: TexNode[] = [
             new TexNode('element', leftDelimiter.value),
             body,
