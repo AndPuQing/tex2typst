@@ -389,8 +389,7 @@ export class LatexParser {
 
     parseNextExprWithoutSupSub(tokens: TexToken[], start: number): ParseResult {
         const firstToken = tokens[start];
-        const tokenType = firstToken.type;
-        switch (tokenType) {
+        switch (firstToken.type) {
             case TexTokenType.ELEMENT:
                 return [new TexNode('element', firstToken.value), start + 1];
             case TexTokenType.TEXT:
