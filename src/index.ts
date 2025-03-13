@@ -1,5 +1,5 @@
 import { parseTex } from "./tex-parser";
-import { Tex2TypstOptions } from "./types";
+import type { Tex2TypstOptions } from "./types";
 import { TypstWriter } from "./typst-writer";
 import { convert_tex_node_to_typst, convert_typst_node_to_tex } from "./convert";
 import { symbolMap } from "./map";
