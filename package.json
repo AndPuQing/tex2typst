@@ -15,8 +15,8 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist/",
-    "build:node": "bun build --entrypoints src/index.ts --outfile ./dist/index.js --target node",
-    "build:browser": "bun build --entrypoints src/tex2typst.ts --outfile ./dist/tex2typst.min.js --target browser --minify",
+    "build:node": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --format=esm",
+    "build:browser": "esbuild src/tex2typst.ts --bundle --platform=browser --outfile=dist/tex2typst.min.js --minify",
     "build:types": "tsc --project ./tsconfig.json",
     "build": "npm run build:node && npm run build:browser && npm run build:types",
     "test": "vitest run",
@@ -28,7 +28,8 @@
     "rimraf": "^3.0.2",
     "toml": "^3.0.0",
     "typescript": "^5.5.3",
-    "vitest": "^2.0.2"
+    "vitest": "^2.0.2",
+    "esbuild": "^0.25.1"
   },
   "dependencies": {}
 }
