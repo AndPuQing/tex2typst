@@ -225,6 +225,51 @@ cases:
     typst: |-
       mat(delim: #none, , a, = b;
       , c, = d)
+  - title: pmatrix
+    tex: |-
+      m = \begin{pmatrix}
+      a & b \\
+      c & d
+      \end{pmatrix}
+    typst: |-
+      m = mat(delim: "(", a, b;
+      c, d)
+  - title: bmatrix
+    tex: |-
+      m = \begin{bmatrix}
+      a & b \\
+      c & d
+      \end{bmatrix}
+    typst: |-
+      m = mat(delim: "[", a, b;
+      c, d)
+  - title: Bmatrix
+    tex: |-
+      m = \begin{Bmatrix}
+      a & b \\
+      c & d
+      \end{Bmatrix}
+    typst: |-
+      m = mat(delim: "{", a, b;
+      c, d)
+  - title: vmatrix
+    tex: |-
+      m = \begin{vmatrix}
+      a & b \\
+      c & d
+      \end{vmatrix}
+    typst: |-
+      m = mat(delim: "|", a, b;
+      c, d)
+  - title: Vmatrix
+    tex: |-
+      m = \begin{Vmatrix}
+      a & b \\
+      c & d
+      \end{Vmatrix}
+    typst: |-
+      m = lr(||mat(delim: #none, a, b;
+      c, d) ||)
   # - title: Array
   #   tex: |-
   #     \begin{array}{cc}

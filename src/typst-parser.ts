@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TYPST_NONE, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha, isdigit } from "./util";
 
 // TODO: In Typst, y' ' is not the same as y''.
@@ -450,7 +450,6 @@ export class TypstParser {
     // start: the position of the left parentheses
     parseArguments(tokens: TypstToken[], start: number): [TypstNode[], number] {
         const end = find_closing_match(tokens, start);
-        
         return [this.parseCommaSeparatedArguments(tokens, start + 1, end), end + 1];
     }
 
@@ -501,7 +500,7 @@ export class TypstParser {
                                 if(g.args!.length !== 4 || !g.args![pos_colon + 2].eq(new TypstNode('symbol', 'none'))) { 
                                     throw new TypstParserError('Invalid number of arguments for delim');
                                 }
-                                np['delim'] = "#none";
+                                np['delim'] = TYPST_NONE;
                             } else {
                                 throw new TypstParserError('Not implemented for other types of delim');
                             }

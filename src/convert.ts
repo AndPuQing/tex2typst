@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue } from "./types";
 import { TypstWriterError, TYPST_INTRINSIC_SYMBOLS } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 
@@ -60,7 +60,7 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
         'op',
         [convert_tex_node_to_typst(base, options)]
     );
-    op_call.setOptions({ limits: '#true' });
+    op_call.setOptions({ limits: TYPST_TRUE });
     return new TypstNode(
         'supsub',
         '',
@@ -240,11 +240,51 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             if (node.content!.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.
                 return new TypstNode('align', '', [], data);
-            } else {
+            }
+            if (node.content!.endsWith('matrix')) {
+                let delim: TypstPrimitiveValue = null;
+                switch (node.content) {
+                    case 'matrix':
+                        delim = TYPST_NONE;
+                        break;
+                    case 'pmatrix':
+                        delim = '(';
+                        break;
+                    case 'bmatrix':
+                        delim = '[';
+                        break;
+                    case 'Bmatrix':
+                        delim = '{';
+                        break;
+                    case 'vmatrix':
+                        delim = '|';
+                        break;
+                    case 'Vmatrix': {
+                        // mat(delim: "||") does not compile in Typst.
+                        // For a workaround, translate
+                        // \begin{Vmatrix}
+                        //   a & b \\
+                        //   c & d
+                        //   \end{Vmatrix}
+                        // to
+                        //  lr(||mat(delim: #none, a, b; c, d)||)
+                        const matrix = new TypstNode('matrix', '', [], data);
+                        matrix.setOptions({ 'delim': TYPST_NONE });
+                        const group = new TypstNode('group', '', [
+                            new TypstNode('symbol', '||'),
+                            matrix,
+                            new TypstNode('symbol', '||'),
+                        ]);
+                        return new TypstNode('funcCall', 'lr', [ group ]);
+                    }
+                    default:
+                        throw new TypstWriterError(`Unimplemented beginend: ${node.content}`, node);
+                }
                 const res = new TypstNode('matrix', '', [], data);
-                res.setOptions({ 'delim': '#none' });
+                res.setOptions({ 'delim': delim });
                 return res;
             }
+            throw new TypstWriterError(`Unimplemented beginend: ${node.content}`, node);
         }
         case 'unknownMacro':
             return new TypstNode('unknown', tex_token_to_typst(node.content));
@@ -416,7 +456,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if (node.options) {
                 if ('delim' in node.options) {
                     switch (node.options.delim) {
-                        case '#none':
+                        case TYPST_NONE:
                             return matrix;
                         case '[':
                             left_delim = "\\left[";

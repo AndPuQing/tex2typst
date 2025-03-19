@@ -352,7 +352,13 @@ export type TypstArrayData = TypstNode[][];
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
             | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'unknown';
 
-export type TypstNamedParams = { [key: string]: string };
+export type TypstPrimitiveValue = string | boolean | null;
+export type TypstNamedParams = { [key: string]: TypstPrimitiveValue };
+
+// #none
+export const TYPST_NONE: TypstPrimitiveValue = null;
+export const TYPST_TRUE: TypstPrimitiveValue = true;
+export const TYPST_FALSE: TypstPrimitiveValue = false;
 
 export class TypstNode {
     type: TypstNodeType;
@@ -370,7 +376,7 @@ export class TypstNode {
         this.data = data;
     }
 
-    public setOptions(options: { [key: string]: string }) {
+    public setOptions(options: TypstNamedParams) {
         this.options = options;
     }
 
