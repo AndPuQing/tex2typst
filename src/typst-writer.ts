@@ -35,6 +35,8 @@ function typst_primitive_to_string(value: TypstPrimitiveValue) {
         default:
             if (value === null) {
                 return '#none';
+            } else if (value instanceof TypstToken) {
+                return value.toString();
             }
             throw new TypstWriterError(`Invalid primitive value: ${value}`, value);
     }

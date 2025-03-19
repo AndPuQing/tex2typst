@@ -352,7 +352,7 @@ export type TypstArrayData = TypstNode[][];
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
             | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'unknown';
 
-export type TypstPrimitiveValue = string | boolean | null;
+export type TypstPrimitiveValue = string | boolean | null | TypstToken;
 export type TypstNamedParams = { [key: string]: TypstPrimitiveValue };
 
 // #none

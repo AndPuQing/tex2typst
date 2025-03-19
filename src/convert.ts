@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType } from "./types";
 import { TypstWriterError, TYPST_INTRINSIC_SYMBOLS } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 
@@ -260,22 +260,8 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                         delim = '|';
                         break;
                     case 'Vmatrix': {
-                        // mat(delim: "||") does not compile in Typst.
-                        // For a workaround, translate
-                        // \begin{Vmatrix}
-                        //   a & b \\
-                        //   c & d
-                        //   \end{Vmatrix}
-                        // to
-                        //  lr(||mat(delim: #none, a, b; c, d)||)
-                        const matrix = new TypstNode('matrix', '', [], data);
-                        matrix.setOptions({ 'delim': TYPST_NONE });
-                        const group = new TypstNode('group', '', [
-                            new TypstNode('symbol', '||'),
-                            matrix,
-                            new TypstNode('symbol', '||'),
-                        ]);
-                        return new TypstNode('funcCall', 'lr', [ group ]);
+                        delim = new TypstToken(TypstTokenType.SYMBOL, 'bar.v.double');
+                        break;
                     }
                     default:
                         throw new TypstWriterError(`Unimplemented beginend: ${node.content}`, node);

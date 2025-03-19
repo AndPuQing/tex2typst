@@ -268,8 +268,8 @@ cases:
       c & d
       \end{Vmatrix}
     typst: |-
-      m = lr(||mat(delim: #none, a, b;
-      c, d) ||)
+      m = mat(delim: bar.v.double, a, b;
+      c, d)
   # - title: Array
   #   tex: |-
   #     \begin{array}{cc}
