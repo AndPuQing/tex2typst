@@ -418,6 +418,17 @@ cases:
       \end{matrix} \right]
     typst: |-
       mat(delim: "[", a_x , a_1 ; a_1 , a_x) + mat(delim: "[", a_y, a_2; a_2, a_y)
+  # shorthands
   - title: oo
     tex: \infty
     typst: oo
+  - title: ll and gg
+    tex: a \ll b \gg c
+    typst: a << b >> c
+  - title: "<==>"
+    tex: a \iff b
+    typst: a <==> b
+  - title: "<-->"
+    tex: a \longleftrightarrow b
+    typst: a <--> b
+  
