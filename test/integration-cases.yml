@@ -229,7 +229,7 @@ cases:
     typst: e^(i theta) = cos theta + i sin theta
   - title: Euler Product
     tex: \prod_p \frac{1}{1 - p^{-s}} = \sum_{n = 1}^\infty \frac{1}{n^s}
-    typst: product_p frac(1, 1 - p^(-s)) = sum_(n = 1)^infinity frac(1, n^s)
+    typst: product_p frac(1, 1 - p^(-s)) = sum_(n = 1)^infinity 1/n^s
   - title: Test7
     tex: (a + b)^2
     typst: (a + b)^2
@@ -323,6 +323,9 @@ cases:
   - title: base of natural logarithm
     tex: e \overset{\text{def}}{=} \lim_{n \rightarrow \infty} \left(1 + \frac{1}{n} \right)^n
     typst: e eq.def lim_(n arrow.r infinity) (1 + frac(1, n))^n
+  - title: base of natural logarithm (shorthands)
+    tex: e \overset{\text{def}}{=} \lim_{n \rightarrow \infty} \left(1 + \frac{1}{n} \right)^n
+    typst: e eq.def lim_(n -> infinity) (1 + 1/n)^n
   - title: Euler's product formula
     tex: \prod_p \frac{1}{1 - p^{-s}} = \sum_{n = 1}^\infty \frac{1}{n^s}
     typst: product_p frac(1, 1 - p^(-s)) = sum_(n = 1)^(infinity) frac(1, n^s)

@@ -2,6 +2,13 @@
 import { array_find } from "./generic";
 import { TYPST_NONE, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha, isdigit } from "./util";
+import { reverseShorthandMap } from "./typst-shorthands";
+
+
+
+const TYPST_EMPTY_NODE = new TypstNode('empty', '');
+
+const TYPST_SHORTHANDS = Array.from(reverseShorthandMap.keys());
 
 // TODO: In Typst, y' ' is not the same as y''.
 // The parser should be able to parse the former correctly.
@@ -22,8 +29,14 @@ function eat_identifier_name(typst: string, start: number): string {
     return typst.substring(start, pos);
 }
 
-
-const TYPST_EMPTY_NODE = new TypstNode('empty', '');
+function try_eat_shorthand(typst: string, start: number): string | null {
+    for (const shorthand of TYPST_SHORTHANDS) {
+        if (typst.startsWith(shorthand, start)) {
+            return shorthand;
+        }
+    }
+    return null;
+}
 
 
 export function tokenize_typst(typst: string): TypstToken[] {
@@ -115,6 +128,13 @@ export function tokenize_typst(typst: string): TypstToken[] {
                 break;
             }
             default: {
+                const shorthand = try_eat_shorthand(typst, pos);
+                if (shorthand !== null) {
+                    token = new TypstToken(TypstTokenType.SYMBOL, reverseShorthandMap.get(shorthand)!);
+                    pos += shorthand.length;
+                    break;
+                }
+
                 if (isdigit(firstChar)) {
                     let newPos = pos;
                     while (newPos < typst.length && isdigit(typst[newPos])) {

@@ -1,4 +1,5 @@
-# tex2typst
+# tex2typst.js
+
 JavaScript library for conversion between TeX/LaTeX and Typst math formula code.
 
 Despite the name `tex2typst` due to the initial goal of converting TeX to Typst, the library can also convert Typst to TeX since version 0.3.0.
@@ -28,14 +29,13 @@ Replace `0.3.0` with the latest version number in case this README is outdated.
 
 ## Usage
 
-
 ```javascript
 import { tex2typst, typst2tex } from 'tex2typst';
 
 let tex = "e \overset{\text{def}}{=} \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n";
 let typst = tex2typst(tex);
 console.log(typst);
-// e eq.def lim_(n arrow.r infinity)(1 + frac(1, n))^n
+// e eq.def lim_(n arrow.r infinity)(1 + 1/n)^n
 
 let tex_recovered = typst2tex(typst);
 console.log(tex_recovered);
@@ -43,6 +43,8 @@ console.log(tex_recovered);
 ```
 
 If you are using the library in a web page via a `<script>` tag, you don't need the line of `import`, function `tex2typst` and `typst2tex` should be available in the global scope.
+
+tex2typst.js supports some advanced options to customize the conversion. For more details, please refer to the [API Reference](docs/api-reference.md).
 
 ## Open-source license
 

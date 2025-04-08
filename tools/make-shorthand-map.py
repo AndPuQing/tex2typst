@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 
 if __name__ == '__main__':
-    shorthand_map = {}
+    shorthand_map = []
 
 
     url = "https://typst.app/docs/reference/symbols/"
@@ -25,4 +25,9 @@ if __name__ == '__main__':
         # ==> shorthand = "->"
         typst = li['id'][7:]
         shorthand = html.unescape(li['data-math-shorthand'])
+        shorthand_map.append((typst, shorthand))
+
+    # Sort by length of shorthand, order from longest to shortest
+    shorthand_map.sort(key=lambda x: len(x[1]), reverse=True)
+    for typst, shorthand in shorthand_map:
         print(f"['{typst}', '{shorthand}'],")
