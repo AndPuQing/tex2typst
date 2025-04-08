@@ -13,6 +13,7 @@ type TestCase = {
   typst: string;
   nonStrict?: boolean;
   preferTypstIntrinsic?: boolean;
+  preferShorthands?: boolean;
   customTexMacros: { [key: string]: string };
 };
 
@@ -41,6 +42,7 @@ caseFiles.forEach((ymlFilename) => {
           const settings: Tex2TypstOptions = {
             nonStrict: c.nonStrict? c.nonStrict: false,
             preferTypstIntrinsic: c.preferTypstIntrinsic? c.preferTypstIntrinsic: false,
+            preferShorthands: c.preferShorthands !== undefined? c.preferShorthands: true,
             customTexMacros: c.customTexMacros? c.customTexMacros: {},
           };
           tokens = tokenize(tex);

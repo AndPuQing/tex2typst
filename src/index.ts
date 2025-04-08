@@ -27,7 +27,7 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
 
     const texTree = parseTex(tex, opt.customTexMacros!);
     const typstTree = convert_tex_node_to_typst(texTree, opt);
-    const writer = new TypstWriter(opt.nonStrict!, opt.preferTypstIntrinsic!, opt.keepSpaces!);
+    const writer = new TypstWriter(opt.nonStrict!, opt.preferShorthands!, opt.keepSpaces!);
     writer.serialize(typstTree);
     return writer.finalize();
 }

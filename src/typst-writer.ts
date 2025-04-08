@@ -1,23 +1,49 @@
 import { TexNode, TypstNode, TypstPrimitiveValue, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 
-
-// symbols that are supported by Typst but not by KaTeX
-export const TYPST_INTRINSIC_SYMBOLS = [
-    'dim',
-    'id',
-    'im',
-    'mod',
-    'Pr',
-    'sech',
-    'csch',
-    // 'sgn
-];
-
+const shorthandMap = new Map<string, string>([
+    ['arrow.r', '->'],
+    ['arrow.r.bar', '|->'],
+    ['arrow.r.double', '=>'],
+    ['arrow.r.double.bar', '|=>'],
+    ['arrow.r.double.long', '==>'],
+    ['arrow.r.long', '-->'],
+    ['arrow.r.long.squiggly', '~~>'],
+    ['arrow.r.squiggly', '~>'],
+    ['arrow.r.tail', '>->'],
+    ['arrow.r.twohead', '->>'],
+    ['arrow.l', '<-'],
+    ['arrow.l.double.long', '<=='],
+    ['arrow.l.long', '<--'],
+    ['arrow.l.long.squiggly', '<~~'],
+    ['arrow.l.squiggly', '<~'],
+    ['arrow.l.tail', '<-<'],
+    ['arrow.l.twohead', '<<-'],
+    ['arrow.l.r', '<->'],
+    ['arrow.l.r.double', '<=>'],
+    ['arrow.l.r.double.long', '<==>'],
+    ['arrow.l.r.long', '<-->'],
+    ['ast.op', '*'],
+    ['bar.v.double', '||'],
+    ['bracket.l.double', '[|'],
+    ['bracket.r.double', '|]'],
+    ['colon.eq', ':='],
+    ['colon.double.eq', '::='],
+    ['dots.h', '...'],
+    ['eq.colon', '=:'],
+    ['eq.not', '!='],
+    ['gt.double', '>>'],
+    ['gt.eq', '>='],
+    ['gt.triple', '>>>'],
+    ['lt.double', '<<'],
+    ['lt.eq', '<='],
+    ['lt.triple', '<<<'],
+    ['minus', '-'],
+    ['tilde.op', '~'],
+]);
 
 function is_delimiter(c: TypstNode): boolean {
     return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content);
 }
-
 
 const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
 const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ')');
@@ -54,7 +80,7 @@ export class TypstWriterError extends Error {
 
 export class TypstWriter {
     private nonStrict: boolean;
-    private preferTypstIntrinsic: boolean;
+    private preferShorthands: boolean;
     private keepSpaces: boolean;
 
     protected buffer: string = "";
@@ -62,9 +88,9 @@ export class TypstWriter {
 
     private insideFunctionDepth = 0;
 
-    constructor(nonStrict: boolean, preferTypstIntrinsic: boolean, keepSpaces: boolean) {
+    constructor(nonStrict: boolean, preferShorthands: boolean, keepSpaces: boolean) {
         this.nonStrict = nonStrict;
-        this.preferTypstIntrinsic = preferTypstIntrinsic;
+        this.preferShorthands = preferShorthands;
         this.keepSpaces = keepSpaces;
     }
 
@@ -125,9 +151,16 @@ export class TypstWriter {
                 }
                 break;
             }
-            case 'symbol':
-                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content));
+            case 'symbol': {
+                let content = node.content;
+                if(this.preferShorthands) {
+                    if (shorthandMap.has(content)) {
+                        content = shorthandMap.get(content)!;
+                    }
+                }
+                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, content));
                 break;
+            }
             case 'text':
                 this.queue.push(new TypstToken(TypstTokenType.TEXT, node.content));
                 break;

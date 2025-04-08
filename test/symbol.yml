@@ -46,6 +46,7 @@ cases:
     # prec.eq and succ.eq don't looks like \preceq and \succeq
     tex: \neq \leq \geq \ll \gg \prec \succ \preceq \succeq
     typst: eq.not lt.eq gt.eq lt.double gt.double prec succ prec.eq succ.eq
+    preferShorthands: false
   - title: symbols about differential
     # TODO: \mathrm{d} or \operatorname{d} -> dif
     tex: \Delta \nabla \partial
@@ -59,9 +60,11 @@ cases:
   - title: wave
     tex: \sim \approx \cong \simeq \asymp \equiv \propto
     typst: tilde.op approx tilde.equiv tilde.eq ≍ equiv prop
+    preferShorthands: false
   - title: arrows used in proofs
     tex: \implies \iff \leftrightarrow \longleftrightarrow \rightrightarrows
     typst: arrow.r.double.long arrow.l.r.double.long arrow.l.r arrow.l.r.long arrows.rr
+    preferShorthands: false
   # - title: def eq
   #   tex: \overset{\text{def}}{=}
   #   typst: eq.def

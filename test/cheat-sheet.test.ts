@@ -23,7 +23,7 @@ describe('cheat sheet', () => {
             const expected1 = `${value} x y`;
             const expected2 = `${value}(x) y`;
             const expected3 = `${value}(x, y)`;
-            const result = tex2typst(input);
+            const result = tex2typst(input, {preferShorthands: false});
             expect([expected1, expected2, expected3]).toContain(result);
         }
     });
@@ -34,7 +34,7 @@ describe('cheat sheet', () => {
         for (const [key, value] of Object.entries(data.math_symbols)) {
             const input = `\\${key}`;
             const expected = value;
-            const result = tex2typst(input);
+            const result = tex2typst(input, {preferShorthands: false});
             expect(result).toBe(expected);
             expect(symbolMap.get(key)).toBe(expected);
         }

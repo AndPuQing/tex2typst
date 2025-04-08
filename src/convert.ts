@@ -1,7 +1,18 @@
 import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType } from "./types";
-import { TypstWriterError, TYPST_INTRINSIC_SYMBOLS } from "./typst-writer";
+import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 
+// symbols that are supported by Typst but not by KaTeX
+const TYPST_INTRINSIC_SYMBOLS = [
+    'dim',
+    'id',
+    'im',
+    'mod',
+    'Pr',
+    'sech',
+    'csch',
+    // 'sgn
+];
 
 function tex_token_to_typst(token: string): string {
     if (/^[a-zA-Z0-9]$/.test(token)) {
