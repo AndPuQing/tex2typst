@@ -1,12 +1,13 @@
-import requests
+import urllib.request
 from bs4 import BeautifulSoup
-
 
 if __name__ == '__main__':
     symbol_map = {}
 
     url = "https://typst.app/docs/reference/symbols/sym/"
-    html_text = requests.get(url).text
+    with urllib.request.urlopen(url) as response:
+        html_text = response.read().decode('utf-8')
+
     soup = BeautifulSoup(html_text, 'html.parser')
     # <ul class="symbol-grid">
     ul = soup.find('ul', class_='symbol-grid')
