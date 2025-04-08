@@ -1,6 +1,6 @@
 import { parseTex } from "./tex-parser";
 import type { Tex2TypstOptions } from "./types";
-import { TypstWriter } from "./typst-writer";
+import { TypstWriter, type TypstWriterOptions } from "./typst-writer";
 import { convert_tex_node_to_typst, convert_typst_node_to_tex } from "./convert";
 import { symbolMap } from "./map";
 import { parseTypst } from "./typst-parser";
@@ -14,6 +14,7 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
         preferShorthands: true,
         keepSpaces: false,
         fracToSlash: true,
+        inftyToOo: false,
         customTexMacros: {}
     };
 
@@ -27,7 +28,7 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
 
     const texTree = parseTex(tex, opt.customTexMacros!);
     const typstTree = convert_tex_node_to_typst(texTree, opt);
-    const writer = new TypstWriter(opt.nonStrict!, opt.preferShorthands!, opt.keepSpaces!);
+    const writer = new TypstWriter(opt as TypstWriterOptions);
     writer.serialize(typstTree);
     return writer.finalize();
 }

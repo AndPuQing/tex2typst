@@ -392,6 +392,7 @@ export interface Tex2TypstOptions {
     preferShorthands?: boolean; // default is true
     keepSpaces?: boolean; // default is false
     fracToSlash?: boolean; // default is true
+    inftyToOo?: boolean; // default is false
     customTexMacros?: { [key: string]: string };
     // TODO: custom typst functions
 }

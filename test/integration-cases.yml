@@ -415,3 +415,6 @@ cases:
       \end{matrix} \right]
     typst: |-
       mat(delim: "[", a_x , a_1 ; a_1 , a_x) + mat(delim: "[", a_y, a_2; a_2, a_y)
+  - title: oo
+    tex: \infty
+    typst: oo

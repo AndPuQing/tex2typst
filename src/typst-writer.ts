@@ -78,20 +78,29 @@ export class TypstWriterError extends Error {
     }
 }
 
+export interface TypstWriterOptions {
+    nonStrict: boolean;
+    preferShorthands: boolean;
+    keepSpaces: boolean;
+    inftyToOo: boolean;
+}
+
 export class TypstWriter {
     private nonStrict: boolean;
     private preferShorthands: boolean;
     private keepSpaces: boolean;
+    private inftyToOo: boolean;
 
     protected buffer: string = "";
     protected queue: TypstToken[] = [];
 
     private insideFunctionDepth = 0;
 
-    constructor(nonStrict: boolean, preferShorthands: boolean, keepSpaces: boolean) {
-        this.nonStrict = nonStrict;
-        this.preferShorthands = preferShorthands;
-        this.keepSpaces = keepSpaces;
+    constructor(opt: TypstWriterOptions) {
+        this.nonStrict = opt.nonStrict;
+        this.preferShorthands = opt.preferShorthands;
+        this.keepSpaces = opt.keepSpaces;
+        this.inftyToOo = opt.inftyToOo;
     }
 
 
@@ -157,6 +166,9 @@ export class TypstWriter {
                     if (shorthandMap.has(content)) {
                         content = shorthandMap.get(content)!;
                     }
+                }
+                if (this.inftyToOo && content === 'infinity') {
+                    content = 'oo';
                 }
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, content));
                 break;

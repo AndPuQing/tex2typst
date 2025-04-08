@@ -1098,6 +1098,7 @@ for(const [key, value] of Array.from(symbolMap.entries()).reverse()) {
     reverseSymbolMap.set(value, key);
 }
 reverseSymbolMap.set('dif', 'mathrm{d}');
+reverseSymbolMap.set('oo', 'infty');
 
 // force override some one-to-multiple mappings
 const typst_to_tex_map = new Map<string, string>([

@@ -373,3 +373,7 @@ cases:
   - title: leading sign
     tex: -a
     typst: -a
+  - title: oo
+    tex: \infty
+    typst: oo
+    inftyToOo: true
