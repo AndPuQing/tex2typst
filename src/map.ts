@@ -1,4 +1,16 @@
 const symbolMap = new Map<string, string>([
+    ['cos', 'cos'],
+    ['sin', 'sin'],
+    ['tan', 'tan'],
+    ['cot', 'cot'],
+    ['sec', 'sec'],
+    ['csc', 'csc'],
+    ['mod', 'mod'],
+    ['omicron', 'omicron'],
+    ['Xi', 'Xi'],
+    ['Upsilon', 'Upsilon'],
+    ['lim', 'lim'],
+
     ['nonumber', ''],
     ['vec', 'arrow'],
     ['neq', 'eq.not'],

@@ -11,24 +11,20 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
     const opt: Tex2TypstOptions = {
         nonStrict: true,
         preferTypstIntrinsic: true,
+        preferShorthands: true,
         keepSpaces: false,
         fracToSlash: true,
         customTexMacros: {}
     };
-    if (options) {
-        if (options.nonStrict) {
-            opt.nonStrict = options.nonStrict;
-        }
-        if (options.preferTypstIntrinsic) {
-            opt.preferTypstIntrinsic = options.preferTypstIntrinsic;
-        }
-        if (options.customTexMacros) {
-            opt.customTexMacros = options.customTexMacros;
-        }
-        if (options.fracToSlash !== undefined) {
-            opt.fracToSlash = options.fracToSlash;
+
+    if(options !== undefined) {
+        for (const key in opt) {
+            if (options[key] !== undefined) {
+                opt[key] = options[key];
+            }
         }
     }
+
     const texTree = parseTex(tex, opt.customTexMacros!);
     const typstTree = convert_tex_node_to_typst(texTree, opt);
     const writer = new TypstWriter(opt.nonStrict!, opt.preferTypstIntrinsic!, opt.keepSpaces!);
