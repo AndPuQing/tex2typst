@@ -1,7 +1,7 @@
 import { symbolMap } from "./map";
 import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
-import { isalpha, isdigit, assert } from "./util";
-
+import { assert } from "./util";
+import { ILexApi, JSLex } from "./jslex";
 
 const UNARY_COMMANDS = [
     'sqrt',
@@ -95,15 +95,6 @@ function eat_primes(tokens: TexToken[], start: number): number {
 }
 
 
-function eat_command_name(latex: string, start: number): string {
-    let pos = start;
-    while (pos < latex.length && isalpha(latex[pos])) {
-        pos += 1;
-    }
-    return latex.substring(start, pos);
-}
-
-
 function find_closing_match(tokens: TexToken[], start: number, leftToken: TexToken, rightToken: TexToken): number {
     assert(tokens[start].eq(leftToken));
     let count = 1;
@@ -141,134 +132,56 @@ function find_closing_end_command(tokens: TexToken[], start: number): number {
     return find_closing_match(tokens, start, BEGIN_COMMAND, END_COMMAND);
 }
 
-function find_closing_curly_bracket_char(latex: string, start: number): number {
-    assert(latex[start] === '{');
-    let count = 1;
-    let pos = start + 1;
 
-    while (count > 0) {
-        if (pos >= latex.length) {
-            throw new LatexParserError('Unmatched curly brackets');
-        }
-        if(pos + 1 < latex.length && (['\\{', '\\}'].includes(latex.substring(pos, pos + 2)))) {
-            pos += 2;
-            continue;
-        }
-        if (latex[pos] === '{') {
-            count += 1;
-        } else if (latex[pos] === '}') {
-            count -= 1;
-        }
-        pos += 1;
+function unescape(str: string): string {
+    const chars = ['{', '}', '\\', '$', '&', '#', '_', '%'];
+    for (const char of chars) {
+        str = str.replaceAll('\\' + char, char);
     }
-
-    return pos - 1;
+    return str;
 }
 
+const rules_map = new Map<string, (a: ILexApi) => TexToken | TexToken[]>([
+    [
+        String.raw`\\(text|operatorname|begin|end){.+?}`, (lex) => {
+            const text = lex.text!;
+            const command = text.substring(0, text.indexOf('{'));
+            const text_inside = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
+            return [
+                new TexToken(TexTokenType.COMMAND, command),
+                new TexToken(TexTokenType.CONTROL, '{'),
+                new TexToken(TexTokenType.TEXT, unescape(text_inside)),
+                new TexToken(TexTokenType.CONTROL, '}')
+            ]
+        }
+    ],
+    [String.raw`%[^\n]*`, (lex) => new TexToken(TexTokenType.COMMENT, lex.text!.substring(1))],
+    [String.raw`[{}_^&]`, (lex) => new TexToken(TexTokenType.CONTROL, lex.text!)],
+    [String.raw`\r?\n`, (_lex) => new TexToken(TexTokenType.NEWLINE, "\n")],
+    [String.raw`\s+`, (lex) => new TexToken(TexTokenType.SPACE, lex.text!)],
+    [String.raw`\\[\\,]`, (lex) => new TexToken(TexTokenType.CONTROL, lex.text!)],
+    [String.raw`\\[{}%$&#_|]`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
+    [String.raw`\\[a-zA-Z]+`, (lex) => new TexToken(TexTokenType.COMMAND, lex.text!)],
+    [String.raw`[0-9]+`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
+    [String.raw`[a-zA-Z]`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
+    [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
+    [String.raw`.`, (lex) => new TexToken(TexTokenType.UNKNOWN, lex.text!)],
+]);
 
-export function tokenize_tex(latex: string): TexToken[] {
+const spec = {
+    "start": rules_map
+};
+
+export function tokenize_tex(input: string): TexToken[] {
     const tokens: TexToken[] = [];
-    let pos = 0;
-
-    while (pos < latex.length) {
-        const firstChar = latex[pos];
-        let token: TexToken;
-        switch (firstChar) {
-            case '%': {
-                let newPos = pos + 1;
-                while (newPos < latex.length && latex[newPos] !== '\n') {
-                    newPos += 1;
-                }
-                token = new TexToken(TexTokenType.COMMENT, latex.slice(pos + 1, newPos));
-                pos = newPos;
-                break;
-            }
-            case '{':
-            case '}':
-            case '_':
-            case '^':
-            case '&':
-                token = new TexToken(TexTokenType.CONTROL, firstChar);
-                pos++;
-                break;
-            case '\n':
-                token = new TexToken(TexTokenType.NEWLINE, firstChar);
-                pos++;
-                break;
-            case '\r': {
-                if (pos + 1 < latex.length && latex[pos + 1] === '\n') {
-                    token = new TexToken(TexTokenType.NEWLINE, '\n');
-                    pos += 2;
-                } else {
-                    token = new TexToken(TexTokenType.NEWLINE, '\n');
-                    pos ++;
-                }
-                break;
-            }
-            case ' ': {
-                let newPos = pos;
-                while (newPos < latex.length && latex[newPos] === ' ') {
-                    newPos += 1;
-                }
-                token = new TexToken(TexTokenType.SPACE, latex.slice(pos, newPos));
-                pos = newPos;
-                break;
-            }
-            case '\\': {
-                if (pos + 1 >= latex.length) {
-                    throw new LatexParserError('Expecting command name after \\');
-                }
-                const firstTwoChars = latex.slice(pos, pos + 2);
-                if (['\\\\', '\\,'].includes(firstTwoChars)) {
-                    token = new TexToken(TexTokenType.CONTROL, firstTwoChars);
-                } else if (['\\{','\\}', '\\%', '\\$', '\\&', '\\#', '\\_', '\\|'].includes(firstTwoChars)) {
-                    // \| is double vertical bar, not the same as just |
-                    token = new TexToken(TexTokenType.ELEMENT, firstTwoChars);
-                } else {
-                    const command = eat_command_name(latex, pos + 1);
-                    token = new TexToken(TexTokenType.COMMAND, '\\' + command);
-                }
-                pos += token.value.length;
-                break;
-            }
-            default: {
-                if (isdigit(firstChar)) {
-                    let newPos = pos;
-                    while (newPos < latex.length && isdigit(latex[newPos])) {
-                        newPos += 1;
-                    }
-                    token = new TexToken(TexTokenType.ELEMENT, latex.slice(pos, newPos));
-                } else if (isalpha(firstChar)) {
-                    token = new TexToken(TexTokenType.ELEMENT, firstChar);
-                } else if ('+-*/=\'<>!.,;:?()[]|'.includes(firstChar)) {
-                    token = new TexToken(TexTokenType.ELEMENT, firstChar)
-                } else {
-                    token = new TexToken(TexTokenType.UNKNOWN, firstChar);
-                }
-                pos += token.value.length;
-            }
+    const lexer = new JSLex<TexToken>(spec);
+    lexer.lex(input, (item: TexToken | TexToken[]) => {
+        if (Array.isArray(item)) {
+            tokens.push(...item);
+        } else {
+            tokens.push(item);
         }
-
-        tokens.push(token);
-
-        if (token.type === TexTokenType.COMMAND && ['\\text', '\\operatorname', '\\begin', '\\end'].includes(token.value)) {
-            if (pos >= latex.length || latex[pos] !== '{') {
-                throw new LatexParserError(`No content for ${token.value} command`);
-            }
-            tokens.push(new TexToken(TexTokenType.CONTROL, '{'));
-            const posClosingBracket = find_closing_curly_bracket_char(latex, pos);
-            pos++;
-            let textInside = latex.slice(pos, posClosingBracket);
-            // replace all escape characters with their actual characters
-            const chars = ['{', '}', '\\', '$', '&', '#', '_', '%'];
-            for (const char of chars) {
-                textInside = textInside.replaceAll('\\' + char, char);
-            }
-            tokens.push(new TexToken(TexTokenType.TEXT, textInside));
-            tokens.push(new TexToken(TexTokenType.CONTROL, '}'));
-            pos = posClosingBracket + 1;
-        }
-    }
+    });
     return tokens;
 }
 

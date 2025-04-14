@@ -1,9 +1,9 @@
 
 import { array_find } from "./generic";
 import { TYPST_NONE, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
-import { assert, isalpha, isdigit } from "./util";
+import { assert, isalpha } from "./util";
 import { reverseShorthandMap } from "./typst-shorthands";
-
+import { ILexApi, JSLex } from "./jslex";
 
 
 const TYPST_EMPTY_NODE = new TypstNode('empty', '');
@@ -21,149 +21,83 @@ function eat_primes(tokens: TypstToken[], start: number): number {
 }
 
 
-function eat_identifier_name(typst: string, start: number): string {
-    let pos = start;
-    while (pos < typst.length && (isalpha(typst[pos]) || (typst[pos] === '.'))) {
-        pos += 1;
-    }
-    return typst.substring(start, pos);
+function generate_regex_for_shorthands(): string {
+    const regex_list = TYPST_SHORTHANDS.map((s) => {
+        s = s.replaceAll('|', '\\|');
+        s = s.replaceAll('.', '\\.');
+        s = s.replaceAll('[', '\\[');
+        s = s.replaceAll(']', '\\]');
+        return s;
+    });
+    return `(${regex_list.join('|')})`;
 }
 
-function try_eat_shorthand(typst: string, start: number): string | null {
-    for (const shorthand of TYPST_SHORTHANDS) {
-        if (typst.startsWith(shorthand, start)) {
-            return shorthand;
+
+const REGEX_SHORTHANDS = generate_regex_for_shorthands();
+
+const rules_map = new Map<string, (a: ILexApi) => TypstToken | TypstToken[]>([
+    [String.raw`//[^\n]*`, (lex) => new TypstToken(TypstTokenType.COMMENT, lex.text!.substring(2))],
+    [String.raw`/`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
+    [String.raw`[_^&]`, (lex) => new TypstToken(TypstTokenType.CONTROL, lex.text!)],
+    [String.raw`\r?\n`, (_lex) => new TypstToken(TypstTokenType.NEWLINE, "\n")],
+    [String.raw`\s+`, (lex) => new TypstToken(TypstTokenType.SPACE, lex.text!)],
+    [String.raw`\\[$&#_]`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
+    [String.raw`\\\n`, (lex) => {
+        return [
+            new TypstToken(TypstTokenType.CONTROL, "\\"),
+            new TypstToken(TypstTokenType.NEWLINE, "\n"),
+        ]
+    }],
+    [String.raw`\\\s`, (lex) => {
+        return [
+            new TypstToken(TypstTokenType.CONTROL, "\\"),
+            new TypstToken(TypstTokenType.SPACE, " "),
+        ]
+    }],
+    // this backslash is dummy and will be ignored in later stages
+    [String.raw`\\\S`, (_lex) => new TypstToken(TypstTokenType.CONTROL, "")],
+    [
+        String.raw`"([^"]|(\\"))*"`,
+        (lex) => {
+            const text = lex.text!.substring(1, lex.text!.length - 1);
+            // replace all escape characters with their actual characters
+            text.replaceAll('\\"', '"');
+            return new TypstToken(TypstTokenType.TEXT, text);
         }
-    }
-    return null;
-}
+    ],
+    [
+        REGEX_SHORTHANDS,
+        (lex) => {
+            const shorthand = lex.text!;
+            const symbol = reverseShorthandMap.get(shorthand)!;
+            return new TypstToken(TypstTokenType.SYMBOL, symbol);
+        }
+    ],
+    [String.raw`[0-9]+(\.[0-9]+)?`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
+    [String.raw`[+\-*/=\'<>!.,;?()\[\]|]`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
+    [String.raw`[a-zA-Z\.]+`, (lex) => {
+        return new TypstToken(lex.text!.length === 1? TypstTokenType.ELEMENT: TypstTokenType.SYMBOL, lex.text!);
+    }],
+    [String.raw`.`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
+]);
 
+const spec = {
+    "start": rules_map
+};
 
-export function tokenize_typst(typst: string): TypstToken[] {
+export function tokenize_typst(input: string): TypstToken[] {
     const tokens: TypstToken[] = [];
-
-    let pos = 0;
-
-    while (pos < typst.length) {
-        const firstChar = typst[pos];
-        let token: TypstToken;
-        switch (firstChar) {
-            case '_':
-            case '^':
-            case '&':
-                token = new TypstToken(TypstTokenType.CONTROL, firstChar);
-                pos++;
-                break;
-            case '\n':
-                token = new TypstToken(TypstTokenType.NEWLINE, firstChar);
-                pos++;
-                break;
-            case '\r': {
-                if (pos + 1 < typst.length && typst[pos + 1] === '\n') {
-                    token = new TypstToken(TypstTokenType.NEWLINE, '\n');
-                    pos += 2;
-                } else {
-                    token = new TypstToken(TypstTokenType.NEWLINE, '\n');
-                    pos++;
-                }
-                break;
-            }
-            case ' ': {
-                let newPos = pos;
-                while (newPos < typst.length && typst[newPos] === ' ') {
-                    newPos++;
-                }
-                token = new TypstToken(TypstTokenType.SPACE, typst.substring(pos, newPos));
-                pos = newPos;
-                break;
-            }
-            case '/': {
-                if (pos < typst.length && typst[pos + 1] === '/') {
-                    let newPos = pos + 2;
-                    while (newPos < typst.length && typst[newPos] !== '\n') {
-                        newPos++;
-                    }
-                    token = new TypstToken(TypstTokenType.COMMENT, typst.slice(pos + 2, newPos));
-                    pos = newPos;
-                } else {
-                    token = new TypstToken(TypstTokenType.ELEMENT, '/');
-                    pos++;
-                }
-                break;
-            }
-            case '\\': {
-                if (pos + 1 >= typst.length) {
-                    throw new Error('Expecting a character after \\');
-                }
-                const firstTwoChars = typst.substring(pos, pos + 2);
-                if (['\\$', '\\&', '\\#', '\\_'].includes(firstTwoChars)) {
-                    token = new TypstToken(TypstTokenType.ELEMENT, firstTwoChars);
-                    pos += 2;
-                } else if (['\\\n', '\\ '].includes(firstTwoChars)) {
-                    token = new TypstToken(TypstTokenType.CONTROL, '\\');
-                    pos += 1;
-                } else {
-                    // this backslash is dummy and will be ignored in later stages
-                    token = new TypstToken(TypstTokenType.CONTROL, '');
-                    pos++;
-                }
-                break;
-            }
-            case '"': {
-                let newPos = pos + 1;
-                while (newPos < typst.length) {
-                    if (typst[newPos] === '"' && typst[newPos - 1] !== '\\') {
-                        break;
-                    }
-                    newPos++;
-                }
-                let text = typst.substring(pos + 1, newPos);
-                // replace all escape characters with their actual characters
-                const chars = ['"', '\\'];
-                for (const char of chars) {
-                    text = text.replaceAll('\\' + char, char);
-                }
-                token = new TypstToken(TypstTokenType.TEXT, text);
-                pos = newPos + 1;
-                break;
-            }
-            default: {
-                const shorthand = try_eat_shorthand(typst, pos);
-                if (shorthand !== null) {
-                    token = new TypstToken(TypstTokenType.SYMBOL, reverseShorthandMap.get(shorthand)!);
-                    pos += shorthand.length;
-                    break;
-                }
-
-                if (isdigit(firstChar)) {
-                    let newPos = pos;
-                    while (newPos < typst.length && isdigit(typst[newPos])) {
-                        newPos += 1;
-                    }
-                    if(newPos < typst.length && typst[newPos] === '.') {
-                        newPos += 1;
-                        while (newPos < typst.length && isdigit(typst[newPos])) {
-                            newPos += 1;
-                        }
-                    }
-                    token = new TypstToken(TypstTokenType.ELEMENT, typst.slice(pos, newPos));
-                } else if ('+-*/=\'<>!.,;?()[]|'.includes(firstChar)) {
-                    token = new TypstToken(TypstTokenType.ELEMENT, firstChar)
-                } else if (isalpha(firstChar)) {
-                    const identifier = eat_identifier_name(typst, pos);
-                    const _type = identifier.length === 1 ? TypstTokenType.ELEMENT : TypstTokenType.SYMBOL;
-                    token = new TypstToken(_type, identifier);
-                } else {
-                    token = new TypstToken(TypstTokenType.ELEMENT, firstChar);
-                }
-                pos += token.value.length;
-            }
+    const lexer = new JSLex<TypstToken>(spec);
+    lexer.lex(input, (item: TypstToken | TypstToken[]) => {
+        if (Array.isArray(item)) {
+            tokens.push(...item);
+        } else {
+            tokens.push(item);
         }
-        tokens.push(token);
-    }
-
+    });
     return tokens;
 }
+
 
 function find_closing_match(tokens: TypstToken[], start: number): number {
     assert(tokens[start].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET]));
