@@ -2,7 +2,7 @@ import { describe, it, test, expect } from 'vitest';
 import yaml from 'js-yaml';
 import path from 'node:path';
 import fs from 'node:fs';
-import { parseTex, tokenize } from '../src/tex-parser';
+import { parseTex, tokenize_tex } from '../src/tex-parser';
 import { tex2typst } from '../src/index';
 import { TypstWriterError } from '../src/typst-writer';
 import { Tex2TypstOptions, TexNode, TexToken } from '../src/types';
@@ -47,7 +47,7 @@ caseFiles.forEach((ymlFilename) => {
             inftyToOo: c.inftyToOo !== undefined? c.inftyToOo: false,
             customTexMacros: c.customTexMacros? c.customTexMacros: {},
           };
-          tokens = tokenize(tex);
+          tokens = tokenize_tex(tex);
           tex_node = parseTex(tex, settings.customTexMacros!);
           result = tex2typst(tex, settings);
           if (result !== typst) {

@@ -166,7 +166,7 @@ function find_closing_curly_bracket_char(latex: string, start: number): number {
 }
 
 
-export function tokenize(latex: string): TexToken[] {
+export function tokenize_tex(latex: string): TexToken[] {
     const tokens: TexToken[] = [];
     let pos = 0;
 
@@ -633,7 +633,7 @@ function passExpandCustomTexMacros(tokens: TexToken[], customTexMacros: {[key: s
     let out_tokens: TexToken[] = [];
     for (const token of tokens) {
         if (token.type === TexTokenType.COMMAND && customTexMacros[token.value]) {
-            const expanded_tokens = tokenize(customTexMacros[token.value]);
+            const expanded_tokens = tokenize_tex(customTexMacros[token.value]);
             out_tokens = out_tokens.concat(expanded_tokens);
         } else {
             out_tokens.push(token);
@@ -644,7 +644,7 @@ function passExpandCustomTexMacros(tokens: TexToken[], customTexMacros: {[key: s
 
 export function parseTex(tex: string, customTexMacros: {[key: string]: string}): TexNode {
     const parser = new LatexParser();
-    let tokens = tokenize(tex);
+    let tokens = tokenize_tex(tex);
     tokens = passIgnoreWhitespaceBeforeScriptMark(tokens);
     tokens = passExpandCustomTexMacros(tokens, customTexMacros);
     return parser.parse(tokens);
