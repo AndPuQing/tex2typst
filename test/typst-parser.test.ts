@@ -103,4 +103,16 @@ describe('typst-parser', () => {
             ]),
         }));
     });
+
+    it('a -> b', function () {
+        const tokens = tokenize_typst('a -> b');
+        const res = parser.parse(tokens);
+        expect(res).toEqual(new TypstNode('group', '', [
+            new TypstNode('atom', 'a'),
+            new TypstNode('whitespace', ' '),
+            new TypstNode('symbol', 'arrow.r'),
+            new TypstNode('whitespace', ' '),
+            new TypstNode('atom', 'b'),
+        ]));
+    });
 });
