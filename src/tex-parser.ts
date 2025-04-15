@@ -1,7 +1,7 @@
 import { symbolMap } from "./map";
 import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
 import { assert } from "./util";
-import { ILexApi, JSLex } from "./jslex";
+import { JSLex, Scanner } from "./jslex";
 
 const UNARY_COMMANDS = [
     'sqrt',
@@ -141,10 +141,10 @@ function unescape(str: string): string {
     return str;
 }
 
-const rules_map = new Map<string, (a: ILexApi) => TexToken | TexToken[]>([
+const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[]>([
     [
-        String.raw`\\(text|operatorname|begin|end){.+?}`, (lex) => {
-            const text = lex.text!;
+        String.raw`\\(text|operatorname|begin|end){.+?}`, (s) => {
+            const text = s.text()!;
             const command = text.substring(0, text.indexOf('{'));
             const text_inside = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
             return [
@@ -155,17 +155,17 @@ const rules_map = new Map<string, (a: ILexApi) => TexToken | TexToken[]>([
             ]
         }
     ],
-    [String.raw`%[^\n]*`, (lex) => new TexToken(TexTokenType.COMMENT, lex.text!.substring(1))],
-    [String.raw`[{}_^&]`, (lex) => new TexToken(TexTokenType.CONTROL, lex.text!)],
-    [String.raw`\r?\n`, (_lex) => new TexToken(TexTokenType.NEWLINE, "\n")],
-    [String.raw`\s+`, (lex) => new TexToken(TexTokenType.SPACE, lex.text!)],
-    [String.raw`\\[\\,]`, (lex) => new TexToken(TexTokenType.CONTROL, lex.text!)],
-    [String.raw`\\[{}%$&#_|]`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
-    [String.raw`\\[a-zA-Z]+`, (lex) => new TexToken(TexTokenType.COMMAND, lex.text!)],
-    [String.raw`[0-9]+`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
-    [String.raw`[a-zA-Z]`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
-    [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (lex) => new TexToken(TexTokenType.ELEMENT, lex.text!)],
-    [String.raw`.`, (lex) => new TexToken(TexTokenType.UNKNOWN, lex.text!)],
+    [String.raw`%[^\n]*`, (s) => new TexToken(TexTokenType.COMMENT, s.text()!.substring(1))],
+    [String.raw`[{}_^&]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
+    [String.raw`\r?\n`, (_s) => new TexToken(TexTokenType.NEWLINE, "\n")],
+    [String.raw`\s+`, (s) => new TexToken(TexTokenType.SPACE, s.text()!)],
+    [String.raw`\\[\\,]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
+    [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    [String.raw`\\[a-zA-Z]+`, (s) => new TexToken(TexTokenType.COMMAND, s.text()!)],
+    [String.raw`[0-9]+`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    [String.raw`[a-zA-Z]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    [String.raw`.`, (s) => new TexToken(TexTokenType.UNKNOWN, s.text()!)],
 ]);
 
 const spec = {
@@ -173,16 +173,8 @@ const spec = {
 };
 
 export function tokenize_tex(input: string): TexToken[] {
-    const tokens: TexToken[] = [];
     const lexer = new JSLex<TexToken>(spec);
-    lexer.lex(input, (item: TexToken | TexToken[]) => {
-        if (Array.isArray(item)) {
-            tokens.push(...item);
-        } else {
-            tokens.push(item);
-        }
-    });
-    return tokens;
+    return lexer.collect(input);
 }
 
 

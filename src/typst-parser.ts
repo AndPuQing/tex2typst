@@ -3,7 +3,7 @@ import { array_find } from "./generic";
 import { TYPST_NONE, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha } from "./util";
 import { reverseShorthandMap } from "./typst-shorthands";
-import { ILexApi, JSLex } from "./jslex";
+import { JSLex, Scanner } from "./jslex";
 
 
 const TYPST_EMPTY_NODE = new TypstNode('empty', '');
@@ -35,31 +35,31 @@ function generate_regex_for_shorthands(): string {
 
 const REGEX_SHORTHANDS = generate_regex_for_shorthands();
 
-const rules_map = new Map<string, (a: ILexApi) => TypstToken | TypstToken[]>([
-    [String.raw`//[^\n]*`, (lex) => new TypstToken(TypstTokenType.COMMENT, lex.text!.substring(2))],
-    [String.raw`/`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
-    [String.raw`[_^&]`, (lex) => new TypstToken(TypstTokenType.CONTROL, lex.text!)],
-    [String.raw`\r?\n`, (_lex) => new TypstToken(TypstTokenType.NEWLINE, "\n")],
-    [String.raw`\s+`, (lex) => new TypstToken(TypstTokenType.SPACE, lex.text!)],
-    [String.raw`\\[$&#_]`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
-    [String.raw`\\\n`, (lex) => {
+const rules_map = new Map<string, (a: Scanner<TypstToken>) => TypstToken | TypstToken[]>([
+    [String.raw`//[^\n]*`, (s) => new TypstToken(TypstTokenType.COMMENT, s.text()!.substring(2))],
+    [String.raw`/`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
+    [String.raw`[_^&]`, (s) => new TypstToken(TypstTokenType.CONTROL, s.text()!)],
+    [String.raw`\r?\n`, (_s) => new TypstToken(TypstTokenType.NEWLINE, "\n")],
+    [String.raw`\s+`, (s) => new TypstToken(TypstTokenType.SPACE, s.text()!)],
+    [String.raw`\\[$&#_]`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
+    [String.raw`\\\n`, (s) => {
         return [
             new TypstToken(TypstTokenType.CONTROL, "\\"),
             new TypstToken(TypstTokenType.NEWLINE, "\n"),
         ]
     }],
-    [String.raw`\\\s`, (lex) => {
+    [String.raw`\\\s`, (s) => {
         return [
             new TypstToken(TypstTokenType.CONTROL, "\\"),
             new TypstToken(TypstTokenType.SPACE, " "),
         ]
     }],
     // this backslash is dummy and will be ignored in later stages
-    [String.raw`\\\S`, (_lex) => new TypstToken(TypstTokenType.CONTROL, "")],
+    [String.raw`\\\S`, (_s) => new TypstToken(TypstTokenType.CONTROL, "")],
     [
         String.raw`"([^"]|(\\"))*"`,
-        (lex) => {
-            const text = lex.text!.substring(1, lex.text!.length - 1);
+        (s) => {
+            const text = s.text()!.substring(1, s.text()!.length - 1);
             // replace all escape characters with their actual characters
             text.replaceAll('\\"', '"');
             return new TypstToken(TypstTokenType.TEXT, text);
@@ -67,18 +67,18 @@ const rules_map = new Map<string, (a: ILexApi) => TypstToken | TypstToken[]>([
     ],
     [
         REGEX_SHORTHANDS,
-        (lex) => {
-            const shorthand = lex.text!;
+        (s) => {
+            const shorthand = s.text()!;
             const symbol = reverseShorthandMap.get(shorthand)!;
             return new TypstToken(TypstTokenType.SYMBOL, symbol);
         }
     ],
-    [String.raw`[0-9]+(\.[0-9]+)?`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
-    [String.raw`[+\-*/=\'<>!.,;?()\[\]|]`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
-    [String.raw`[a-zA-Z\.]+`, (lex) => {
-        return new TypstToken(lex.text!.length === 1? TypstTokenType.ELEMENT: TypstTokenType.SYMBOL, lex.text!);
+    [String.raw`[0-9]+(\.[0-9]+)?`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
+    [String.raw`[+\-*/=\'<>!.,;?()\[\]|]`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
+    [String.raw`[a-zA-Z\.]+`, (s) => {
+        return new TypstToken(s.text()!.length === 1? TypstTokenType.ELEMENT: TypstTokenType.SYMBOL, s.text()!);
     }],
-    [String.raw`.`, (lex) => new TypstToken(TypstTokenType.ELEMENT, lex.text!)],
+    [String.raw`.`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
 ]);
 
 const spec = {
@@ -86,16 +86,8 @@ const spec = {
 };
 
 export function tokenize_typst(input: string): TypstToken[] {
-    const tokens: TypstToken[] = [];
     const lexer = new JSLex<TypstToken>(spec);
-    lexer.lex(input, (item: TypstToken | TypstToken[]) => {
-        if (Array.isArray(item)) {
-            tokens.push(...item);
-        } else {
-            tokens.push(item);
-        }
-    });
-    return tokens;
+    return lexer.collect(input);
 }
 
 
