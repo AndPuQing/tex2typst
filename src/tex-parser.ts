@@ -33,6 +33,8 @@ const UNARY_COMMANDS = [
     'vec',
     'widehat',
     'widetilde',
+    'overleftarrow',
+    'overrightarrow',
 ]
 
 const BINARY_COMMANDS = [

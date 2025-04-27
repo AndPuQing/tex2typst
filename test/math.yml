@@ -377,3 +377,9 @@ cases:
     tex: \infty
     typst: oo
     inftyToOo: true
+  - title: overrightarrow
+    tex: \overrightarrow{AB}
+    typst: arrow(A B)
+  - title: overleftarrow
+    tex: \overleftarrow{AB}
+    typst: accent(A B, <-)

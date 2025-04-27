@@ -218,6 +218,22 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             if (node.content === '\\mathbb' && arg0.type === 'atom' && /^[A-Z]$/.test(arg0.content)) {
                 return new TypstNode('symbol', arg0.content + arg0.content);
             }
+            // \overrightarrow{AB} -> arrow(A B)
+            if (node.content === '\\overrightarrow') {
+                return new TypstNode(
+                    'funcCall',
+                    'arrow',
+                    [arg0]
+                );
+            }
+            // \overleftarrow{AB} -> accent(A B, arrow.l)
+            if (node.content === '\\overleftarrow') {
+                return new TypstNode(
+                    'funcCall',
+                    'accent',
+                    [arg0, new TypstNode('symbol', 'arrow.l')]
+                );
+            }
             // \operatorname{opname} -> op("opname")
             if (node.content === '\\operatorname') {
                 const body = node.args!;
