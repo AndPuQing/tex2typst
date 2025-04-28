@@ -236,11 +236,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             // \operatorname{opname} -> op("opname")
             if (node.content === '\\operatorname') {
-                const body = node.args!;
-                if (body.length !== 1 || body[0].type !== 'text') {
-                    throw new TypstWriterError(`Expecting body of \\operatorname to be text but got`, node);
-                }
-                const text = body[0].content;
+                const text = arg0.content;
 
                 if (TYPST_INTRINSIC_SYMBOLS.includes(text)) {
                     return new TypstNode('symbol', text);
@@ -248,9 +244,19 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     return new TypstNode(
                         'funcCall',
                         'op',
-                        [new TypstNode('text', text)]
+                        [arg0]
                     );
                 }
+            }
+            // \hspace{1cm} -> #h(1cm)
+            // TODO: reverse conversion support for this
+            if (node.content === '\\hspace') {
+                const text = arg0.content;
+                return new TypstNode(
+                    'funcCall',
+                    '#h',
+                    [new TypstNode('symbol', text)]
+                );
             }
 
             // generic case
@@ -304,8 +310,10 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
         case 'control':
             if (node.content === '\\\\') {
                 return new TypstNode('symbol', '\\');
-            } else if (node.content === '\\,') {
-                return new TypstNode('symbol', 'thin');
+            } else if (symbolMap.has(node.content.substring(1))) {
+                // node.content is one of \, \: \;
+                const typst_symbol = symbolMap.get(node.content.substring(1))!;
+                return new TypstNode('symbol', typst_symbol);
             } else {
                 throw new TypstWriterError(`Unknown control sequence: ${node.content}`, node);
             }

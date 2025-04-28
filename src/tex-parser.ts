@@ -35,6 +35,7 @@ const UNARY_COMMANDS = [
     'widetilde',
     'overleftarrow',
     'overrightarrow',
+    'hspace',
 ]
 
 const BINARY_COMMANDS = [
@@ -145,7 +146,7 @@ function unescape(str: string): string {
 
 const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[]>([
     [
-        String.raw`\\(text|operatorname|begin|end){.+?}`, (s) => {
+        String.raw`\\(text|operatorname|begin|end|hspace){.+?}`, (s) => {
             const text = s.text()!;
             const command = text.substring(0, text.indexOf('{'));
             const text_inside = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
@@ -161,7 +162,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     [String.raw`[{}_^&]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\r?\n`, (_s) => new TexToken(TexTokenType.NEWLINE, "\n")],
     [String.raw`\s+`, (s) => new TexToken(TexTokenType.SPACE, s.text()!)],
-    [String.raw`\\[\\,]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
+    [String.raw`\\[\\,:;]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`\\[a-zA-Z]+`, (s) => new TexToken(TexTokenType.COMMAND, s.text()!)],
     [String.raw`[0-9]+`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
@@ -326,9 +327,10 @@ export class LatexParser {
                     case '}':
                         throw new LatexParserError("Unmatched '}'");
                     case '\\\\':
-                        return [new TexNode('control', '\\\\'), start + 1];
                     case '\\,':
-                        return [new TexNode('control', '\\,'), start + 1];
+                    case '\\:':
+                    case '\\;':
+                        return [new TexNode('control', controlChar), start + 1];
                     case '_':
                     case '^':
                         return [ EMPTY_NODE, start];

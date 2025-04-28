@@ -274,9 +274,9 @@ cases:
   - title: mod
     tex: a^{p - 1} \equiv 1 \mod p
     typst: a^(p - 1) equiv 1 mod p
-  - title: thin space
-    tex: a \, b
-    typst: a thin b
+  - title: Horizontal space symbols
+    tex: "\\, \\: \\; \\quad"
+    typst: thin med thick quad
   - title: spaces around text
     tex: i_D = \mu_n C_\text{ox} \frac{W}{L} [ (v_\text{GS} - V_t) v_\text{DS} - \frac{1}{2} v_\text{DS}^2 ]
     typst: i_D = mu_n C_"ox" frac(W, L) [ (v_"GS" - V_t) v_"DS" - frac(1, 2) v_"DS"^2 ]

@@ -1,4 +1,8 @@
 const symbolMap = new Map<string, string>([
+    [',', 'thin'],
+    [':', 'med'],
+    [';', 'thick'],
+
     ['cos', 'cos'],
     ['sin', 'sin'],
     ['tan', 'tan'],
