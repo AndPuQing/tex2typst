@@ -119,11 +119,26 @@ function find_closing_match(tokens: TexToken[], start: number, leftToken: TexTok
 }
 
 
-const LEFT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\left');
+const LEFT_RIGHT_COMMANDS: TexToken[][] = [
+    [
+        new TexToken(TexTokenType.COMMAND, '\\left'),
+        new TexToken(TexTokenType.COMMAND, '\\right'),
+    ],
+    [
+        new TexToken(TexTokenType.COMMAND, '\\bigl'),
+        new TexToken(TexTokenType.COMMAND, '\\bigr'),
+    ]
+]
 const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
 
 function find_closing_right_command(tokens: TexToken[], start: number): number {
-    return find_closing_match(tokens, start, LEFT_COMMAND, RIGHT_COMMAND);
+    const leftCommand = tokens[start];
+    for (const pair of LEFT_RIGHT_COMMANDS) {
+        if (leftCommand.eq(pair[0])) {
+            return find_closing_match(tokens, start, pair[0], pair[1]);
+        }
+    }
+    throw new LatexParserError('Call find_closing_right_command with a non-left command');
 }
 
 
@@ -310,7 +325,7 @@ export class LatexParser {
             case TexTokenType.COMMAND:
                 if (firstToken.eq(BEGIN_COMMAND)) {
                     return this.parseBeginEndExpr(tokens, start);
-                } else if (firstToken.eq(LEFT_COMMAND)) {
+                } else if (LEFT_RIGHT_COMMANDS.some(pair => firstToken.eq(pair[0]))) {
                     return this.parseLeftRightExpr(tokens, start);
                 } else {
                     return this.parseCommandExpr(tokens, start);
@@ -402,7 +417,7 @@ export class LatexParser {
     }
 
     parseLeftRightExpr(tokens: TexToken[], start: number): ParseResult {
-        assert(tokens[start].eq(LEFT_COMMAND));
+        assert(LEFT_RIGHT_COMMANDS.some(pair => tokens[start].eq(pair[0])));
 
         let pos = start + 1;
         pos += eat_whitespaces(tokens, pos).length;
