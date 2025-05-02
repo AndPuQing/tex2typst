@@ -274,7 +274,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 // align, align*, alignat, alignat*, aligned, etc.
                 return new TypstNode('align', '', [], data);
             }
-            if (node.content!.startsWith('cases')) {
+            if (node.content! === 'cases') {
                 return new TypstNode('cases', '', [], data);
             }
             if (node.content!.endsWith('matrix')) {
