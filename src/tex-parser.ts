@@ -127,9 +127,12 @@ const LEFT_RIGHT_COMMANDS: TexToken[][] = [
     [
         new TexToken(TexTokenType.COMMAND, '\\bigl'),
         new TexToken(TexTokenType.COMMAND, '\\bigr'),
+    ],
+    [
+        new TexToken(TexTokenType.COMMAND, '\\biggl'),
+        new TexToken(TexTokenType.COMMAND, '\\biggr'),
     ]
 ]
-const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
 
 function find_closing_right_command(tokens: TexToken[], start: number): number {
     const leftCommand = tokens[start];
@@ -417,36 +420,38 @@ export class LatexParser {
     }
 
     parseLeftRightExpr(tokens: TexToken[], start: number): ParseResult {
-        assert(LEFT_RIGHT_COMMANDS.some(pair => tokens[start].eq(pair[0])));
+        const pairs = LEFT_RIGHT_COMMANDS.filter(pair => tokens[start].eq(pair[0]));
+        assert(pairs.length > 0);
+        const [leftCommand, rightCommand] = pairs[0];
 
         let pos = start + 1;
         pos += eat_whitespaces(tokens, pos).length;
 
         if (pos >= tokens.length) {
-            throw new LatexParserError('Expecting delimiter after \\left');
+            throw new LatexParserError(`Expecting delimiter after ${leftCommand.value}`);
         }
 
         const leftDelimiter = eat_parenthesis(tokens, pos);
         if (leftDelimiter === null) {
-            throw new LatexParserError('Invalid delimiter after \\left');
+            throw new LatexParserError(`Invalid delimiter after ${leftCommand.value}`);
         }
         pos++;
         const exprInsideStart = pos;
         const idx = find_closing_right_command(tokens, start);
         if (idx === -1) {
-            throw new LatexParserError('No matching \\right');
+            throw new LatexParserError(`No matching ${rightCommand.value}`);
         }
         const exprInsideEnd = idx;
         pos = idx + 1;
 
         pos += eat_whitespaces(tokens, pos).length;
         if (pos >= tokens.length) {
-            throw new LatexParserError('Expecting \\right after \\left');
+            throw new LatexParserError(`Expecting ${rightCommand.value} after ${leftCommand.value}`);
         }
 
         const rightDelimiter = eat_parenthesis(tokens, pos);
         if (rightDelimiter === null) {
-            throw new LatexParserError('Invalid delimiter after \\right');
+            throw new LatexParserError(`Invalid delimiter after ${rightCommand.value}`);
         }
         pos++;
 
