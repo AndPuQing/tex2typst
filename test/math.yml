@@ -386,3 +386,69 @@ cases:
   - title: hspace
     tex: \hspace{1cm}
     typst: "#h(1cm)"
+  - title: cases1
+    tex: |-
+      \begin{cases}
+      x^2, & \text{if } x \geq 0 \\
+      -x,  & \text{if } x < 0
+      \end{cases}
+    typst: |-
+      cases(x^2 comma & "if " x >= 0,
+      - x comma & "if " x < 0)
+  - title: cases2
+    tex: |-
+      A_{ij} = 
+        \begin{cases}
+        1, & \text{if } i = j \\
+        0, & \text{otherwise}
+        \end{cases}
+    typst: |-
+      A_(i j) =
+      cases(1 comma & "if " i = j,
+      0 comma & "otherwise")
+  - title: cases3
+    tex: |-
+      P(X = x) = 
+        \begin{cases}
+        \frac{1}{n}, & x \in \{1,2,\dots,n\} \\
+        0,           & \text{otherwise}
+        \end{cases}
+    typst: |-
+      P(X = x) =
+      cases(1/n comma & x in {1 comma 2 comma ... comma n},
+      0 comma & "otherwise")
+  - title: cases4
+    tex: |-
+      f(x) = 
+        \begin{cases}
+        x^2 + 1,        & \text{if } x < -1 \\
+        \sin x + x^2,   & \text{if } -1 \leq x \leq 1 \\
+        \sqrt{x},       & \text{if } x > 1
+        \end{cases}
+    typst: |-
+      f(x) =
+      cases(x^2 + 1 comma & "if " x < - 1,
+      sin x + x^2 comma & "if " - 1 <= x <= 1,
+      sqrt(x) comma & "if " x > 1)
+  - title: cases5
+    tex: |-
+      \begin{align*}
+      f(x) &= 
+      \begin{cases}
+      x^2, & x \geq 0 \\
+      -x, & x < 0
+      \end{cases} \\
+      g(x) &= 
+      \begin{cases}
+      \sin x, & x < \pi \\
+      0, & x \geq \pi
+      \end{cases}
+      \end{align*}
+
+    typst: |-
+      f(x) &=
+      cases(x^2 comma & x >= 0,
+      - x comma & x < 0) \
+      g(x) &=
+      cases(sin x comma & x < pi,
+      0 comma & x >= pi)

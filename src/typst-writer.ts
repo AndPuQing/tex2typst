@@ -275,6 +275,33 @@ export class TypstWriter {
                 this.insideFunctionDepth--;
                 break;
             }
+            case 'cases': {
+                const cases = node.data as TypstNode[][];
+                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'cases'));
+                this.insideFunctionDepth++;
+                this.queue.push(TYPST_LEFT_PARENTHESIS);
+                if (node.options) {
+                    for (const [key, value] of Object.entries(node.options)) {
+                        const value_str = typst_primitive_to_string(value);
+                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `${key}: ${value_str}, `));
+                    }
+                }
+                cases.forEach((row, i) => {
+                    row.forEach((cell, j) => {
+                        this.serialize(cell);
+                        if (j < row.length - 1) {
+                            this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '&'));
+                        } else {
+                            if (i < cases.length - 1) {
+                                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+                            }
+                        }
+                    });
+                });
+                this.queue.push(TYPST_RIGHT_PARENTHESIS);
+                this.insideFunctionDepth--;
+                break;
+            }
             case 'unknown': {
                 if (this.nonStrict) {
                     this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content));
