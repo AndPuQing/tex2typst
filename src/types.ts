@@ -350,7 +350,7 @@ export interface TypstSupsubData {
 export type TypstArrayData = TypstNode[][];
 
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
-            | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'unknown';
+            | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
 
 export type TypstPrimitiveValue = string | boolean | null | TypstToken;
 export type TypstNamedParams = { [key: string]: TypstPrimitiveValue };

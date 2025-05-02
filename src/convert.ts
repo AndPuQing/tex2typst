@@ -274,6 +274,9 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 // align, align*, alignat, alignat*, aligned, etc.
                 return new TypstNode('align', '', [], data);
             }
+            if (node.content! === 'cases') {
+                return new TypstNode('cases', '', [], data);
+            }
             if (node.content!.endsWith('matrix')) {
                 let delim: TypstPrimitiveValue = null;
                 switch (node.content) {
@@ -515,6 +518,11 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 matrix,
                 new TexNode('element', right_delim)
             ]);
+        }
+        case 'cases': {
+            const typst_data = node.data as TypstNode[][];
+            const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
+            return new TexNode('beginend', 'cases', [], tex_data);
         }
         case 'control': {
             switch (node.content) {

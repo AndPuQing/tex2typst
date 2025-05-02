@@ -383,6 +383,12 @@ export class TypstParser {
                     mat.setOptions(named_params);
                     return [mat, newPos];
                 }
+                if(firstToken.value === 'cases') {
+                    const [cases, named_params, newPos] = this.parseGroupsOfArguments(tokens, start + 1, COMMA);
+                    const casesNode = new TypstNode('cases', '', [], cases);
+                    casesNode.setOptions(named_params);
+                    return [casesNode, newPos];
+                }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
                 const func_call = new TypstNode('funcCall', firstToken.value);
                 func_call.args = args;
@@ -400,7 +406,7 @@ export class TypstParser {
     }
 
     // start: the position of the left parentheses
-    parseGroupsOfArguments(tokens: TypstToken[], start: number): [TypstNode[][], TypstNamedParams, number] {
+    parseGroupsOfArguments(tokens: TypstToken[], start: number, newline_token = SEMICOLON): [TypstNode[][], TypstNamedParams, number] {
         const end = find_closing_match(tokens, start);
         tokens = tokens.slice(0, end);
 
@@ -410,7 +416,7 @@ export class TypstParser {
         let pos = start + 1;
         while (pos < end) {
             while(pos < end) {
-                let next_stop = array_find(tokens, SEMICOLON, pos);
+                let next_stop = array_find(tokens, newline_token, pos);
                 if (next_stop === -1) {
                     next_stop = end;
                 }
