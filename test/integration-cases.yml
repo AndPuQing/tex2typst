@@ -426,7 +426,7 @@ cases:
     tex: a \ll b \gg c
     typst: a << b >> c
   - title: "<==>"
-    tex: a \iff b
+    tex: a \Longleftrightarrow b
     typst: a <==> b
   - title: "<-->"
     tex: a \longleftrightarrow b

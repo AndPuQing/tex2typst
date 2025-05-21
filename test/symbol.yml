@@ -124,3 +124,7 @@ cases:
   - title: backslash |
     tex: \|
     typst: parallel
+  - title: preferShorthands
+    tex: \leadsto
+    typst: ~>
+    preferShorthands: true

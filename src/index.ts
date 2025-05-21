@@ -5,6 +5,7 @@ import { convert_tex_node_to_typst, convert_typst_node_to_tex } from "./convert"
 import { symbolMap } from "./map";
 import { parseTypst } from "./typst-parser";
 import { TexWriter } from "./tex-writer";
+import { shorthandMap } from "./typst-shorthands";
 
 
 export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
@@ -41,4 +42,4 @@ export function typst2tex(typst: string): string {
     return writer.finalize();
 }
 
-export { symbolMap, Tex2TypstOptions };
+export { Tex2TypstOptions, symbolMap, shorthandMap };

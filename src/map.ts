@@ -74,11 +74,8 @@ const symbolMap = new Map<string, string>([
     ['propto', 'prop'],
 
     /* arrows */
-    ['gets', 'arrow.l'],
     // ['longmapsto', 'arrow.r.bar'],
-    ['iff', 'arrow.l.r.double.long'],
-    ['implies', 'arrow.r.double.long'],
-    ['leadsto', 'arrow.squiggly'],
+    ['leadsto', 'arrow.r.squiggly'],
 
 
     ['Cap', 'sect.double'], 
@@ -1054,6 +1051,20 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['jmath', 'dotless.j'],
 ]);
 
+const texAliasMap = new Map<string, string>([
+    ['gets', 'leftarrow'],
+    ['iff', 'Longleftrightarrow'],
+    ['implies', 'Longrightarrow'],
+]);
+
+const typstAliasMap = new Map<string, string>([
+    // ['arrow', 'arrow.r'],
+    // ['dot', 'dot.op'],
+    ['arrow.double', 'arrow.r.double'],
+    ['arrow.squiggly', 'arrow.r.squiggly'],
+]);
+
+
 for(const [key, value] of map_from_official_docs) {
     if(!symbolMap.has(key)) {
         symbolMap.set(key, value);
@@ -1084,4 +1095,10 @@ for(const [key, value] of typst_to_tex_map) {
     reverseSymbolMap.set(key, value);
 }
 
-export {symbolMap, reverseSymbolMap};
+for(const [key, value] of texAliasMap) {
+    if(!symbolMap.has(key)) {
+        symbolMap.set(key, symbolMap.get(value)!);
+    }
+}
+
+export {symbolMap, reverseSymbolMap, texAliasMap, typstAliasMap};
