@@ -119,29 +119,11 @@ function find_closing_match(tokens: TexToken[], start: number, leftToken: TexTok
 }
 
 
-const LEFT_RIGHT_COMMANDS: TexToken[][] = [
-    [
-        new TexToken(TexTokenType.COMMAND, '\\left'),
-        new TexToken(TexTokenType.COMMAND, '\\right'),
-    ],
-    [
-        new TexToken(TexTokenType.COMMAND, '\\bigl'),
-        new TexToken(TexTokenType.COMMAND, '\\bigr'),
-    ],
-    [
-        new TexToken(TexTokenType.COMMAND, '\\biggl'),
-        new TexToken(TexTokenType.COMMAND, '\\biggr'),
-    ]
-]
+const LEFT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\left');
+const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
 
 function find_closing_right_command(tokens: TexToken[], start: number): number {
-    const leftCommand = tokens[start];
-    for (const pair of LEFT_RIGHT_COMMANDS) {
-        if (leftCommand.eq(pair[0])) {
-            return find_closing_match(tokens, start, pair[0], pair[1]);
-        }
-    }
-    throw new LatexParserError('Call find_closing_right_command with a non-left command');
+    return find_closing_match(tokens, start, LEFT_COMMAND, RIGHT_COMMAND);
 }
 
 
@@ -328,7 +310,7 @@ export class LatexParser {
             case TexTokenType.COMMAND:
                 if (firstToken.eq(BEGIN_COMMAND)) {
                     return this.parseBeginEndExpr(tokens, start);
-                } else if (LEFT_RIGHT_COMMANDS.some(pair => firstToken.eq(pair[0]))) {
+                } else if (firstToken.eq(LEFT_COMMAND)) {
                     return this.parseLeftRightExpr(tokens, start);
                 } else {
                     return this.parseCommandExpr(tokens, start);
@@ -420,38 +402,36 @@ export class LatexParser {
     }
 
     parseLeftRightExpr(tokens: TexToken[], start: number): ParseResult {
-        const pairs = LEFT_RIGHT_COMMANDS.filter(pair => tokens[start].eq(pair[0]));
-        assert(pairs.length > 0);
-        const [leftCommand, rightCommand] = pairs[0];
+        assert(tokens[start].eq(LEFT_COMMAND));
 
         let pos = start + 1;
         pos += eat_whitespaces(tokens, pos).length;
 
         if (pos >= tokens.length) {
-            throw new LatexParserError(`Expecting delimiter after ${leftCommand.value}`);
+            throw new LatexParserError('Expecting delimiter after \\left');
         }
 
         const leftDelimiter = eat_parenthesis(tokens, pos);
         if (leftDelimiter === null) {
-            throw new LatexParserError(`Invalid delimiter after ${leftCommand.value}`);
+            throw new LatexParserError('Invalid delimiter after \\left');
         }
         pos++;
         const exprInsideStart = pos;
         const idx = find_closing_right_command(tokens, start);
         if (idx === -1) {
-            throw new LatexParserError(`No matching ${rightCommand.value}`);
+            throw new LatexParserError('No matching \\right');
         }
         const exprInsideEnd = idx;
         pos = idx + 1;
 
         pos += eat_whitespaces(tokens, pos).length;
         if (pos >= tokens.length) {
-            throw new LatexParserError(`Expecting ${rightCommand.value} after ${leftCommand.value}`);
+            throw new LatexParserError('Expecting \\right after \\left');
         }
 
         const rightDelimiter = eat_parenthesis(tokens, pos);
         if (rightDelimiter === null) {
-            throw new LatexParserError(`Invalid delimiter after ${rightCommand.value}`);
+            throw new LatexParserError('Invalid delimiter after \\right');
         }
         pos++;
 

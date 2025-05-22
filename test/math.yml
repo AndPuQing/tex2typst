@@ -47,24 +47,9 @@ cases:
   - title: lr
     tex: \left|a + \frac{1}{3} \right|^2
     typst: lr(|a + 1/3|)^2
-  - title: biglr
-    tex: \bigl|a + \frac{1}{3} \bigr|^2
-    typst: lr(|a + 1/3|)^2
-  - title: bigglr
-    tex: \biggl|a + \frac{1}{3} \biggr|^2
-    typst: lr(|a + 1/3|)^2
   - title: symmetry left right
     tex: \left\{ a \right\} \left( b \right) \left[ c \right]
     typst: '{a}(b) [c]'
-  - title: symmetry bigl bigr
-    tex: \bigl\{ a \bigr\} \bigl( b \bigr) \bigl[ c \bigr]
-    typst: '{a}(b) [c]'
-  - title: symmetry biggl biggr
-    tex: \biggl\{ a \biggr\} \biggl( b \biggr) \biggl[ c \biggr]
-    typst: '{a}(b) [c]'
-  - title: paired delimiter commands
-    tex: \left(\bigl[\biggl\{a\biggr\}\bigr]\right)
-    typst: '([ {a}])'
   - title: operatorname
     tex: '\operatorname{diag} \text{diag}'
     typst: 'op("diag") "diag"'
