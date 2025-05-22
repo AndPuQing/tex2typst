@@ -48,7 +48,12 @@ const BINARY_COMMANDS = [
     'overset',
 ]
 
-
+const IGNORED_COMMANDS = [
+    'bigl', 'bigr',
+    'biggl', 'biggr',
+    'Bigl', 'Bigr',
+    'Biggl', 'Biggr',
+];
 
 const EMPTY_NODE: TexNode = new TexNode('empty', '');
 
@@ -296,6 +301,9 @@ export class LatexParser {
     }
 
     parseNextExprWithoutSupSub(tokens: TexToken[], start: number): ParseResult {
+        if (start >= tokens.length) {
+            return [EMPTY_NODE, start];
+        }
         const firstToken = tokens[start];
         switch (firstToken.type) {
             case TexTokenType.ELEMENT:
@@ -308,6 +316,10 @@ export class LatexParser {
             case TexTokenType.NEWLINE:
                 return [new TexNode('whitespace', firstToken.value), start + 1];
             case TexTokenType.COMMAND:
+                const commandName = firstToken.value.slice(1);
+                if (IGNORED_COMMANDS.includes(commandName)) {
+                    return this.parseNextExprWithoutSupSub(tokens, start + 1);
+                }
                 if (firstToken.eq(BEGIN_COMMAND)) {
                     return this.parseBeginEndExpr(tokens, start);
                 } else if (firstToken.eq(LEFT_COMMAND)) {
