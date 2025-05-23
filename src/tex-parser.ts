@@ -181,7 +181,6 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
             new TexToken(TexTokenType.COMMAND, command),
             new TexToken(TexTokenType.ELEMENT, arg1),
             new TexToken(TexTokenType.ELEMENT, arg2),
-            new TexToken(TexTokenType.SPACE, ' ')
         ];
     }],
     [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`, (s) => {
