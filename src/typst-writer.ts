@@ -84,8 +84,6 @@ export class TypstWriter {
         no_need_space ||= /^[_^,;!]$/.test(str);
         // putting a prime
         no_need_space ||= str === "'";
-        // continue a number
-        no_need_space ||= /[0-9]$/.test(this.buffer) && /^[0-9]/.test(str);
         // leading sign. e.g. produce "+1" instead of " +1"
         no_need_space ||= /[\(\[{]\s*(-|\+)$/.test(this.buffer) || this.buffer === "-" || this.buffer === "+";
         // new line

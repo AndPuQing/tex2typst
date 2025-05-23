@@ -169,8 +169,38 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     [String.raw`\s+`, (s) => new TexToken(TexTokenType.SPACE, s.text()!)],
     [String.raw`\\[\\,:;]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
-    [String.raw`\\[a-zA-Z]+`, (s) => new TexToken(TexTokenType.COMMAND, s.text()!)],
-    [String.raw`[0-9]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])\s*([0-9a-zA-Z])`, (s) => {
+        const text = s.text()!;
+        const regex = RegExp(String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])\s*([0-9a-zA-Z])`);
+        const match = text.match(regex);
+        assert(match !== null);
+        const command = match![1];
+        const arg1 = match![2].trimStart();
+        const arg2 = match![3];
+        return [
+            new TexToken(TexTokenType.COMMAND, command),
+            new TexToken(TexTokenType.ELEMENT, arg1),
+            new TexToken(TexTokenType.ELEMENT, arg2),
+            new TexToken(TexTokenType.SPACE, ' ')
+        ];
+    }],
+    [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`, (s) => {
+        const text = s.text()!;
+        const regex = RegExp(String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`);
+        const match = text.match(regex);
+        assert(match !== null);
+        const command = match![1];
+        const arg1 = match![2].trimStart();
+        return [
+            new TexToken(TexTokenType.COMMAND, command),
+            new TexToken(TexTokenType.ELEMENT, arg1),
+        ];
+    }],
+    [String.raw`\\[a-zA-Z]+`, (s) => {
+        const command = s.text()!;
+        return [ new TexToken(TexTokenType.COMMAND, command), ];
+    }],
+    [String.raw`[0-9]+`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[a-zA-Z]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`.`, (s) => new TexToken(TexTokenType.UNKNOWN, s.text()!)],
