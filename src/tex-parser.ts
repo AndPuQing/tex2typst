@@ -48,7 +48,12 @@ const BINARY_COMMANDS = [
     'overset',
 ]
 
-
+const IGNORED_COMMANDS = [
+    'bigl', 'bigr',
+    'biggl', 'biggr',
+    'Bigl', 'Bigr',
+    'Biggl', 'Biggr',
+];
 
 const EMPTY_NODE: TexNode = new TexNode('empty', '');
 
@@ -164,7 +169,36 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     [String.raw`\s+`, (s) => new TexToken(TexTokenType.SPACE, s.text()!)],
     [String.raw`\\[\\,:;]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
-    [String.raw`\\[a-zA-Z]+`, (s) => new TexToken(TexTokenType.COMMAND, s.text()!)],
+    [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])\s*([0-9a-zA-Z])`, (s) => {
+        const text = s.text()!;
+        const regex = RegExp(String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])\s*([0-9a-zA-Z])`);
+        const match = text.match(regex);
+        assert(match !== null);
+        const command = match![1];
+        const arg1 = match![2].trimStart();
+        const arg2 = match![3];
+        return [
+            new TexToken(TexTokenType.COMMAND, command),
+            new TexToken(TexTokenType.ELEMENT, arg1),
+            new TexToken(TexTokenType.ELEMENT, arg2),
+        ];
+    }],
+    [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`, (s) => {
+        const text = s.text()!;
+        const regex = RegExp(String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`);
+        const match = text.match(regex);
+        assert(match !== null);
+        const command = match![1];
+        const arg1 = match![2].trimStart();
+        return [
+            new TexToken(TexTokenType.COMMAND, command),
+            new TexToken(TexTokenType.ELEMENT, arg1),
+        ];
+    }],
+    [String.raw`\\[a-zA-Z]+`, (s) => {
+        const command = s.text()!;
+        return [ new TexToken(TexTokenType.COMMAND, command), ];
+    }],
     [String.raw`[0-9]+`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[a-zA-Z]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
@@ -296,6 +330,9 @@ export class LatexParser {
     }
 
     parseNextExprWithoutSupSub(tokens: TexToken[], start: number): ParseResult {
+        if (start >= tokens.length) {
+            return [EMPTY_NODE, start];
+        }
         const firstToken = tokens[start];
         switch (firstToken.type) {
             case TexTokenType.ELEMENT:
@@ -308,6 +345,10 @@ export class LatexParser {
             case TexTokenType.NEWLINE:
                 return [new TexNode('whitespace', firstToken.value), start + 1];
             case TexTokenType.COMMAND:
+                const commandName = firstToken.value.slice(1);
+                if (IGNORED_COMMANDS.includes(commandName)) {
+                    return this.parseNextExprWithoutSupSub(tokens, start + 1);
+                }
                 if (firstToken.eq(BEGIN_COMMAND)) {
                     return this.parseBeginEndExpr(tokens, start);
                 } else if (firstToken.eq(LEFT_COMMAND)) {
@@ -376,7 +417,7 @@ export class LatexParser {
                         throw new LatexParserError('No matching right square bracket for [');
                     }
                     const [exponent, _] = this.parseGroup(tokens, posLeftSquareBracket + 1, posRightSquareBracket);
-                    const [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, posRightSquareBracket + 1);
+                    const [arg1, newPos] = this.parseNextArg(tokens, posRightSquareBracket + 1);
                     return [new TexNode('unaryFunc', command, [arg1], exponent), newPos];
                 } else if (command === '\\text') {
                     if (pos + 2 >= tokens.length) {
@@ -388,17 +429,41 @@ export class LatexParser {
                     const text = tokens[pos + 1].value;
                     return [new TexNode('text', text), pos + 3];
                 }
-                let [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, pos);
+                let [arg1, newPos] = this.parseNextArg(tokens, pos);
                 return [new TexNode('unaryFunc', command, [arg1]), newPos];
             }
             case 2: {
-                const [arg1, pos1] = this.parseNextExprWithoutSupSub(tokens, pos);
-                const [arg2, pos2] = this.parseNextExprWithoutSupSub(tokens, pos1);
+                const [arg1, pos1] = this.parseNextArg(tokens, pos);
+                const [arg2, pos2] = this.parseNextArg(tokens, pos1);
                 return [new TexNode('binaryFunc', command, [arg1, arg2]), pos2];
             }
             default:
                 throw new Error( 'Invalid number of parameters');
         }
+    }
+
+    /*
+    Extract a non-space argument from the token stream.
+    So that `\frac{12} 3` is parsed as
+        TexCommand{ content: '\frac', args: ['12', '3'] }
+        rather than
+        TexCommand{ content: '\frac', args: ['12', ' '] }, TexElement{ content: '3' }
+    */
+    parseNextArg(tokens: TexToken[], start: number): ParseResult {
+        let pos = start;
+        let arg: TexNode | null = null;
+        while (pos < tokens.length) {
+            let node: TexNode;
+            [node, pos] = this.parseNextExprWithoutSupSub(tokens, pos);
+            if (node.type !== 'whitespace') {
+                arg = node;
+                break;
+            }
+        }
+        if (arg === null) {
+            throw new LatexParserError('Expecting argument but token stream ended');
+        }
+        return [arg, pos];
     }
 
     parseLeftRightExpr(tokens: TexToken[], start: number): ParseResult {
