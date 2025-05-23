@@ -170,7 +170,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     [String.raw`\\[\\,:;]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`\\[a-zA-Z]+`, (s) => new TexToken(TexTokenType.COMMAND, s.text()!)],
-    [String.raw`[0-9]+`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    [String.raw`[0-9]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[a-zA-Z]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`.`, (s) => new TexToken(TexTokenType.UNKNOWN, s.text()!)],

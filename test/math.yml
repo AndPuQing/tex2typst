@@ -470,3 +470,21 @@ cases:
       g(x) &=
       cases(sin x comma & x < pi,
       0 comma & x >= pi)
+  - title: frac1
+    tex: \frac ab
+    typst: a/b
+  - title: frac2
+    tex: \frac 12
+    typst: 1/2
+  - title: frac3
+    tex: \frac 12
+    typst: 1/2
+  - title: frac4
+    tex: \frac12
+    typst: 1/2
+  - title: frac5
+    tex: \frac{12}{34}
+    typst: 12/34
+  - title: frac6
+    tex: \frac123
+    typst: 1/2 3
