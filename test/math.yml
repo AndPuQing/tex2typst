@@ -488,3 +488,6 @@ cases:
   - title: frac6
     tex: \frac123
     typst: 1/2 3
+  - title: frac7
+    tex: \frac {12}3
+    typst: 12/3

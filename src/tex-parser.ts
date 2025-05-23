@@ -417,7 +417,7 @@ export class LatexParser {
                         throw new LatexParserError('No matching right square bracket for [');
                     }
                     const [exponent, _] = this.parseGroup(tokens, posLeftSquareBracket + 1, posRightSquareBracket);
-                    const [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, posRightSquareBracket + 1);
+                    const [arg1, newPos] = this.parseNextArg(tokens, posRightSquareBracket + 1);
                     return [new TexNode('unaryFunc', command, [arg1], exponent), newPos];
                 } else if (command === '\\text') {
                     if (pos + 2 >= tokens.length) {
@@ -429,17 +429,41 @@ export class LatexParser {
                     const text = tokens[pos + 1].value;
                     return [new TexNode('text', text), pos + 3];
                 }
-                let [arg1, newPos] = this.parseNextExprWithoutSupSub(tokens, pos);
+                let [arg1, newPos] = this.parseNextArg(tokens, pos);
                 return [new TexNode('unaryFunc', command, [arg1]), newPos];
             }
             case 2: {
-                const [arg1, pos1] = this.parseNextExprWithoutSupSub(tokens, pos);
-                const [arg2, pos2] = this.parseNextExprWithoutSupSub(tokens, pos1);
+                const [arg1, pos1] = this.parseNextArg(tokens, pos);
+                const [arg2, pos2] = this.parseNextArg(tokens, pos1);
                 return [new TexNode('binaryFunc', command, [arg1, arg2]), pos2];
             }
             default:
                 throw new Error( 'Invalid number of parameters');
         }
+    }
+
+    /*
+    Extract a non-space argument from the token stream.
+    So that `\frac{12} 3` is parsed as
+        TexCommand{ content: '\frac', args: ['12', '3'] }
+        rather than
+        TexCommand{ content: '\frac', args: ['12', ' '] }, TexElement{ content: '3' }
+    */
+    parseNextArg(tokens: TexToken[], start: number): ParseResult {
+        let pos = start;
+        let arg: TexNode | null = null;
+        while (pos < tokens.length) {
+            let node: TexNode;
+            [node, pos] = this.parseNextExprWithoutSupSub(tokens, pos);
+            if (node.type !== 'whitespace') {
+                arg = node;
+                break;
+            }
+        }
+        if (arg === null) {
+            throw new LatexParserError('Expecting argument but token stream ended');
+        }
+        return [arg, pos];
     }
 
     parseLeftRightExpr(tokens: TexToken[], start: number): ParseResult {
