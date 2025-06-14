@@ -56,10 +56,10 @@ cases:
     typst: integral integral.cont integral.double integral.surf integral.triple integral.vol
   - title: big symbols used to denote accumulated operations
     tex: \sum \prod \bigcup \bigcap \bigvee \bigwedge \bigoplus \bigotimes \bigodot \biguplus \bigsqcup
-    typst: sum product union.big sect.big or.big and.big plus.circle.big times.circle.big dot.circle.big union.plus.big union.sq.big
+    typst: sum product union.big inter.big or.big and.big plus.circle.big times.circle.big dot.circle.big union.plus.big union.sq.big
   - title: wave
     tex: \sim \approx \cong \simeq \asymp \equiv \propto
-    typst: tilde.op approx tilde.equiv tilde.eq ≍ equiv prop
+    typst: tilde.op approx tilde.equiv tilde.eq asymp equiv prop
     preferShorthands: false
   - title: arrows used in proofs
     tex: \implies \iff \leftrightarrow \longleftrightarrow \rightrightarrows

@@ -55,67 +55,29 @@ const symbolMap = new Map<string, string>([
     // TODO: \pmb need special logic to handle but it is not implemented now. See the commented test case.
     ['pmb', 'bold'],
 
-    /* variants of plus,minus,times,divide */
-    ['pm', 'plus.minus'],
-    ['mp', 'minus.plus'],
-    ['boxplus', 'plus.square'],
-    ['otimes', 'times.circle'],
-    ['boxtimes', 'times.square'],
-
-
-    /* wave */
-    // tex: \sim \approx \cong \simeq \asymp \equiv \propto
-    // typst: tilde.op approx tilde.equiv tilde.eq ≍ equiv prop
-    ['approx', 'approx'],
-    ['cong', 'tilde.equiv'],
-    ['simeq', 'tilde.eq'],
-    ['asymp', '≍'],   // just use the unicode character :-)
-    ['equiv', 'equiv'],
-    ['propto', 'prop'],
-
-    /* arrows */
-    // ['longmapsto', 'arrow.r.bar'],
     ['leadsto', 'arrow.r.squiggly'],
+    ['P', 'pilcrow'],
+    ['S', 'section'],
+    ['aleph', 'alef'],
 
 
-    ['Cap', 'sect.double'], 
-    ['Cup', 'union.double'], 
     ['Delta', 'Delta'], 
     ['Gamma', 'Gamma'], 
-    ['Join', 'join'], 
     ['Lambda', 'Lambda'], 
     ['Omega', 'Omega'], 
-    ['P', 'pilcrow'], 
     ['Phi', 'Phi'], 
     ['Pi', 'Pi'], 
     ['Psi', 'Psi'], 
-    ['Rightarrow', 'arrow.r.double'], 
-    ['S', 'section'], 
     ['Sigma', 'Sigma'], 
     ['Theta', 'Theta'], 
-    ['aleph', 'alef'], 
+
     ['alpha', 'alpha'], 
     // ['amalg', 'product.co'], 
-    ['angle', 'angle'], 
-    ['approx', 'approx'], 
-    ['approxeq', 'approx.eq'], 
-    // ['ast', 'ast'], 
     ['beta', 'beta'], 
-    ['bigcap', 'sect.big'], 
+
     ['bigcirc', 'circle.big'], 
-    ['bigcup', 'union.big'], 
-    ['bigodot', 'dot.circle.big'], 
-    // ['bigoplus', 'xor.big'], // or "plus.circle.big"
-    ['bigotimes', 'times.circle.big'], 
-    ['bigsqcup', 'union.sq.big'], 
-    // ['bigtriangledown', 'triangle.b'], 
-    // ['bigtriangleup', 'triangle.t'], 
-    ['biguplus', 'union.plus.big'], 
-    ['bigvee', 'or.big'], 
-    ['bigwedge', 'and.big'], 
     // ['bowtie', 'join'], 
     ['bullet', 'bullet'], 
-    ['cap', 'sect'], 
     ['cdot', 'dot.op'],  // 'dot.op' or 'dot.c'
     ['cdots', 'dots.c'], 
     ['checkmark', 'checkmark'], 
@@ -210,7 +172,6 @@ const symbolMap = new Map<string, string>([
     ['oiint', 'integral.surf'],
     ['oiiint', 'integral.vol'],
     ['omega', 'omega'], 
-    // ['omicron', 'omicron'], 
     ['ominus', 'minus.circle'], 
     // ['oplus', 'xor'], // or 'plus.circle'
     ['otimes', 'times.circle'], 
@@ -243,8 +204,6 @@ const symbolMap = new Map<string, string>([
     ['smallsetminus', 'without'], 
     // ['smile', 'paren.b'], 
     ['spadesuit', 'suit.spade'],
-    ['sqcap', 'sect.sq'], 
-    ['sqcup', 'union.sq'], 
     ['sqsubseteq', 'subset.eq.sq'],
     ['sqsupseteq', 'supset.eq.sq'],
     // ['star', 'star'], 
@@ -360,15 +319,15 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['bigcupdot', 'union.dot.big'],
     ['biginterleave', 'interleave.big'],
     ['bigodot', 'dot.circle.big'],
-    ['bigoplus', 'plus.circle.big'],
+    ['bigoplus', 'plus.circle.big'], // or 'xor.big'
     ['bigotimes', 'times.circle.big'],
     ['bigsqcap', 'inter.sq.big'],
     ['bigsqcup', 'union.sq.big'],
     ['bigstar', 'star.filled'],
     ['bigtimes', 'times.big'],
     ['bigtop', 'tack.b.big'],
-    ['bigtriangledown', 'triangle.stroked.b'],
-    ['bigtriangleup', 'triangle.stroked.t'],
+    ['bigtriangledown', 'triangle.stroked.b'], // or 'triangle.b'
+    ['bigtriangleup', 'triangle.stroked.t'], // or 'triangle.t'
     ['biguplus', 'union.plus.big'],
     ['bigvee', 'or.big'],
     ['bigwedge', 'and.big'],
