@@ -26,5 +26,10 @@ if __name__ == '__main__':
             # We only keep the first one
             if latex not in symbol_map:
                 symbol_map[latex] = typst
-                # print(f"    ['{latex[1:]}', '{typst}'],")
-                print(f'{latex[1:]} = "{typst}"')
+
+    # sort the pairs with alphabetical order of latex
+    sorted_keys = sorted(list(symbol_map.keys()), key=str.lower)
+    sorted_symbol_map = [(key, symbol_map[key]) for key in sorted_keys]
+    for latex, typst in sorted_symbol_map:
+        print(f"    ['{latex[1:]}', '{typst}'],")
+        # print(f'{latex[1:]} = "{typst}"')
