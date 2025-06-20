@@ -175,25 +175,35 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
         const match = text.match(regex);
         assert(match !== null);
         const command = match![1];
-        const arg1 = match![2].trimStart();
-        const arg2 = match![3];
-        return [
-            new TexToken(TexTokenType.COMMAND, command),
-            new TexToken(TexTokenType.ELEMENT, arg1),
-            new TexToken(TexTokenType.ELEMENT, arg2),
-        ];
-    }],
+        if (BINARY_COMMANDS.includes(command.substring(1))) {
+            const arg1 = match![2].trimStart();
+            const arg2 = match![3];
+            return [
+                new TexToken(TexTokenType.COMMAND, command),
+                new TexToken(TexTokenType.ELEMENT, arg1),
+                new TexToken(TexTokenType.ELEMENT, arg2),
+            ];
+        } else {
+            s.reject();
+            return [];
+        }
+   }],
     [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`, (s) => {
         const text = s.text()!;
         const regex = RegExp(String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`);
         const match = text.match(regex);
         assert(match !== null);
         const command = match![1];
-        const arg1 = match![2].trimStart();
-        return [
-            new TexToken(TexTokenType.COMMAND, command),
-            new TexToken(TexTokenType.ELEMENT, arg1),
-        ];
+        if (UNARY_COMMANDS.includes(command.substring(1))) {
+            const arg1 = match![2].trimStart();
+            return [
+                new TexToken(TexTokenType.COMMAND, command),
+                new TexToken(TexTokenType.ELEMENT, arg1),
+            ];
+        } else {
+            s.reject();
+            return [];
+        }
     }],
     [String.raw`\\[a-zA-Z]+`, (s) => {
         const command = s.text()!;

@@ -491,3 +491,7 @@ cases:
   - title: frac7
     tex: \frac {12}3
     typst: 12/3
+  # this test the lexer's regex. Old non-rigorous implementation translated it to "yen 2 0 00 \$ 3000"
+  - title: yen
+    tex: \yen 2000 > \$ 3000
+    typst: yen 2000 > \$ 3000
