@@ -50,7 +50,7 @@ describe('examples', () => {
         const res = writer.finalize();
         expect(res).toEqual('\\int_a^b f(x) \\mathrm{d} x');
     });
-    
+
     it('lr({a))', function () {
         const typst_node = parseTypst('lr({a))');
         const tex_node = convert_typst_node_to_tex(typst_node);

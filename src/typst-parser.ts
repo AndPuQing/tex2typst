@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TYPST_NONE, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TYPST_NONE, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha } from "./util";
 import { reverseShorthandMap } from "./typst-shorthands";
 import { JSLex, Scanner } from "./jslex";
@@ -91,8 +91,9 @@ export function tokenize_typst(input: string): TypstToken[] {
 }
 
 
-function find_closing_match(tokens: TypstToken[], start: number): number {
-    assert(tokens[start].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET]));
+function _find_closing_match(tokens: TypstToken[], start: number,
+        leftBrackets: TypstToken[], rightBrackets: TypstToken[]): number {
+    assert(tokens[start].isOneOf(leftBrackets));
     let count = 1;
     let pos = start + 1;
 
@@ -100,16 +101,35 @@ function find_closing_match(tokens: TypstToken[], start: number): number {
         if (pos >= tokens.length) {
             throw new Error('Unmatched brackets');
         }
-        if (tokens[pos].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET])) {
-            count += 1;
-        } else if (tokens[pos].isOneOf([RIGHT_PARENTHESES, RIGHT_BRACKET, RIGHT_CURLY_BRACKET])) {
+        if (tokens[pos].isOneOf(rightBrackets)) {
             count -= 1;
+        }else if (tokens[pos].isOneOf(leftBrackets)) {
+            count += 1;
         }
         pos += 1;
     }
 
     return pos - 1;
 }
+
+function find_closing_match(tokens: TypstToken[], start: number): number {
+    return _find_closing_match(
+        tokens,
+        start,
+        [LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET],
+        [RIGHT_PARENTHESES, RIGHT_BRACKET, RIGHT_CURLY_BRACKET]
+    );
+}
+
+function find_closing_delim(tokens: TypstToken[], start: number): number {
+    return _find_closing_match(
+        tokens,
+        start,
+        [LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET, VERTICAL_BAR],
+        [RIGHT_PARENTHESES, RIGHT_BRACKET, RIGHT_CURLY_BRACKET, VERTICAL_BAR]
+    );
+}
+
 
 
 function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
@@ -261,6 +281,7 @@ const LEFT_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '[');
 const RIGHT_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ']');
 const LEFT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '{');
 const RIGHT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '}');
+const VERTICAL_BAR = new TypstToken(TypstTokenType.ELEMENT, '|');
 const COMMA = new TypstToken(TypstTokenType.ELEMENT, ',');
 const SEMICOLON = new TypstToken(TypstTokenType.ELEMENT, ';');
 const SINGLE_SPACE = new TypstToken(TypstTokenType.SPACE, ' ');
@@ -389,9 +410,13 @@ export class TypstParser {
                     casesNode.setOptions(named_params);
                     return [casesNode, newPos];
                 }
+                if (firstToken.value === 'lr') {
+                    const [args, newPos, lrData] = this.parseLrArguments(tokens, start + 1);
+                    const func_call = new TypstNode('funcCall', firstToken.value, args, lrData);
+                    return [func_call, newPos];
+                }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
-                const func_call = new TypstNode('funcCall', firstToken.value);
-                func_call.args = args;
+                const func_call = new TypstNode('funcCall', firstToken.value, args);
                 return [func_call, newPos];
             }
         }
@@ -403,6 +428,28 @@ export class TypstParser {
     parseArguments(tokens: TypstToken[], start: number): [TypstNode[], number] {
         const end = find_closing_match(tokens, start);
         return [this.parseCommaSeparatedArguments(tokens, start + 1, end), end + 1];
+    }
+
+    // start: the position of the left parentheses
+    parseLrArguments(tokens: TypstToken[], start: number): [TypstNode[], number, TypstLrData] {
+        if (tokens[start + 1].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET, VERTICAL_BAR])) {
+            const end = find_closing_match(tokens, start);
+            const inner_start = start + 1;
+            const inner_end = find_closing_delim(tokens, inner_start);
+            const inner_args= this.parseCommaSeparatedArguments(tokens, inner_start + 1, inner_end);
+            return [
+                inner_args,
+                end + 1,
+                {leftDelim: tokens[inner_start].value, rightDelim: tokens[inner_end].value} as TypstLrData
+            ];
+        } else {
+            const [args, end] = this.parseArguments(tokens, start);
+            return [
+                args,
+                end,
+                {leftDelim: null, rightDelim: null} as TypstLrData,
+            ];
+        }
     }
 
     // start: the position of the left parentheses
@@ -472,7 +519,7 @@ export class TypstParser {
                 pos = next_stop + 1;
             }
         }
-        
+
         return [matrix, named_params, end + 1];
     }
 
@@ -481,8 +528,7 @@ export class TypstParser {
         const args: TypstNode[] = [];
         let pos = start;
         while (pos < end) {
-            let arg = new TypstNode('group', '', []);
-
+            let nodes: TypstNode[] = [];
             while(pos < end) {
                 if(tokens[pos].eq(COMMA)) {
                     pos += 1;
@@ -493,14 +539,18 @@ export class TypstParser {
                 }
                 const [argItem, newPos] = this.parseNextExpr(tokens, pos);
                 pos = newPos;
-                arg.args!.push(argItem);
+                nodes.push(argItem);
             }
 
-            if(arg.args!.length === 0) {
+            let arg: TypstNode;
+            if (nodes.length === 0) {
                 arg = TYPST_EMPTY_NODE;
-            } else if (arg.args!.length === 1) {
-                arg = arg.args![0];
+            } else if (nodes.length === 1) {
+                arg = nodes[0];
+            } else {
+                arg = process_operators(nodes);
             }
+
             args.push(arg);
         }
         return args;

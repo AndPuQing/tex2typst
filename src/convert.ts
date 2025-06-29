@@ -1,7 +1,8 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_join } from "./generic";
+import { assert } from "./util";
 
 
 // symbols that are supported by Typst but not by KaTeX
@@ -417,17 +418,18 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if (TYPST_UNARY_FUNCTIONS.includes(node.content)) {
                 // special hook for lr
                 if (node.content === 'lr') {
-                    const body = node.args![0];
-                    if (body.type === 'group') {
-                        let left_delim = body.args![0].content;
-                        let right_delim = body.args![body.args!.length - 1].content;
-                        left_delim = apply_escape_if_needed(left_delim);
-                        right_delim = apply_escape_if_needed(right_delim);
+                    const data = node.data as TypstLrData;
+                    if (data.leftDelim !== null) {
+                        let left_delim = apply_escape_if_needed(data.leftDelim);
+                        assert(data.rightDelim !== null, "leftDelim has value but rightDelim not");
+                        let right_delim = apply_escape_if_needed(data.rightDelim!);
                         return new TexNode('ordgroup', '', [
                             new TexNode('element', '\\left' + left_delim),
-                            ...body.args!.slice(1, body.args!.length - 1).map(convert_typst_node_to_tex),
+                            ...node.args!.map(convert_typst_node_to_tex),
                             new TexNode('element', '\\right' + right_delim)
                         ]);
+                    } else {
+                        return new TexNode('ordgroup', '', node.args!.map(convert_typst_node_to_tex));
                     }
                 }
                 // special hook for floor, ceil

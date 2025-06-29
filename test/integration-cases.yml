@@ -239,9 +239,6 @@ cases:
   - title: Test8
     tex: \sqrt{\frac{1}{x^2 + y^2}}
     typst: sqrt(frac(1, x^2 + y^2))
-  - title: Test8
-    tex: \sqrt{\frac{1}{x^2 + y^2}}
-    typst: sqrt(frac(1, x^2 + y^2))
   - title: basic prime case
     tex: y'
     typst: y'
@@ -500,3 +497,9 @@ cases:
   - title: floor and ceil 1
     tex: \lfloor 1.2 \rfloor + \lceil 1.2 \rceil
     typst: floor(1.2) + ceil(1.2)
+  - title: floor and ceil 2
+    tex: \lfloor \frac{1}{2} \rfloor + \lceil \frac{1}{2} \rceil
+    typst: floor(1/2) + ceil(1/2)
+  - title: multiple arguments should join with comma
+    tex: A(B(x, y))
+    typst: A(B(x, y))

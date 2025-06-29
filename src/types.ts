@@ -348,6 +348,10 @@ export interface TypstSupsubData {
 }
 
 export type TypstArrayData = TypstNode[][];
+export interface TypstLrData {
+    leftDelim: string | null;
+    rightDelim: string | null;
+}
 
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
             | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
@@ -364,12 +368,12 @@ export class TypstNode {
     type: TypstNodeType;
     content: string;
     args?: TypstNode[];
-    data?: TypstSupsubData | TypstArrayData;
+    data?: TypstSupsubData | TypstArrayData | TypstLrData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
     constructor(type: TypstNodeType, content: string, args?: TypstNode[],
-            data?: TypstSupsubData | TypstArrayData) {
+            data?: TypstSupsubData | TypstArrayData| TypstLrData) {
         this.type = type;
         this.content = content;
         this.args = args;
