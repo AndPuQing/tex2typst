@@ -123,15 +123,7 @@ export class TexNode {
                 return tokens;
             }
             case 'ordgroup': {
-                let tokens =  this.args!.map((n) => n.serialize()).flat();
-                if(this.content === 'parenthesis') {
-                    const is_over_high = this.isOverHigh();
-                    const left_delim = is_over_high ? '\\left(' : '(';
-                    const right_delim = is_over_high ? '\\right)' : ')';
-                    tokens.unshift(new TexToken(TexTokenType.ELEMENT, left_delim));
-                    tokens.push(new TexToken(TexTokenType.ELEMENT, right_delim));
-                }
-                return tokens;
+                return this.args!.map((n) => n.serialize()).flat();
             }
             case 'unaryFunc': {
                 let tokens: TexToken[] = [];
@@ -236,34 +228,6 @@ export class TexNode {
             }
             default:
                 throw new Error('[TexNode.serialize] Unimplemented type: ' + this.type);
-        }
-    }
-
-    // whether the node is over high so that if it's wrapped in braces, \left and \right should be used.
-    // e.g. \frac{1}{2} is over high, "2" is not.
-    public isOverHigh(): boolean {
-        switch (this.type) {
-            case 'element':
-            case 'symbol':
-            case 'text':
-            case 'control':
-            case 'empty':
-                    return false;
-            case 'binaryFunc':
-                if(this.content === '\\frac') {
-                    return true;
-                }
-                // fall through
-            case 'unaryFunc':
-            case 'ordgroup':
-                return this.args!.some((n) => n.isOverHigh());
-            case 'supsub': {
-                return (this.data as TexSupsubData).base.isOverHigh();
-            }
-            case 'beginend':
-                return true;
-            default:
-                return false;
         }
     }
 }
@@ -387,6 +351,31 @@ export class TypstNode {
     // Note that this is only shallow equality.
     public eq(other: TypstNode): boolean {
         return this.type === other.type && this.content === other.content;
+    }
+
+    // whether the node is over high so that if it's wrapped in braces, \left and \right should be used in its TeX form
+    // e.g. 1/2 is over high, "2" is not.
+    public isOverHigh(): boolean {
+        switch (this.type) {
+            case 'fraction':
+                return true;
+            case 'funcCall': {
+                if (this.content === 'frac') {
+                    return true;
+                }
+                return this.args!.some((n) => n.isOverHigh());
+            }
+            case 'group':
+                return this.args!.some((n) => n.isOverHigh());
+            case 'supsub':
+                return (this.data as TypstSupsubData).base.isOverHigh();
+            case 'align':
+            case 'cases':
+            case 'matrix':
+                return true;
+            default:
+                return false;
+        }
     }
 }
 

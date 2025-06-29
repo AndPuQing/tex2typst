@@ -498,8 +498,11 @@ cases:
     tex: \lfloor 1.2 \rfloor + \lceil 1.2 \rceil
     typst: floor(1.2) + ceil(1.2)
   - title: floor and ceil 2
-    tex: \lfloor \frac{1}{2} \rfloor + \lceil \frac{1}{2} \rceil
+    tex: \left\lfloor \frac{1}{2} \right\rfloor + \left\lceil \frac{1}{2} \right\rceil
     typst: floor(1/2) + ceil(1/2)
+  - title: fractions as function argument
+    tex: g(\frac{1}{2})
+    typst: g(1/2)
   - title: multiple arguments should join with comma
     tex: A(B(x, y))
     typst: A(B(x, y))

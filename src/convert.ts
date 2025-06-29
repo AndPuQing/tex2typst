@@ -412,6 +412,13 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return new TexNode('comment', node.content);
         case 'group': {
             const args = node.args!.map(convert_typst_node_to_tex);
+            if (node.content === 'parenthesis') {
+                const is_over_high = node.isOverHigh();
+                const left_delim = is_over_high ? '\\left(' : '(';
+                const right_delim = is_over_high ? '\\right)' : ')';
+                args.unshift(new TexNode('element', left_delim));
+                args.push(new TexNode('element', right_delim));
+            }
             return new TexNode('ordgroup', node.content, args);
         }
         case 'funcCall': {
@@ -435,13 +442,18 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 // special hook for floor, ceil
                 // Typst "floor(a) + ceil(b)" should converts to Tex "\lfloor a \rfloor + \lceil b \rceil"
                 if (node.content === 'floor' || node.content === 'ceil') {
-                    const left = "\\l" + node.content;
-                    const right = "\\r" + node.content;
-                        return new TexNode('ordgroup', '', [
-                            new TexNode('symbol', left),
-                            ...node.args!.map(convert_typst_node_to_tex),
-                            new TexNode('element', right)
-                        ]);
+                    let left = "\\l" + node.content;
+                    let right = "\\r" + node.content;
+                    const arg0 = node.args![0];
+                    if (arg0.isOverHigh()) {
+                        left = "\\left" + left;
+                        right = "\\right" + right;
+                    }
+                    return new TexNode('ordgroup', '', [
+                        new TexNode('symbol', left),
+                        convert_typst_node_to_tex(arg0),
+                        new TexNode('symbol', right)
+                    ]);
                 }
                 const command = typst_token_to_tex(node.content);
                 return new TexNode('unaryFunc', command, node.args!.map(convert_typst_node_to_tex));
