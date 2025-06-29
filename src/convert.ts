@@ -1,6 +1,8 @@
 import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
+import { array_join } from "./generic";
+
 
 // symbols that are supported by Typst but not by KaTeX
 const TYPST_INTRINSIC_SYMBOLS = [
@@ -374,6 +376,7 @@ function typst_token_to_tex(token: string): string {
 }
 
 
+const TEX_NODE_COMMA = new TexNode('element', ',');
 
 export function convert_typst_node_to_tex(node: TypstNode): TexNode {
     // special hook for eq.def
@@ -430,7 +433,6 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 // special hook for floor, ceil
                 // Typst "floor(a) + ceil(b)" should converts to Tex "\lfloor a \rfloor + \lceil b \rceil"
                 if (node.content === 'floor' || node.content === 'ceil') {
-                    console.dir(node,  { depth: null });
                     const left = "\\l" + node.content;
                     const right = "\\r" + node.content;
                         return new TexNode('ordgroup', '', [
@@ -462,7 +464,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 return new TexNode('ordgroup', '', [
                     new TexNode('symbol', typst_token_to_tex(node.content)),
                     new TexNode('element', '('),
-                    ...node.args!.map(convert_typst_node_to_tex),
+                    ...array_join(node.args!.map(convert_typst_node_to_tex), TEX_NODE_COMMA),
                     new TexNode('element', ')')
                 ]);
             }
