@@ -497,3 +497,6 @@ cases:
       g(x) &=
       cases(sin x comma & x < pi,
       0 comma & x >= pi)
+  - title: floor and ceil 1
+    tex: \lfloor 1.2 \rfloor + \lceil 1.2 \rceil
+    typst: floor(1.2) + ceil(1.2)

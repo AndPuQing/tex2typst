@@ -344,6 +344,8 @@ const TYPST_UNARY_FUNCTIONS: string[] = [
     'bb',
     'cal',
     'frak',
+    'floor',
+    'ceil',
 ];
 
 const TYPST_BINARY_FUNCTIONS: string[] = [
@@ -424,6 +426,18 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                             new TexNode('element', '\\right' + right_delim)
                         ]);
                     }
+                }
+                // special hook for floor, ceil
+                // Typst "floor(a) + ceil(b)" should converts to Tex "\lfloor a \rfloor + \lceil b \rceil"
+                if (node.content === 'floor' || node.content === 'ceil') {
+                    console.dir(node,  { depth: null });
+                    const left = "\\l" + node.content;
+                    const right = "\\r" + node.content;
+                        return new TexNode('ordgroup', '', [
+                            new TexNode('symbol', left),
+                            ...node.args!.map(convert_typst_node_to_tex),
+                            new TexNode('element', right)
+                        ]);
                 }
                 const command = typst_token_to_tex(node.content);
                 return new TexNode('unaryFunc', command, node.args!.map(convert_typst_node_to_tex));
