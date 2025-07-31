@@ -238,7 +238,6 @@ export enum TypstTokenType {
     TEXT,
     COMMENT,
     SPACE,
-    SOFT_SPACE,
     CONTROL,
     NEWLINE,
 }
