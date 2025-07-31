@@ -1,5 +1,6 @@
 import { TexNode, TypstNode, TypstPrimitiveValue, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { shorthandMap } from "./typst-shorthands";
+import { assert } from "./util";
 
 function is_delimiter(c: TypstNode): boolean {
     return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content);
@@ -19,12 +20,8 @@ function typst_primitive_to_string(value: TypstPrimitiveValue) {
         case 'boolean':
             return (value as boolean) ? '#true' : '#false';
         default:
-            if (value === null) {
-                return '#none';
-            } else if (value instanceof TypstToken) {
-                return value.toString();
-            }
-            throw new TypstWriterError(`Invalid primitive value: ${value}`, value);
+            assert(value instanceof TypstNode, 'Not a valid primitive value');
+            return (value as TypstNode).content;
     }
 }
 

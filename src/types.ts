@@ -262,6 +262,8 @@ export class TypstToken {
 
     public toNode(): TypstNode {
         switch(this.type) {
+            case TypstTokenType.NONE:
+                return new TypstNode('none', '#none');
             case TypstTokenType.TEXT:
                 return new TypstNode('text', this.value);
             case TypstTokenType.COMMENT:
@@ -279,7 +281,7 @@ export class TypstToken {
                     case '':
                     case '_':
                     case '^':
-                        return new TypstNode('none', '#none');
+                        throw new Error(`Should not convert ${controlChar} to a node`);
                     case '&':
                         return new TypstNode('control', '&');
                     case '\\':
@@ -320,13 +322,9 @@ export interface TypstLrData {
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
             | 'none' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
 
-export type TypstPrimitiveValue = string | boolean | null | TypstToken;
+export type TypstPrimitiveValue = string | boolean | TypstNode;
 export type TypstNamedParams = { [key: string]: TypstPrimitiveValue };
 
-// #none
-export const TYPST_NULL: TypstPrimitiveValue = null;
-export const TYPST_TRUE: TypstPrimitiveValue = true;
-export const TYPST_FALSE: TypstPrimitiveValue = false;
 
 export class TypstNode {
     type: TypstNodeType;
@@ -378,6 +376,11 @@ export class TypstNode {
         }
     }
 }
+
+// #none
+export const TYPST_NONE = new TypstNode('none', '#none');
+export const TYPST_TRUE: TypstPrimitiveValue = true;
+export const TYPST_FALSE: TypstPrimitiveValue = false;
 
 export interface Tex2TypstOptions {
     nonStrict?: boolean; // default is true

@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NULL, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_join } from "./generic";
@@ -90,7 +90,7 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
 export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptions = {}): TypstNode {
     switch (node.type) {
         case 'empty':
-            return new TypstNode('none', '');
+            return TYPST_NONE;
         case 'whitespace':
             return new TypstNode('whitespace', node.content);
         case 'ordgroup':
@@ -281,10 +281,10 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 return new TypstNode('cases', '', [], data);
             }
             if (node.content!.endsWith('matrix')) {
-                let delim: TypstPrimitiveValue = null;
+                let delim: TypstPrimitiveValue;
                 switch (node.content) {
                     case 'matrix':
-                        delim = TYPST_NULL;
+                        delim = TYPST_NONE;
                         break;
                     case 'pmatrix':
                         delim = '(';
@@ -299,7 +299,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                         delim = '|';
                         break;
                     case 'Vmatrix': {
-                        delim = new TypstToken(TypstTokenType.SYMBOL, 'bar.v.double');
+                        delim = new TypstNode('symbol', 'bar.v.double');
                         break;
                     }
                     default:
@@ -514,29 +514,44 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             let env_type = 'pmatrix';
             if (node.options) {
                 if ('delim' in node.options) {
-                    switch (node.options.delim) {
-                        case TYPST_NULL:
-                            env_type = 'matrix';
-                            break;
-                        case '[':
-                            env_type = 'bmatrix';
-                            break;
-                        case ']':
-                            env_type = 'bmatrix';
-                            break;
-                        case '{':
-                            env_type = 'Bmatrix';
-                            break;
-                        case '}':
-                            env_type = 'Bmatrix';
-                            break;
-                        case '|':
-                            env_type = 'vmatrix';
-                            break;
-                        case ')':
-                        case '(':
-                        default:
-                            env_type = 'pmatrix';
+                    const delim = node.options.delim;
+                    if (delim instanceof TypstNode) {
+                        switch (delim.content) {
+                            case '#none':
+                                env_type = 'matrix';
+                                break;
+                            case 'bar.v.double':
+                                env_type = 'Vmatrix';
+                                break;
+                            case 'bar':
+                            case 'bar.v':
+                                env_type = 'vmatrix';
+                                break;
+                            default:
+                                throw new Error(`Unexpected delimiter ${delim.content}`);
+                        }
+                    } else {
+                        switch (delim) {
+                            case '[':
+                                env_type = 'bmatrix';
+                                break;
+                            case ']':
+                                env_type = 'bmatrix';
+                                break;
+                            case '{':
+                                env_type = 'Bmatrix';
+                                break;
+                            case '}':
+                                env_type = 'Bmatrix';
+                                break;
+                            case '|':
+                                env_type = 'vmatrix';
+                                break;
+                            case ')':
+                            case '(':
+                            default:
+                                env_type = 'pmatrix';
+                        }
                     }
                 }
             }

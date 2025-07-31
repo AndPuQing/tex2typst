@@ -78,15 +78,15 @@ cases:
     typst: |-
       m = mat(delim: "|", a, b;
       c, d)
-  # - title: Vmatrix
-  #   tex: |-
-  #     m = \begin{Vmatrix}
-  #     a & b \\
-  #     c & d
-  #     \end{Vmatrix}
-  #   typst: |-
-  #     m = mat(delim: bar.v.double, a, b;
-  #     c, d)
+  - title: Vmatrix
+    tex: |-
+      m = \begin{Vmatrix}
+      a & b \\
+      c & d
+      \end{Vmatrix}
+    typst: |-
+      m = mat(delim: bar.v.double, a, b;
+      c, d)
   - title: accent, symbol over variable
     tex: \bar{y} \vec{x} \dot{y} \ddot{y} \tilde{a} \hat{a}
     typst: macron(y) arrow(x) dot(y) dot.double(y) tilde(a) hat(a)

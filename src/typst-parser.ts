@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TYPST_NULL, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TYPST_NONE, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha } from "./util";
 import { reverseShorthandMap } from "./typst-shorthands";
 import { JSLex, Scanner } from "./jslex";
@@ -75,6 +75,7 @@ const rules_map = new Map<string, (a: Scanner<TypstToken>) => TypstToken | Typst
     [String.raw`[a-zA-Z\.]+`, (s) => {
         return new TypstToken(s.text()!.length === 1? TypstTokenType.ELEMENT: TypstTokenType.SYMBOL, s.text()!);
     }],
+    [String.raw`#none`, (s) => new TypstToken(TypstTokenType.NONE, s.text()!)],
     [String.raw`.`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
 ]);
 
@@ -482,19 +483,24 @@ export class TypstParser {
                         to_delete.push(i);
                         const param_name = g.args![pos_colon - 1];
                         if(param_name.eq(new TypstNode('symbol', 'delim'))) {
-                            if(g.args![pos_colon + 1].type === 'text') {
-                                np['delim'] = g.args![pos_colon + 1].content;
-                                if(g.args!.length !== 3) {
-                                    throw new TypstParserError('Invalid number of arguments for delim');
+                            if(g.args!.length !== 3) {
+                                throw new TypstParserError('Invalid number of arguments for delim');
+                            }
+                             switch (g.args![pos_colon + 1].type) {
+                                case 'text': {
+                                    np['delim'] = g.args![pos_colon + 1].content;
+                                    break;
                                 }
-                            } else if(g.args![pos_colon + 1].eq(new TypstNode('atom', '#'))) {
-                                // TODO: should parse #none properly
-                                if(g.args!.length !== 4 || !g.args![pos_colon + 2].eq(new TypstNode('symbol', 'none'))) { 
-                                    throw new TypstParserError('Invalid number of arguments for delim');
+                                case 'none': {
+                                   np['delim'] = TYPST_NONE;
+                                    break;
                                 }
-                                np['delim'] = TYPST_NULL;
-                            } else {
-                                throw new TypstParserError('Not implemented for other types of delim');
+                                case 'symbol': {
+                                    np['delim'] = g.args![pos_colon + 1];
+                                    break;
+                                }
+                                default:
+                                    throw new TypstParserError('Not implemented for other types of delim');
                             }
                         } else {
                             throw new TypstParserError('Not implemented for other named parameters');
