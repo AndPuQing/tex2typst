@@ -185,29 +185,29 @@ cases:
     typst: |-
       & a &= b \
       & c &= d
-  - title: Matrix wrapped with delimiters 
+  - title: Matrix wrapped with delimiters
     tex: |-
-      \left(\begin{matrix}
+      \begin{pmatrix}
       a & b \\
       c & d \\
       e & f
-      \end{matrix} \right)
+      \end{pmatrix}
     typst: |-
       mat(a, b;
       c, d;
       e, f)
-  - title: Matrix wrapped with custom delimiters 
+  - title: Matrix wrapped with custom delimiters
     tex: |-
-      \left[\begin{matrix}
+      \begin{bmatrix}
       a & b \\
       c & d \\
       e & f
-      \end{matrix} \right]
+      \end{bmatrix}
     typst: |-
       mat(delim: "[", a, b;
       c, d;
       e, f)
-  - title: Matrix wrapped with none delimiters 
+  - title: Matrix wrapped with none delimiters
     tex: |-
       \begin{matrix}
       a & b \\
@@ -373,13 +373,13 @@ cases:
     typst: f(z_0) = frac(1, 2 pi upright(i)) integral.cont_C frac(f(z), z - z_0) dif z
   - title: determinant of a Vandermonde matrix
     tex: |-
-      \left|\begin{matrix}
+      \begin{vmatrix}
       1 & 1 & \dots & 1 \\
       x_1 & x_2 & \dots & x_n \\
       x_1^2 & x_2^2 & \dots & x_n^2 \\
       \vdots & \vdots & \ddots & \vdots \\
       x_1^{n - 1} & x_2^{n - 1} & \dots & x_n^{n - 1}
-      \end{matrix} \right|
+      \end{vmatrix}
       = \prod_{1 \le i < j \le n} (x_j - x_i)
     typst: |-
       mat(delim: "|", 1, 1, dots.h, 1;
@@ -408,11 +408,11 @@ cases:
     typst: a^(23)
   - title: matrixes
     tex: |-
-      \left[\begin{matrix}
+      \begin{bmatrix}
       a_x & a_1 \\ a_1 & a_x
-      \end{matrix} \right] + \left[\begin{matrix}
+      \end{bmatrix} + \begin{bmatrix}
       a_y & a_2 \\ a_2 & a_y
-      \end{matrix} \right]
+      \end{bmatrix}
     typst: |-
       mat(delim: "[", a_x , a_1 ; a_1 , a_x) + mat(delim: "[", a_y, a_2; a_2, a_y)
   # shorthands

@@ -510,50 +510,36 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         case 'matrix': {
             const typst_data = node.data as TypstNode[][];
             const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
-            const matrix = new TexNode('beginend', 'matrix', [], tex_data);
-            let left_delim = "\\left(";
-            let right_delim = "\\right)";
+            let env_type = 'pmatrix';
             if (node.options) {
                 if ('delim' in node.options) {
                     switch (node.options.delim) {
                         case TYPST_NULL:
-                            return matrix;
+                            env_type = 'matrix';
+                            break;
                         case '[':
-                            left_delim = "\\left[";
-                            right_delim = "\\right]";
+                            env_type = 'bmatrix';
                             break;
                         case ']':
-                            left_delim = "\\left]";
-                            right_delim = "\\right[";
+                            env_type = 'bmatrix';
                             break;
                         case '{':
-                            left_delim = "\\left\\{";
-                            right_delim = "\\right\\}";
+                            env_type = 'Bmatrix';
                             break;
                         case '}':
-                            left_delim = "\\left\\}";
-                            right_delim = "\\right\\{";
+                            env_type = 'Bmatrix';
                             break;
                         case '|':
-                            left_delim = "\\left|";
-                            right_delim = "\\right|";
+                            env_type = 'vmatrix';
                             break;
                         case ')':
-                            left_delim = "\\left)";
-                            right_delim = "\\right(";
                         case '(':
                         default:
-                            left_delim = "\\left(";
-                            right_delim = "\\right)";
-                            break;
+                            env_type = 'pmatrix';
                     }
                 }
             }
-            return new TexNode('ordgroup', '', [
-                new TexNode('element', left_delim),
-                matrix,
-                new TexNode('element', right_delim)
-            ]);
+            return new TexNode('beginend', env_type, [], tex_data);
         }
         case 'cases': {
             const typst_data = node.data as TypstNode[][];
