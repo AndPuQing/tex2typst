@@ -1,5 +1,9 @@
 import { describe, it, test, expect } from 'vitest';
+import { parseTex, tokenize_tex } from '../src/tex-parser';
 import { tex2typst } from '../src/index';
+import { TypstWriterError } from '../src/typst-writer';
+import { Tex2TypstOptions, TexNode, TexToken } from '../src/types';
+import { loadTestCases, TestCase } from './test-common';
 
 describe('options', () => {
     it('fracToSlash = true', function () {
@@ -47,5 +51,50 @@ describe('options', () => {
             expect(res).toEqual(expected);
         }
     });
+});
 
+
+const caseFiles = ["struct-tex2typst.yaml", "symbol.yml", "struct-bidirection.yaml"];
+
+caseFiles.forEach((ymlFilename) => {
+  const suite = loadTestCases(ymlFilename);
+  describe(ymlFilename, () => {
+    suite.cases.forEach((c: TestCase) => {
+      test(c.title, function() {
+        const {tex, typst} = c;
+        let tokens: null | TexToken[] = null;
+        let tex_node: null | TexNode = null;
+        let result: null | string = null;
+        try {
+          const settings: Tex2TypstOptions = {
+            nonStrict: c.nonStrict? c.nonStrict: false,
+            preferTypstIntrinsic: c.preferTypstIntrinsic? c.preferTypstIntrinsic: false,
+            preferShorthands: c.preferShorthands !== undefined? c.preferShorthands: true,
+            inftyToOo: c.inftyToOo !== undefined? c.inftyToOo: false,
+            customTexMacros: c.customTexMacros? c.customTexMacros: {},
+          };
+          tokens = tokenize_tex(tex);
+          tex_node = parseTex(tex, settings.customTexMacros!);
+          result = tex2typst(tex, settings);
+          if (result !== typst) {
+            console.log(`====== 😭 Wrong ======`);
+            console.log(tex);
+            console.log(tokens);
+            console.dir(tex_node, {depth: null});
+          }
+          expect(result).toBe(typst);
+        } catch (e) {
+          console.log(`====== 😭 Error ======`);
+          if (e instanceof TypstWriterError) {
+            console.log(e.node);
+          }
+          if (tex_node !== null) {
+            console.dir(tex_node, {depth: null});
+          }
+          console.log(tex);
+          throw e;
+        }
+      })
+    });
+  });
 });

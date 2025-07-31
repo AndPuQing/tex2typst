@@ -7,30 +7,15 @@ cases:
   - title: Fractions and vectors
     tex: '\frac{1}{4} \sum_{i = 1}^4 \boldsymbol{P}_i^\top \sqrt{v} \boldsymbol{\Sigma}^{-1} \sqrt{v} \boldsymbol{P}_i \boldsymbol{j} = \boldsymbol{D}^\top v \phi'
     typst: frac(1, 4) sum_(i = 1)^4 bold(P)_i^top sqrt(v) bold(Sigma)^(-1) sqrt(v) bold(P)_i bold(j) = bold(D)^top v phi.alt
-  - title: Mathrm
-    tex: 'p_e = 1 - \mathrm{e}^{-t \lambda}'
-    typst: p_e = 1 - upright(e)^(-t lambda)
-  - title: Cube root
-    tex: '\sqrt[3]{x}'
-    typst: root(3, x)
-  - title: Simplified brackets f(x)
-    tex: 'e_{f(x)}'
-    typst: e_(f(x))
-  - title: Text Functions
-    tex: '\text{diag}(\boldsymbol{v}) \boldsymbol{D} \boldsymbol{M}_f (\sigma^{-1})^{-1} \boldsymbol{D}^\top \text{diag}(\boldsymbol{v}) \phi = \boldsymbol{q}'
-    typst: '"diag"(bold(v)) bold(D) bold(M)_f (sigma^(-1))^(-1) bold(D)^top "diag"(bold(v)) phi.alt = bold(q)'
-  - title: Single Char Text
-    tex: \text{a}
-    typst: '"a"'
+
+
   - title: Plus minus
     tex: 'q = \pm I'
     typst: q = plus.minus I
   - title: Comma inside function
     tex: '\boldsymbol{j_x, j_y}'
     typst: 'bold(j_x comma j_y)'
-  - title: Nested scripts
-    tex: 'r_{s^+}'
-    typst: 'r_(s^+)'
+
   - title: Nested functions
     tex: '\boldsymbol{m}_\text{ref}'
     typst: 'bold(m)_"ref"'
@@ -167,57 +152,6 @@ cases:
   - title: Symbols
     tex: '\alpha \nabla \partial'
     typst: alpha nabla diff
-  - title: Aligned
-    tex: |-
-      \begin{aligned}
-      a &= b \\
-      c &= d
-      \end{aligned}
-    typst: |-
-      a &= b \
-      c &= d
-  - title: Aligned2
-    tex: |-
-      \begin{aligned}
-      & a &= b \\
-      & c &= d
-      \end{aligned}
-    typst: |-
-      & a &= b \
-      & c &= d
-  - title: Matrix wrapped with delimiters
-    tex: |-
-      \begin{pmatrix}
-      a & b \\
-      c & d \\
-      e & f
-      \end{pmatrix}
-    typst: |-
-      mat(a, b;
-      c, d;
-      e, f)
-  - title: Matrix wrapped with custom delimiters
-    tex: |-
-      \begin{bmatrix}
-      a & b \\
-      c & d \\
-      e & f
-      \end{bmatrix}
-    typst: |-
-      mat(delim: "[", a, b;
-      c, d;
-      e, f)
-  - title: Matrix wrapped with none delimiters
-    tex: |-
-      \begin{matrix}
-      a & b \\
-      c & d \\
-      e & f
-      \end{matrix}
-    typst: |-
-      mat(delim: #none, a, b;
-      c, d;
-      e, f)
   - title: Test3
     tex: \boldsymbol{x}
     typst: bold(x)
@@ -245,32 +179,8 @@ cases:
   - title: has both prime and subscript
     tex: y'_2 + y'_{a_1} + \theta'_1
     typst: y'_2 + y'_(a_1) + theta'_1
-  - title: accent, symbol over variable
-    tex: \bar{y} \vec{x} \dot{y} \ddot{y} \tilde{a} \hat{a}
-    typst: macron(y) arrow(x) dot(y) dot.double(y) tilde(a) hat(a)
-  - title: underline, overline
-    tex: \underline{a} \overline{a} \underline{a + 1} \overline{a + 1}
-    typst: underline(a) overline(a) underline(a + 1) overline(a + 1)
-  - title: comment
-    tex: a + b % comment
-    typst: a + b // comment
-  - title: comment2
-    tex: a + b % comment % comment2
-    typst: a + b // comment % comment2
-  - title: comment3
-    tex: |-
-      a + b % co
-      c + d
-      e + f % co
-      g + h
-    typst: |-
-      a + b // co
-      c + d
-      e + f // co
-      g + h
-  - title: mod
-    tex: a^{p - 1} \equiv 1 \mod p
-    typst: a^(p - 1) equiv 1 mod p
+
+
   - title: Horizontal space symbols
     tex: "\\, \\: \\; \\quad"
     typst: thin med thick quad
@@ -280,19 +190,7 @@ cases:
   - title: base is group wrapped in brackets
     tex: e = \lim_{n \rightarrow \infty} \left(1 + \frac{1}{n} \right)^n
     typst: e = lim_(n arrow.r infinity) (1 + frac(1, n))^n
-  - title: overset, special case 1
-    tex: \overset{\text{def}}{=}
-    typst: eq.def
-  - title: newline
-    tex: |-
-      a + b \\
-      c + d
-    typst: |-
-      a + b \
-      c + d
-  - title: leading sign
-    tex: -a
-    typst: -a
+
   - title: fraction1
     tex: \frac{1}{2}
     typst: 1/2
@@ -486,7 +384,6 @@ cases:
       0, & x \ge \pi
       \end{cases}
       \end{aligned}
-
     typst: |-
       f(x) &=
       cases(x^2 comma & x >= 0,
@@ -494,18 +391,7 @@ cases:
       g(x) &=
       cases(sin x comma & x < pi,
       0 comma & x >= pi)
-  - title: floor and ceil 1
-    tex: \lfloor 1.2 \rfloor + \lceil 1.2 \rceil
-    typst: floor(1.2) + ceil(1.2)
-  - title: floor and ceil 2
-    tex: \left\lfloor \frac{1}{2} \right\rfloor + \left\lceil \frac{1}{2} \right\rceil
-    typst: floor(1/2) + ceil(1/2)
-  - title: fractions as function argument
-    tex: g(\frac{1}{2})
-    typst: g(1/2)
-  - title: multiple arguments should join with comma
-    tex: A(B(x, y))
-    typst: A(B(x, y))
+
   - title: Typst vec to Tex pmatrix
     tex: |-
       \begin{pmatrix}

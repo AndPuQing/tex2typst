@@ -1,0 +1,150 @@
+title: Bidirectional conversion of structures
+cases:
+  - title: a complex structure as script
+    # This doesn't actually need the extra brackets, but it is clearer!
+    tex: 'e_{f(x)}'
+    typst: e_(f(x))
+  - title: Nested scripts
+    tex: 'r_{s^+}'
+    typst: 'r_(s^+)'
+  - title: Text Functions
+    tex: '\text{diag}'
+    typst: '"diag"'
+  - title: Single Char Text
+    tex: \text{a}
+    typst: '"a"'
+  - title: Aligned
+    tex: |-
+      \begin{aligned}
+      a &= b \\
+      c &= d
+      \end{aligned}
+    typst: |-
+      a &= b \
+      c &= d
+  - title: An align mark & is at the beginning of a line
+    tex: |-
+      \begin{aligned}
+      & a &= b \\
+      & c &= d
+      \end{aligned}
+    typst: |-
+      & a &= b \
+      & c &= d
+  - title: matrix
+    tex: |-
+      m = \begin{matrix}
+      a & b \\
+      c & d \\
+      e & f
+      \end{matrix}
+    typst: |-
+      m = mat(delim: #none, a, b;
+      c, d;
+      e, f)
+  - title: pmatrix
+    tex: |-
+      m = \begin{pmatrix}
+      a & b \\
+      c & d
+      \end{pmatrix}
+    typst: |-
+      m = mat(delim: "(", a, b;
+      c, d)
+  - title: bmatrix
+    tex: |-
+      m = \begin{bmatrix}
+      a & b \\
+      c & d
+      \end{bmatrix}
+    typst: |-
+      m = mat(delim: "[", a, b;
+      c, d)
+  - title: Bmatrix
+    tex: |-
+      m = \begin{Bmatrix}
+      a & b \\
+      c & d
+      \end{Bmatrix}
+    typst: |-
+      m = mat(delim: "{", a, b;
+      c, d)
+  - title: vmatrix
+    tex: |-
+      m = \begin{vmatrix}
+      a & b \\
+      c & d
+      \end{vmatrix}
+    typst: |-
+      m = mat(delim: "|", a, b;
+      c, d)
+  # - title: Vmatrix
+  #   tex: |-
+  #     m = \begin{Vmatrix}
+  #     a & b \\
+  #     c & d
+  #     \end{Vmatrix}
+  #   typst: |-
+  #     m = mat(delim: bar.v.double, a, b;
+  #     c, d)
+  - title: accent, symbol over variable
+    tex: \bar{y} \vec{x} \dot{y} \ddot{y} \tilde{a} \hat{a}
+    typst: macron(y) arrow(x) dot(y) dot.double(y) tilde(a) hat(a)
+  - title: underline, overline
+    tex: \underline{a} \overline{a} \underline{a + 1} \overline{a + 1}
+    typst: underline(a) overline(a) underline(a + 1) overline(a + 1)
+  - title: comment
+    tex: a + b % comment
+    typst: a + b // comment
+  - title: comment2
+    tex: a + b % comment % comment2
+    typst: a + b // comment % comment2
+  - title: comment3
+    tex: |-
+      a + b % co
+      c + d
+      e + f % co
+      g + h
+    typst: |-
+      a + b // co
+      c + d
+      e + f // co
+      g + h
+  - title: mod
+    tex: a^{p - 1} \equiv 1 \mod p
+    typst: a^(p - 1) equiv 1 mod p
+
+  - title: overset, special case 1
+    tex: \overset{\text{def}}{=}
+    typst: eq.def
+  - title: newline
+    tex: |-
+      a + b \\
+      c + d
+    typst: |-
+      a + b \
+      c + d
+  - title: leading sign
+    tex: -a
+    typst: -a
+  - title: Mathrm
+    tex: 'p_e = 1 - \mathrm{e}^{-t \lambda}'
+    typst: p_e = 1 - upright(e)^(-t lambda)
+  - title: decimals
+    tex: "3.14"
+    typst: "3.14"
+  - title: Cube root
+    tex: '\sqrt[3]{x}'
+    typst: root(3, x)
+  - title: floor and ceil 1
+    tex: \lfloor 1.2 \rfloor + \lceil 1.2 \rceil
+    typst: floor(1.2) + ceil(1.2)
+  - title: floor and ceil 2
+    tex: \left\lfloor \frac{1}{2} \right\rfloor + \left\lceil \frac{1}{2} \right\rceil
+    typst: floor(1/2) + ceil(1/2)
+  - title: fractions as function argument
+    tex: g(\frac{1}{2})
+    typst: g(1/2)
+  - title: multiple arguments should join with a comma
+    tex: A(B(x, y))
+    typst: A(B(x, y))

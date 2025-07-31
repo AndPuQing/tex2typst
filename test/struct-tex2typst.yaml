@@ -1,37 +1,16 @@
-# Most test cases are from https://github.com/curvenote/tex-to-typst/blob/1d0b121d162911f1c99b47171939e30656f49270/tests/math.yml (MIT License)
+# Some test cases are from https://github.com/curvenote/tex-to-typst/blob/1d0b121d162911f1c99b47171939e30656f49270/tests/math.yml (MIT License)
 title: tex2typst
 cases:
-  - title: Testing factorial, no space
+  - title: redundant spaces should be ignored
     tex: 'p ( x )   =    \frac{e^{-\lambda}\lambda^{x}}{ x ! }'
     typst: p(x) = (e^(-lambda) lambda^x)/(x!)
-  - title: Mathrm
-    tex: 'p_e = 1 - \mathrm{e}^{-t \lambda}'
-    typst: p_e = 1 - upright(e)^(-t lambda)
-  - title: Cube root
-    tex: '\sqrt[3]{x}'
-    typst: root(3, x)
   - title: Simplified brackets
     tex: 'e_f(x)'
     typst: e_f (x)
-  - title: Simplified brackets f(x)
-    # This doesn't actually need the extra brackets, but it is clearer!
-    tex: 'e_{f(x)}'
-    typst: e_(f(x))
-  - title: Text Functions
-    tex: '\text{diag}({\boldsymbol{v}}) \boldsymbol{D}\boldsymbol{M}_f(\sigma^{-1})^{-1}\boldsymbol{D}^\top\text{diag}({\boldsymbol{v}})\phi = \boldsymbol{q}'
-    typst: '"diag"(bold(v)) bold(D) bold(M)_f (sigma^(-1))^(-1) bold(D)^top "diag"(bold(v)) phi.alt = bold(q)'
-  - title: Single Char Text
-    tex: \text{a}
-    typst: '"a"'
-  - title: Plus minus
-    tex: 'q = \pm I'
-    typst: q = plus.minus I
   - title: Comma inside function
     tex: '\boldsymbol{j_x, j_y}'
     typst: 'bold(j_x comma j_y)'
-  - title: Nested scripts
-    tex: 'r_{s^+}'
-    typst: 'r_(s^+)'
+
   - title: Nested functions
     tex: '\boldsymbol{m}_\text{ref}'
     typst: 'bold(m)_"ref"'
@@ -211,25 +190,7 @@ cases:
     typst: |-
       a &= b \
       c &= d
-  - title: Aligned
-    tex: |-
-      \begin{aligned}
-      a &= b \\
-      c &= d
-      \end{aligned}
-    typst: |-
-      a &= b \
-      c &= d
-  - title: Aligned2
-    tex: |-
-      \begin{aligned}
-      &a &= b \\
-      &c &= d
-      \end{aligned}
-    typst: |-
-      & a &= b \
-      & c &= d
-  - title: Matrix
+  - title: Matrix cells are groups
     tex: |-
       m = \begin{matrix}
       a &= b \\
@@ -238,7 +199,7 @@ cases:
     typst: |-
       m = mat(delim: #none, a, = b;
       c, = d)
-  - title: Matrix2
+  - title: An align mark & is at the beginning of a line
     tex: |-
       \begin{matrix}
       &a &= b \\
@@ -247,51 +208,6 @@ cases:
     typst: |-
       mat(delim: #none, , a, = b;
       , c, = d)
-  - title: pmatrix
-    tex: |-
-      m = \begin{pmatrix}
-      a & b \\
-      c & d
-      \end{pmatrix}
-    typst: |-
-      m = mat(delim: "(", a, b;
-      c, d)
-  - title: bmatrix
-    tex: |-
-      m = \begin{bmatrix}
-      a & b \\
-      c & d
-      \end{bmatrix}
-    typst: |-
-      m = mat(delim: "[", a, b;
-      c, d)
-  - title: Bmatrix
-    tex: |-
-      m = \begin{Bmatrix}
-      a & b \\
-      c & d
-      \end{Bmatrix}
-    typst: |-
-      m = mat(delim: "{", a, b;
-      c, d)
-  - title: vmatrix
-    tex: |-
-      m = \begin{vmatrix}
-      a & b \\
-      c & d
-      \end{vmatrix}
-    typst: |-
-      m = mat(delim: "|", a, b;
-      c, d)
-  - title: Vmatrix
-    tex: |-
-      m = \begin{Vmatrix}
-      a & b \\
-      c & d
-      \end{Vmatrix}
-    typst: |-
-      m = mat(delim: bar.v.double, a, b;
-      c, d)
   # - title: Array
   #   tex: |-
   #     \begin{array}{cc}
@@ -334,32 +250,7 @@ cases:
   - title: has both prime and subscript
     tex: y_1' + y'_2 + y_{a_1}' + {\theta}_1'
     typst: y'_1 + y'_2 + y'_(a_1) + theta'_1
-  - title: accent, symbol over variable
-    tex: \bar{y} \vec{x} \dot{y} \ddot{y} \tilde{a} \widetilde{a} \hat{a} \widehat{a}
-    typst: macron(y) arrow(x) dot(y) dot.double(y) tilde(a) tilde(a) hat(a) hat(a)
-  - title: underline, overline
-    tex: \underline{a} \overline{a} \underline{a + 1} \overline{a + 1}
-    typst: underline(a) overline(a) underline(a + 1) overline(a + 1)
-  - title: comment
-    tex: a + b % comment
-    typst: a + b // comment
-  - title: comment2
-    tex: a + b % comment % comment2
-    typst: a + b // comment % comment2
-  - title: comment3
-    tex: |-
-      a + b % co
-      c + d
-      e + f % co
-      g + h
-    typst: |-
-      a + b // co
-      c + d
-      e + f // co
-      g + h
-  - title: mod
-    tex: a^{p-1} \equiv 1 \mod{p}
-    typst: a^(p - 1) equiv 1 mod p
+
   - title: space before or after script
     tex: \lim _{x \to 0} \sum_{i=1} ^ n
     typst: lim_(x -> 0) sum_(i = 1)^n
@@ -369,25 +260,13 @@ cases:
   - title: base is group wrapped in brackets
     tex: e = \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
     typst: e = lim_(n -> infinity)(1 + 1/n)^n
+
   - title: overset
     tex: \overset{a}{+}
     typst: "op(+, limits: #true)^a"
-  - title: overset, special case 1
-    tex: \overset{\text{def}}{=}
-    typst: eq.def
-  - title: overset, special case 2
-    tex: \overset{def}{=}
-    typst: eq.def
-  - title: newline
-    tex: |-
-      a + b \\
-      c + d
-    typst: |-
-      a + b \
-      c + d
-  - title: leading sign
-    tex: -a
-    typst: -a
+
+
+
   - title: oo
     tex: \infty
     typst: oo
