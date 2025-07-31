@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NULL, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_join } from "./generic";
@@ -284,7 +284,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 let delim: TypstPrimitiveValue = null;
                 switch (node.content) {
                     case 'matrix':
-                        delim = TYPST_NONE;
+                        delim = TYPST_NULL;
                         break;
                     case 'pmatrix':
                         delim = '(';
@@ -516,7 +516,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if (node.options) {
                 if ('delim' in node.options) {
                     switch (node.options.delim) {
-                        case TYPST_NONE:
+                        case TYPST_NULL:
                             return matrix;
                         case '[':
                             left_delim = "\\left[";

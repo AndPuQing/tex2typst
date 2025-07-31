@@ -324,7 +324,7 @@ export type TypstPrimitiveValue = string | boolean | null | TypstToken;
 export type TypstNamedParams = { [key: string]: TypstPrimitiveValue };
 
 // #none
-export const TYPST_NONE: TypstPrimitiveValue = null;
+export const TYPST_NULL: TypstPrimitiveValue = null;
 export const TYPST_TRUE: TypstPrimitiveValue = true;
 export const TYPST_FALSE: TypstPrimitiveValue = false;
 

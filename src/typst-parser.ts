@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TYPST_NONE, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TYPST_NULL, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { assert, isalpha } from "./util";
 import { reverseShorthandMap } from "./typst-shorthands";
 import { JSLex, Scanner } from "./jslex";
@@ -499,7 +499,7 @@ export class TypstParser {
                                 if(g.args!.length !== 4 || !g.args![pos_colon + 2].eq(new TypstNode('symbol', 'none'))) { 
                                     throw new TypstParserError('Invalid number of arguments for delim');
                                 }
-                                np['delim'] = TYPST_NONE;
+                                np['delim'] = TYPST_NULL;
                             } else {
                                 throw new TypstParserError('Not implemented for other types of delim');
                             }
