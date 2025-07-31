@@ -374,3 +374,6 @@ cases:
   - title: yen
     tex: \yen 2000 > \$ 3000
     typst: yen 2000 > \$ 3000
+  - title: Don't escape commas inside a lr()
+    tex: \left| f(a, b) \right|
+    typst: lr(|f(a, b)|)

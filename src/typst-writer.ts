@@ -183,7 +183,9 @@ export class TypstWriter {
             case 'funcCall': {
                 const func_symbol: TypstToken = new TypstToken(TypstTokenType.SYMBOL, node.content);
                 this.queue.push(func_symbol);
-                this.insideFunctionDepth++;
+                if (node.content !== 'lr') {
+                    this.insideFunctionDepth++;
+                }
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
                 for (let i = 0; i < node.args!.length; i++) {
                     this.serialize(node.args![i]);
@@ -198,7 +200,9 @@ export class TypstWriter {
                     }
                 }
                 this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                this.insideFunctionDepth--;
+                if (node.content !== 'lr') {
+                    this.insideFunctionDepth--;
+                }
                 break;
             }
             case 'fraction': {
