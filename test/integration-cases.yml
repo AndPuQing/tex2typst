@@ -506,3 +506,9 @@ cases:
   - title: multiple arguments should join with comma
     tex: A(B(x, y))
     typst: A(B(x, y))
+  - title: Typst vec to Tex pmatrix
+    tex: |-
+      \begin{pmatrix}
+      a \\ b \\ c
+      \end{pmatrix}
+    typst: vec(a,b,c)

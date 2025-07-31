@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_join } from "./generic";
@@ -475,6 +475,12 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 const command = typst_token_to_tex(node.content);
                 return new TexNode('binaryFunc', command, node.args!.map(convert_typst_node_to_tex));
             } else {
+                // special hook for vec
+                // "vec(a, b, c)" -> "\begin{pmatrix}a\\ b\\ c\end{pmatrix}"
+                if (node.content === 'vec') {
+                    const tex_data = node.args!.map(convert_typst_node_to_tex).map((n) => [n]) as TexArrayData;
+                    return new TexNode('beginend', 'pmatrix', [], tex_data);
+                }
                 return new TexNode('ordgroup', '', [
                     new TexNode('symbol', typst_token_to_tex(node.content)),
                     new TexNode('element', '('),
