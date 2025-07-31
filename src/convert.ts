@@ -90,7 +90,7 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
 export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptions = {}): TypstNode {
     switch (node.type) {
         case 'empty':
-            return new TypstNode('empty', '');
+            return new TypstNode('none', '');
         case 'whitespace':
             return new TypstNode('whitespace', node.content);
         case 'ordgroup':
@@ -128,8 +128,8 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             const data: TypstSupsubData = {
                 base: convert_tex_node_to_typst(base, options),
             };
-            if (data.base.type === 'empty') {
-                data.base = new TypstNode('text', '');
+            if (data.base.type === 'none') {
+                data.base = new TypstNode('none', '');
             }
 
             if (sup) {
@@ -388,7 +388,8 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         ]);
     }
     switch (node.type) {
-        case 'empty':
+        case 'none':
+            // e.g. Typst `#none^2` is converted to TeX `^2`
             return new TexNode('empty', '');
         case 'whitespace':
             return new TexNode('whitespace', node.content);

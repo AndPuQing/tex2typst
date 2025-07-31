@@ -108,7 +108,8 @@ export class TypstWriter {
     // Serialize a tree of TypstNode into a list of TypstToken
     public serialize(node: TypstNode) {
         switch (node.type) {
-            case 'empty':
+            case 'none':
+                this.queue.push(new TypstToken(TypstTokenType.NONE, '#none'));
                 break;
             case 'atom': {
                 if (node.content === ',' && this.insideFunctionDepth > 0) {
@@ -163,7 +164,7 @@ export class TypstWriter {
                 const has_prime = (sup && sup.type === 'atom' && sup.content === '\'');
                 if (has_prime) {
                     // Put prime symbol before '_'. Because $y_1'$ is not displayed properly in Typst (so far)
-                    // e.g. 
+                    // e.g.
                     // y_1' -> y'_1
                     // y_{a_1}' -> y'_{a_1}
                     this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '\''));
@@ -317,10 +318,15 @@ export class TypstWriter {
         let need_to_wrap = ['group', 'supsub', 'empty'].includes(node.type);
 
         if (node.type === 'group') {
-            const first = node.args![0];
-            const last = node.args![node.args!.length - 1];
-            if (is_delimiter(first) && is_delimiter(last)) {
-                need_to_wrap = false;
+            if (node.args!.length === 0) {
+                // e.g. TeX `P_{}` converts to Typst `P_()`
+                need_to_wrap = true;
+            } else {
+                const first = node.args![0];
+                const last = node.args![node.args!.length - 1];
+                if (is_delimiter(first) && is_delimiter(last)) {
+                    need_to_wrap = false;
+                }
             }
         }
 

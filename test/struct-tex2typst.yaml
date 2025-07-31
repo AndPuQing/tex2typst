@@ -140,10 +140,10 @@ cases:
       , bold(B)(psi^(n + 1))) &
   - title: leading underscore
     tex: _2
-    typst: '""_2'
+    typst: '#none_2'
   - title: leading power
     tex: '^{\text{st}}'
-    typst: '""^"st"'
+    typst: '#none^"st"'
   - title: greater than
     tex: 'a \ge b'
     typst: a >= b

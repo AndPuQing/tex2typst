@@ -233,6 +233,7 @@ export class TexNode {
 }
 
 export enum TypstTokenType {
+    NONE,
     SYMBOL,
     ELEMENT,
     TEXT,
@@ -278,7 +279,7 @@ export class TypstToken {
                     case '':
                     case '_':
                     case '^':
-                        return new TypstNode('empty', '');
+                        return new TypstNode('none', '#none');
                     case '&':
                         return new TypstNode('control', '&');
                     case '\\':
@@ -317,7 +318,7 @@ export interface TypstLrData {
 }
 
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
-            | 'empty' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
+            | 'none' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
 
 export type TypstPrimitiveValue = string | boolean | null | TypstToken;
 export type TypstNamedParams = { [key: string]: TypstPrimitiveValue };

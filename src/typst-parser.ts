@@ -5,9 +5,6 @@ import { assert, isalpha } from "./util";
 import { reverseShorthandMap } from "./typst-shorthands";
 import { JSLex, Scanner } from "./jslex";
 
-
-const TYPST_EMPTY_NODE = new TypstNode('empty', '');
-
 const TYPST_SHORTHANDS = Array.from(reverseShorthandMap.keys());
 
 // TODO: In Typst, y' ' is not the same as y''.
@@ -168,12 +165,12 @@ const DIV = new TypstNode('atom', '/');
 
 
 
-function next_non_whitespace(nodes: TypstNode[], start: number): TypstNode {
+function next_non_whitespace(nodes: TypstNode[], start: number): TypstNode | null {
     let pos = start;
     while (pos < nodes.length && nodes[pos].type === 'whitespace') {
         pos++;
     }
-    return pos === nodes.length ? TYPST_EMPTY_NODE : nodes[pos];
+    return pos === nodes.length ? null : nodes[pos];
 }
 
 function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
@@ -185,7 +182,7 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
             if(after_operator) {
                 continue;
             }
-            if(next_non_whitespace(nodes, i + 1).eq(DIV)) {
+            if(next_non_whitespace(nodes, i + 1)?.eq(DIV)) {
                 continue;
             }
         }
@@ -253,9 +250,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
     if(parenthesis) {
         return new TypstNode('group', 'parenthesis', args);
     } else {
-        if(args.length === 0) {
-            return TYPST_EMPTY_NODE;
-        } else if(args.length === 1) {
+        if(args.length === 1) {
             return args[0];
         } else {
             return new TypstNode('group', '', args);
@@ -322,9 +317,7 @@ export class TypstParser {
         if(parentheses) {
             node = process_operators(results, true);
         } else {
-            if (results.length === 0) {
-                node = TYPST_EMPTY_NODE;
-            } else if (results.length === 1) {
+            if (results.length === 1) {
                 node = results[0];
             } else {
                 node = process_operators(results);
@@ -543,9 +536,7 @@ export class TypstParser {
             }
 
             let arg: TypstNode;
-            if (nodes.length === 0) {
-                arg = TYPST_EMPTY_NODE;
-            } else if (nodes.length === 1) {
+            if (nodes.length === 1) {
                 arg = nodes[0];
             } else {
                 arg = process_operators(nodes);

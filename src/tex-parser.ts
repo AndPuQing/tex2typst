@@ -274,9 +274,7 @@ export class LatexParser {
         }
 
         let node: TexNode;
-        if (results.length === 0) {
-            node = EMPTY_NODE;
-        } else if (results.length === 1) {
+        if (results.length === 1) {
             node = results[0];
         } else {
             node = new TexNode('ordgroup', '', results);
