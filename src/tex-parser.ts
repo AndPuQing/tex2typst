@@ -209,7 +209,8 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
         const command = s.text()!;
         return [ new TexToken(TexTokenType.COMMAND, command), ];
     }],
-    [String.raw`[0-9]+`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    // Numbers like "123", "3.14"
+    [String.raw`[0-9]+(\.[0-9]+)?`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[a-zA-Z]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`.`, (s) => new TexToken(TexTokenType.UNKNOWN, s.text()!)],
