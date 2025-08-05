@@ -32,7 +32,7 @@ Replace `0.3.0` with the latest version number in case this README is outdated.
 ```javascript
 import { tex2typst, typst2tex } from 'tex2typst';
 
-let tex = "e \overset{\text{def}}{=} \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n";
+let tex = "e \\overset{\\text{def}}{=} \\lim_{{n \\to \\infty}} \left(1 + \\frac{1}{n}\\right)^n";
 let typst = tex2typst(tex);
 console.log(typst);
 // e eq.def lim_(n -> infinity)(1 + 1/n)^n
