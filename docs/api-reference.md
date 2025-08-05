@@ -51,7 +51,7 @@ console.log(typst2);
 // a / b
 ```
 
-- `inftyToOo`: If set to `true`, `\\infty` converts to `oo` instead of `infinity`. Default is `false`.
+- `inftyToOo`: If set to `true`, `\infty` converts to `oo` instead of `infinity`. Default is `false`.
 
 ```javascript
 let tex = "\\infty";
