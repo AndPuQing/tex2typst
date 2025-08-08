@@ -62,6 +62,7 @@ const symbolMap = new Map<string, string>([
     ['S', 'section'],
     ['aleph', 'alef'],
 
+    ['infin', 'infinity'],
 
     ['Delta', 'Delta'], 
     ['Gamma', 'Gamma'], 
@@ -1071,6 +1072,7 @@ const typst_to_tex_map = new Map<string, string>([
     ['hat', 'hat'],
     ['upright', 'mathrm'],
     ['bold', 'boldsymbol'],
+    ['infinity', 'infty'],
 
     ['hyph.minus', '\\text{-}'],
 ]);
