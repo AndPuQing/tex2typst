@@ -2,6 +2,7 @@ import { symbolMap } from "./map";
 import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
 import { assert } from "./util";
 import { JSLex, Scanner } from "./jslex";
+import { array_find } from "./generic";
 
 const UNARY_COMMANDS = [
     'sqrt',
@@ -251,8 +252,22 @@ export class LatexParser {
     }
 
     parse(tokens: TexToken[]): TexNode {
-        const [tree, _] = this.parseGroup(tokens, 0, tokens.length);
-        return tree;
+        const idx = array_find(tokens, new TexToken(TexTokenType.COMMAND, '\\displaystyle'));
+        if (idx === -1) {
+            // no \displaystyle, normal execution path
+            const [tree, _] = this.parseGroup(tokens, 0, tokens.length);
+            return tree;
+        } else if (idx === 0) {
+            // \displaystyle at the beginning. Wrap the whole thing in \displaystyle
+            const [tree, _] = this.parseGroup(tokens, 1, tokens.length);
+            return new TexNode('unaryFunc', '\\displaystyle', [tree]);
+        } else {
+            // \displaystyle somewhere in the middle. Split the expression to two parts
+            const [tree1, _1] = this.parseGroup(tokens, 0, idx);
+            const [tree2, _2] = this.parseGroup(tokens, idx + 1, tokens.length);
+            const display = new TexNode('unaryFunc', '\\displaystyle', [tree2]);
+            return new TexNode('ordgroup', '', [tree1, display]);
+        }
     }
 
     parseGroup(tokens: TexToken[], start: number, end: number): ParseResult {

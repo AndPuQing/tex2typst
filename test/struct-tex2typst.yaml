@@ -380,3 +380,9 @@ cases:
   - title: Backslash space
     tex: a \ b
     typst: a med b
+  - title: display style
+    tex: \displaystyle \lim_{x \to -\infty} F(x) = 0, \lim_{x \to +\infty} F(x) = 1
+    typst: display(lim_(x -> - infinity) F(x) = 0 comma lim_(x -> + infinity) F(x) = 1)
+  - title: display style 2
+    tex:  \lim_{x \to -\infty} F(x) = 0, \displaystyle \lim_{x \to +\infty} F(x) = 1
+    typst: lim_(x -> - infinity) F(x) = 0, display(lim_(x -> + infinity) F(x) = 1)
