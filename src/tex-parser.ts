@@ -165,9 +165,9 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     ],
     [String.raw`%[^\n]*`, (s) => new TexToken(TexTokenType.COMMENT, s.text()!.substring(1))],
     [String.raw`[{}_^&]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
+    [String.raw`\\[\\,:; ]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\r?\n`, (_s) => new TexToken(TexTokenType.NEWLINE, "\n")],
     [String.raw`\s+`, (s) => new TexToken(TexTokenType.SPACE, s.text()!)],
-    [String.raw`\\[\\,:;]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])\s*([0-9a-zA-Z])`, (s) => {
         const text = s.text()!;
@@ -383,6 +383,8 @@ export class LatexParser {
                     case '\\:':
                     case '\\;':
                         return [new TexNode('control', controlChar), start + 1];
+                    case '\\ ':
+                        return [new TexNode('control', '\\:'), start + 1];
                     case '_':
                     case '^':
                         return [ EMPTY_NODE, start];

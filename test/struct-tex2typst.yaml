@@ -377,3 +377,6 @@ cases:
   - title: Don't escape commas inside a lr()
     tex: \left| f(a, b) \right|
     typst: lr(|f(a, b)|)
+  - title: Backslash space
+    tex: a \ b
+    typst: a med b
