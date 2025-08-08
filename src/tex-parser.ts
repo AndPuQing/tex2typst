@@ -213,6 +213,8 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     [String.raw`[0-9]+(\.[0-9]+)?`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[a-zA-Z]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[+\-*/='<>!.,;:?()\[\]|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
+    // non-ASCII characters
+    [String.raw`[^\x00-\x7F]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`.`, (s) => new TexToken(TexTokenType.UNKNOWN, s.text()!)],
 ]);
 

@@ -103,8 +103,16 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return new TypstNode('atom', tex_token_to_typst(node.content));
         case 'symbol':
             return new TypstNode('symbol', tex_token_to_typst(node.content));
-        case 'text':
+        case 'text': {
+            if ((/[^\x00-\x7F]+/).test(node.content) && options.nonAsciiWrapper !== "") {
+                return new TypstNode(
+                    'funcCall',
+                    options.nonAsciiWrapper!,
+                    [new TypstNode('text', node.content)]
+                );
+            }
             return new TypstNode('text', node.content);
+        }
         case 'comment':
             return new TypstNode('comment', node.content);
         case 'supsub': {

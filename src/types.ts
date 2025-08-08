@@ -389,6 +389,7 @@ export interface Tex2TypstOptions {
     keepSpaces?: boolean; // default is false
     fracToSlash?: boolean; // default is true
     inftyToOo?: boolean; // default is false
+    nonAsciiWrapper?: string; // default is ""
     customTexMacros?: { [key: string]: string };
     // TODO: custom typst functions
 }

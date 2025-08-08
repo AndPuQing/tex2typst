@@ -20,6 +20,21 @@ describe('options', () => {
         expect(res).toEqual(expected);
     });
 
+
+    it('nonAsciiWrapper = ""', function () {
+        const input = 'a + b = \\text{こにちは、世界}';
+        const expected = 'a + b = "こにちは、世界"';
+        const res = tex2typst(input);
+        expect(res).toEqual(expected);
+    });
+
+    it('nonAsciiWrapper = "ut"', function () {
+        const input = 'a + b = \\text{こにちは、世界}';
+        const expected = 'a + b = ut("こにちは、世界")';
+        const res = tex2typst(input, { nonAsciiWrapper: 'ut' });
+        expect(res).toEqual(expected);
+    });
+
     it('preferShorthands = true', function () {
         const map = new Map<string, string>([
             ['a \\rightarrow b', 'a -> b'],
