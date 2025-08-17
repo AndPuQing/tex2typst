@@ -1,12 +1,12 @@
 {
   "name": "tex2typst",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "description": "JavaScript library for converting TeX code to Typst",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "https://github.com/qwinsi/tex2typst",
-  "license": "GPL-3.0",
+  "license": "Apache-2.0",
   "keywords": [
     "LaTeX",
     "Typst",

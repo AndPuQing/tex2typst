@@ -48,7 +48,9 @@ tex2typst.js supports some advanced options to customize the conversion. For mor
 
 ## Open-source license
 
-GPL v3. See [LICENSE](LICENSE) for details.
+Apache License 2.0. See [LICENSE](LICENSE) for details.
+
+Historical note: This project originally use GPL-3.0 license, and the license has been changed to Apache License 2.0 since version 0.3.15.
 
 ## Contributing
 
