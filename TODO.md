@@ -1,1 +1,2 @@
 - Tex math `\frac{X}{\frac{Y}{2}}` should converts to Typst `X/(Y/2)`, not `X/Y/2`.
+- Typst math `limits(Y)^X` to TeX `\overset{X}{Y}`
