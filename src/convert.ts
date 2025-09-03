@@ -44,7 +44,7 @@ function tex_token_to_typst(token: string): string {
 }
 
 
-// \overset{X}{Y} -> op(Y, limits: #true)^X
+// \overset{X}{Y} -> limits(Y)^X
 // and with special case \overset{\text{def}}{=} -> eq.def
 function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     const [sup, base] = node.args!;
@@ -69,18 +69,17 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     if (is_def(sup) && is_eq(base)) {
         return new TypstNode('symbol', 'eq.def');
     }
-    const op_call = new TypstNode(
+    const limits_call = new TypstNode(
         'funcCall',
-        'op',
+        'limits',
         [convert_tex_node_to_typst(base, options)]
     );
-    op_call.setOptions({ limits: TYPST_TRUE });
     return new TypstNode(
         'supsub',
         '',
         [],
         {
-            base: op_call,
+            base: limits_call,
             sup: convert_tex_node_to_typst(sup, options),
         }
     );

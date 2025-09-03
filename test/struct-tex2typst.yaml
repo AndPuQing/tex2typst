@@ -263,7 +263,7 @@ cases:
 
   - title: overset
     tex: \overset{a}{+}
-    typst: "op(+, limits: #true)^a"
+    typst: limits(+)^a
 
 
 
