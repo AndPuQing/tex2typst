@@ -166,7 +166,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     ],
     [String.raw`%[^\n]*`, (s) => new TexToken(TexTokenType.COMMENT, s.text()!.substring(1))],
     [String.raw`[{}_^&]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
-    [String.raw`\\[\\,:; ]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
+    [String.raw`\\[\\,:;! ]`, (s) => new TexToken(TexTokenType.CONTROL, s.text()!)],
     [String.raw`\r?\n`, (_s) => new TexToken(TexTokenType.NEWLINE, "\n")],
     [String.raw`\s+`, (s) => new TexToken(TexTokenType.SPACE, s.text()!)],
     [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
@@ -394,6 +394,7 @@ export class LatexParser {
                     case '}':
                         throw new LatexParserError("Unmatched '}'");
                     case '\\\\':
+                    case '\\!':    
                     case '\\,':
                     case '\\:':
                     case '\\;':
