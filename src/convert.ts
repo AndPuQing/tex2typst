@@ -151,6 +151,14 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
         }
         case 'leftright': {
             const [left, body, right] = node.args!;
+            
+            if (left.content === '\\|' && right.content === '\\|') {
+                return new TypstNode(
+                    'funcCall',
+                    'norm',
+                    [convert_tex_node_to_typst(body, options)]
+                );
+            }
             // These pairs will be handled by Typst compiler by default. No need to add lr()
             const group: TypstNode = new TypstNode(
                 'group',

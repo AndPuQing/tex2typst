@@ -86,7 +86,7 @@ function eat_whitespaces(tokens: TexToken[], start: number): TexToken[] {
 
 function eat_parenthesis(tokens: TexToken[], start: number): TexToken | null {
     const firstToken = tokens[start];
-    if (firstToken.type === TexTokenType.ELEMENT && ['(', ')', '[', ']', '|', '\\{', '\\}', '.'].includes(firstToken.value)) {
+    if (firstToken.type === TexTokenType.ELEMENT && ['(', ')', '[', ']', '|', '\\{', '\\}', '.', '\\|'].includes(firstToken.value)) {
         return firstToken;
     } else if (firstToken.type === TexTokenType.COMMAND && ['lfloor', 'rfloor', 'lceil', 'rceil', 'langle', 'rangle'].includes(firstToken.value.slice(1))) {
         return firstToken;
