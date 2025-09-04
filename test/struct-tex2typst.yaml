@@ -299,8 +299,8 @@ cases:
     tex: \overleftarrow{AB}
     typst: accent(A B, <-)
   - title: Horizontal space symbols
-    tex: "\\, \\: \\; \\quad"
-    typst: thin med thick quad
+    tex: "\\, \\: \\; \\quad \\!"
+    typst: "thin med thick quad #h(-math.thin.amount)"
   - title: hspace
     tex: \hspace{1cm}
     typst: "#h(1cm)"
