@@ -1,6 +1,6 @@
 # tex2typst.js
 
-JavaScript library for conversion between TeX/LaTeX and Typst math formula code.
+JavaScript library for conversion between TeX/LaTeX and Typst math code.
 
 Despite the name `tex2typst` due to the initial goal of converting TeX to Typst, the library can also convert Typst to TeX since version 0.3.0.
 
@@ -44,7 +44,7 @@ console.log(tex_recovered);
 
 If you are using the library in a web page via a `<script>` tag, you don't need the line of `import`, function `tex2typst` and `typst2tex` should be available in the global scope.
 
-tex2typst.js supports some advanced options to customize the conversion. For more details, please refer to the [API Reference](docs/api-reference.md).
+tex2typst.js supports some advanced options to customize the conversion. For details, please refer to the [API Reference](docs/api-reference.md).
 
 ## Open-source license
 
