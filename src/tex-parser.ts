@@ -548,7 +548,18 @@ export class LatexParser {
         const envName = tokens[pos + 1].value;
         pos += 3;
 
-        pos += eat_whitespaces(tokens, pos).length; // ignore whitespaces and '\n' after \begin{envName}
+        const args: TexNode[] = [];
+        while (pos < tokens.length) {
+            const whitespaceCount = eat_whitespaces(tokens, pos).length;
+            pos += whitespaceCount;
+            
+            if (pos >= tokens.length || !tokens[pos].eq(LEFT_CURLY_BRACKET)) {
+                break;
+            }
+            const [arg, newPos] = this.parseNextArg(tokens, pos);
+            args.push(arg);
+            pos = newPos;
+        }
 
         const exprInsideStart = pos;
 
@@ -573,7 +584,7 @@ export class LatexParser {
             exprInside.pop();
         }
         const body = this.parseAligned(exprInside);
-        const res = new TexNode('beginend', envName, [], body);
+        const res = new TexNode('beginend', envName, args, body);
         return [res, pos];
     }
 

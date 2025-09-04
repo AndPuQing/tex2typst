@@ -154,9 +154,9 @@ cases:
   - title: ddot
     tex: 'q, \dot{q}, \ddot{q}'
     typst: q, dot(q), dot.double(q)
-  # - title: mat
-  #   tex: 'x(t) = \left[ \begin{array}{c} q(t) & x \\ \dot{q}(t) & x \end{array}\right]'
-  #   typst: 'x(t) = [ mat(delim: #none, q(t), x; dot(q)(t), x) ]'
+  - title: mat
+    tex: 'x(t) = \left[ \begin{array}{c} q(t) & x \\ \dot{q}(t) & x \end{array}\right]'
+    typst: 'x(t) = [mat(delim: #none, align: #center, q(t), x; dot(q)(t), x)]'
   - title: brackets
     tex: '\frac{1}{\tau(X_2)}'
     typst: '1/(tau(X_2))'
@@ -208,15 +208,33 @@ cases:
     typst: |-
       mat(delim: #none, , a, = b;
       , c, = d)
-  # - title: Array
-  #   tex: |-
-  #     \begin{array}{cc}
-  #     a & b \\
-  #     c & d
-  #     \end{array}
-  #   typst: |-
-  #     mat(delim: #none, a, b;
-  #     c, d)
+  - title: Array
+    tex: |-
+      \begin{array}{cc}
+      a & b \\
+      c & d
+      \end{array}
+    typst: |-
+      mat(delim: #none, align: #center, a, b;
+      c, d)
+  - title: Array with vertical line
+    tex: |-
+      \begin{array}{c|c|c}
+      a & b & c \\
+      c & d & e
+      \end{array}
+    typst: |-
+      mat(delim: #none, augment: #(vline: (1, 2)), align: #center, a, b, c;
+      c, d, e)
+  - title: Array with single vertical line
+    tex: |-
+      \begin{array}{c|cc}
+      a & b & c \\
+      c & d & e
+      \end{array}
+    typst: |-
+      mat(delim: #none, augment: #1, align: #center, a, b, c;
+      c, d, e)
   - title: Test3
     tex: \boldsymbol{x}
     typst: bold(x)
