@@ -246,7 +246,7 @@ cases:
     typst: e^(i theta) = cos theta + i sin theta
   - title: Euler Product
     tex: \prod_{p} \frac{1}{1-p^{-s}}= \sum_{n=1}^{\infty} \frac{1}{n^s}
-    typst: product_p 1/(1 - p^(-s)) = sum_(n = 1)^infinity 1/n^s
+    typst: product_p 1/(1 - p^(-s)) = sum_(n = 1)^infinity 1/(n^s)
   - title: Test5
     tex: "{a+b}^2"
     typst: (a + b)^2
@@ -388,10 +388,14 @@ cases:
   - title: frac7
     tex: \frac {12}3
     typst: 12/3
-  # this test the lexer's regex. Old non-rigorous implementation translated it to "yen 2 0 00 \$ 3000"
+  # this test the lexer's regex. Old bad implementation translated it to "yen 2 0 00 \$ 3000"
   - title: yen
     tex: \yen 2000 > \$ 3000
     typst: yen 2000 > \$ 3000
+  # this test the typst writer. Old bad implementation translated it to "X/Y/2"
+  - title: frac of frac
+    tex: \frac{X}{\frac{Y}{2}}
+    typst: X/(Y/2)
   - title: Don't escape commas inside a lr()
     tex: \left| f(a, b) \right|
     typst: lr(|f(a, b)|)

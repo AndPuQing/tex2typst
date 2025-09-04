@@ -207,21 +207,9 @@ export class TypstWriter {
             }
             case 'fraction': {
                 const [numerator, denominator] = node.args!;
-                if(numerator.type === 'group') {
-                    this.queue.push(TYPST_LEFT_PARENTHESIS);
-                    this.serialize(numerator);
-                    this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                } else {
-                    this.serialize(numerator);
-                }
+                this.appendWithBracketsIfNeeded(numerator);
                 this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '/'));
-                if(denominator.type === 'group') {
-                    this.queue.push(TYPST_LEFT_PARENTHESIS);
-                    this.serialize(denominator);
-                    this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                } else {
-                    this.serialize(denominator);
-                }
+                this.appendWithBracketsIfNeeded(denominator);
                 break;
             }
             case 'align': {
@@ -316,7 +304,7 @@ export class TypstWriter {
     }
 
     private appendWithBracketsIfNeeded(node: TypstNode): boolean {
-        let need_to_wrap = ['group', 'supsub', 'empty'].includes(node.type);
+        let need_to_wrap = ['group', 'supsub', 'fraction','empty'].includes(node.type);
 
         if (node.type === 'group') {
             if (node.args!.length === 0) {
