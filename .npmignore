@@ -4,3 +4,7 @@ node_modules/
 test/
 vitest.config.ts
 .gitignore
+
+TODO.md
+tools/
+docs/
