@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData, TypstNamedParams } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_join } from "./generic";
@@ -186,7 +186,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             // \frac{a}{b} -> a / b
             if (node.content === '\\frac') {
-                if(options.fracToSlash) {
+                if (options.fracToSlash) {
                     return new TypstNode(
                         'fraction',
                         '',
@@ -286,6 +286,59 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             if (node.content! === 'cases') {
                 return new TypstNode('cases', '', [], data);
+            }
+            if (node.content! === 'array') {
+                const res = new TypstNode('matrix', '', [], data);
+                const options: TypstNamedParams = { 'delim': TYPST_NONE };
+
+                const align_args = node.args!;
+                if (align_args.length > 0) {
+                    const align_node = align_args[0];
+                    const align_str = (() => {
+                        if (align_node.type === 'element') return align_node.content;
+                        if (align_node.type === 'ordgroup') {
+                            return align_node.args!.map(n => n.type === 'element' ? n.content : '').join('');
+                        }
+                        return '';
+                    })();
+
+                    if (align_str) {
+                        const alignMap: Record<string, string> = { l: '#left', c: '#center', r: '#right' };
+                        const chars = Array.from(align_str);
+
+                        const alignments = chars
+                            .map(c => alignMap[c])
+                            .filter(Boolean)
+                            .map(s => new TypstNode('symbol', s!));
+
+                        const vlinePositions: number[] = [];
+                        let columnIndex = 0;
+                        for (const c of chars) {
+                            if (c === '|') {
+                                vlinePositions.push(columnIndex);
+                            } else if (c === 'l' || c === 'c' || c === 'r') {
+                                columnIndex++;
+                            }
+                        }
+
+                        if (vlinePositions.length > 0) {
+                            if (vlinePositions.length === 1) {
+                                options['augment'] = new TypstNode('symbol', `#${vlinePositions[0]}`);
+                            } else {
+                                options['augment'] = new TypstNode('symbol', `#(vline: (${vlinePositions.join(', ')}))`);
+                            }
+                        }
+
+                        if (alignments.length > 0) {
+                            const first_align = alignments[0].content;
+                            const all_same = alignments.every(item => item.content === first_align);
+                            options['align'] = all_same ? alignments[0] : new TypstNode('symbol', '#center');
+                        }
+                    }
+                }
+
+                res.setOptions(options);
+                return res;
             }
             if (node.content!.endsWith('matrix')) {
                 let delim: TypstPrimitiveValue;
