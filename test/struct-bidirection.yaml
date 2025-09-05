@@ -141,12 +141,18 @@ cases:
   - title: Cube root
     tex: '\sqrt[3]{x}'
     typst: root(3, x)
-  - title: floor and ceil 1
+  - title: floor and ceil
     tex: \lfloor 1.2 \rfloor + \lceil 1.2 \rceil
     typst: floor(1.2) + ceil(1.2)
-  - title: floor and ceil 2
-    tex: \left\lfloor \frac{1}{2} \right\rfloor + \left\lceil \frac{1}{2} \right\rceil
+  - title: floor and ceil with overHigh
+    tex: \left \lfloor \frac{1}{2} \right \rfloor + \left \lceil \frac{1}{2} \right \rceil
     typst: floor(1/2) + ceil(1/2)
+  # - title: norm
+  #   tex: \|a \|^2
+  #   typst: norm(a)^2
+  - title: norm with overHigh
+    tex: \left \|a + \frac{1}{3} \right \|^2
+    typst: norm(a + 1/3)^2
   - title: fractions as function argument
     tex: g(\frac{1}{2})
     typst: g(1/2)

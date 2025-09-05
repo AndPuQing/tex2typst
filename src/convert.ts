@@ -521,6 +521,8 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                         let left_delim = apply_escape_if_needed(data.leftDelim);
                         assert(data.rightDelim !== null, "leftDelim has value but rightDelim not");
                         let right_delim = apply_escape_if_needed(data.rightDelim!);
+                        // TODO: should be TeXNode('leftright', ...)
+                        // But currently writer will output `\left |` while people commonly prefer `\left|`.
                         return new TexNode('ordgroup', '', [
                             new TexNode('element', '\\left' + left_delim),
                             ...node.args!.map(convert_typst_node_to_tex),
@@ -530,17 +532,29 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                         return new TexNode('ordgroup', '', node.args!.map(convert_typst_node_to_tex));
                     }
                 }
-                // special hook for floor, ceil
-                // Typst "floor(a) + ceil(b)" should converts to Tex "\lfloor a \rfloor + \lceil b \rceil"
-                if (node.content === 'floor' || node.content === 'ceil') {
-                    let left = "\\l" + node.content;
-                    let right = "\\r" + node.content;
+                // special hook for norm
+                // `\| a  \|` <- `norm(a)`
+                // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
+                if (node.content === 'norm') {
                     const arg0 = node.args![0];
-                    if (arg0.isOverHigh()) {
-                        left = "\\left" + left;
-                        right = "\\right" + right;
-                    }
-                    return new TexNode('ordgroup', '', [
+                    const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
+                    return new TexNode(tex_node_type, '', [
+                        new TexNode('symbol', "\\|"),
+                        convert_typst_node_to_tex(arg0),
+                        new TexNode('symbol', "\\|")
+                    ]);
+                }
+                // special hook for floor, ceil
+                // `\lfloor a \rfloor` <- `floor(a)`
+                // `\lceil a \rceil` <- `ceil(a)`
+                // `\left\lfloor a \right\rfloor` <- `floor(a)`
+                // `\left\lceil a \right\rceil` <- `ceil(a)`
+                if (node.content === 'floor' || node.content === 'ceil') {
+                    const left = "\\l" + node.content;
+                    const right = "\\r" + node.content;
+                    const arg0 = node.args![0];
+                    const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
+                    return new TexNode(tex_node_type, '', [
                         new TexNode('symbol', left),
                         convert_typst_node_to_tex(arg0),
                         new TexNode('symbol', right)

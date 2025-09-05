@@ -125,6 +125,13 @@ export class TexNode {
             case 'ordgroup': {
                 return this.args!.map((n) => n.serialize()).flat();
             }
+            case 'leftright': {
+                let tokens = this.args!.map((n) => n.serialize()).flat();
+                tokens.splice(0, 0, new TexToken(TexTokenType.COMMAND, '\\left'));
+                tokens.splice(tokens.length - 1, 0, new TexToken(TexTokenType.COMMAND, '\\right'));
+
+                return tokens;
+            }
             case 'unaryFunc': {
                 let tokens: TexToken[] = [];
                 tokens.push(new TexToken(TexTokenType.COMMAND, this.content));
