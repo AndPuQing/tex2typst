@@ -11,6 +11,8 @@ const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMEN
 const TYPST_COMMA: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ',');
 const TYPST_NEWLINE: TypstToken = new TypstToken(TypstTokenType.SYMBOL, '\n');
 
+const SOFT_SPACE = new TypstToken(TypstTokenType.CONTROL, ' ');
+
 function typst_primitive_to_string(value: TypstPrimitiveValue) {
     switch (typeof value) {
         case 'string':
@@ -177,7 +179,7 @@ export class TypstWriter {
                     trailing_space_needed = this.appendWithBracketsIfNeeded(sup);
                 }
                 if (trailing_space_needed) {
-                    this.queue.push(new TypstToken(TypstTokenType.CONTROL, ' '));
+                    this.queue.push(SOFT_SPACE);
                 }
                 break;
             }
@@ -208,7 +210,16 @@ export class TypstWriter {
             }
             case 'fraction': {
                 const [numerator, denominator] = node.args!;
-                this.appendWithBracketsIfNeeded(numerator);
+                const pos = this.queue.length;
+                const no_wrap = this.appendWithBracketsIfNeeded(numerator);
+
+                // This is a dirty hack to force `C \frac{xy}{z}`to translate to `C (x y)/z` instead of `C(x y)/z`
+                // To solve this properly, we should implement a Typst formatter
+                const wrapped = !no_wrap;
+                if (wrapped) {
+                    this.queue.splice(pos, 0, SOFT_SPACE);
+                }
+
                 this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '/'));
                 this.appendWithBracketsIfNeeded(denominator);
                 break;
@@ -332,19 +343,23 @@ export class TypstWriter {
     }
 
     protected flushQueue() {
-        const SOFT_SPACE = new TypstToken(TypstTokenType.CONTROL, ' ');
+        const dummy_token = new TypstToken(TypstTokenType.SYMBOL, '');
 
         // delete soft spaces if they are not needed
         for(let i = 0; i < this.queue.length; i++) {
             let token = this.queue[i];
             if (token.eq(SOFT_SPACE)) {
-                if (i === this.queue.length - 1) {
-                    this.queue[i].value = '';
-                } else if (this.queue[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE])) {
-                    this.queue[i].value = '';
+                const to_delete = (i === 0)
+                                || (i === this.queue.length - 1)
+                                || this.queue[i - 1].isOneOf([TYPST_NEWLINE])
+                                || this.queue[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE]);
+                if (to_delete) {
+                    this.queue[i] = dummy_token;
                 }
             }
         }
+
+        this.queue = this.queue.filter((token) => !token.eq(dummy_token));
 
         this.queue.forEach((token) => {
             this.writeBuffer(token)

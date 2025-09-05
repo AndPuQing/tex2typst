@@ -402,3 +402,7 @@ cases:
   - title: display style 2
     tex:  \lim_{x \to -\infty} F(x) = 0, \displaystyle \lim_{x \to +\infty} F(x) = 1
     typst: lim_(x -> - infinity) F(x) = 0, display(lim_(x -> + infinity) F(x) = 1)
+  # this test the typst formatter. Old bad implementation translated it to "C(x y)/z"
+  - title: parenthesis in fraction
+    tex: C \frac{xy}{z}
+    typst: C (x y)/z
