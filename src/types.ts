@@ -393,7 +393,7 @@ export const TYPST_FALSE: TypstPrimitiveValue = false;
  * ATTENTION:
  * Don't use any options except those explicitly documented in
  *   https://github.com/qwinsi/tex2typst/blob/main/docs/api-reference.md
- * Any undocumented options may break in the future!
+ * Any undocumented options may be not working at present or break in the future!
  */
 export interface Tex2TypstOptions {
     nonStrict?: boolean; /** default is true */
