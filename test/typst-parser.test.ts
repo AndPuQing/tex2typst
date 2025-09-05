@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { tokenize_typst, TypstParser } from '../src/typst-parser';
+import { tokenize_typst } from '../src/typst-tokenizer';
+import { TypstParser } from '../src/typst-parser';
 import { TypstNode, TypstToken, TypstTokenType } from '../src/types';
 
 
