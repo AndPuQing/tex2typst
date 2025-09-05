@@ -7,6 +7,9 @@ const symbolMap = new Map<string, string>([
     [':', 'med'],
     [';', 'thick'],
 
+    /* textual operators */
+    ['ln', 'ln'],
+    ['log', 'log'],
     ['cos', 'cos'],
     ['sin', 'sin'],
     ['tan', 'tan'],

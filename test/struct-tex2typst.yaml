@@ -1,5 +1,5 @@
 # Some test cases are from https://github.com/curvenote/tex-to-typst/blob/1d0b121d162911f1c99b47171939e30656f49270/tests/math.yml (MIT License)
-title: tex2typst
+title: struct-tex2typst
 cases:
   - title: redundant spaces should be ignored
     tex: 'p ( x )   =    \frac{e^{-\lambda}\lambda^{x}}{ x ! }'

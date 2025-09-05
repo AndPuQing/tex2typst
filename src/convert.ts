@@ -5,8 +5,8 @@ import { array_join } from "./generic";
 import { assert } from "./util";
 
 
-// symbols that are supported by Typst but not by KaTeX
-const TYPST_INTRINSIC_SYMBOLS = [
+// native textual operators in Typst
+const TYPST_INTRINSIC_OP = [
     'dim',
     'id',
     'im',
@@ -279,7 +279,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 
                 if (options.optimize) {
                     const text = arg0.content;
-                    if (TYPST_INTRINSIC_SYMBOLS.includes(text)) {
+                    if (TYPST_INTRINSIC_OP.includes(text)) {
                         return new TypstNode('symbol', text);
                     }
                 }

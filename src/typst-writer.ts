@@ -351,7 +351,8 @@ export class TypstWriter {
             if (token.eq(SOFT_SPACE)) {
                 const to_delete = (i === 0)
                                 || (i === this.queue.length - 1)
-                                || this.queue[i - 1].isOneOf([TYPST_NEWLINE])
+                                || (this.queue[i - 1].type === TypstTokenType.SPACE)
+                                || this.queue[i - 1].isOneOf([TYPST_LEFT_PARENTHESIS, TYPST_NEWLINE])
                                 || this.queue[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE]);
                 if (to_delete) {
                     this.queue[i] = dummy_token;

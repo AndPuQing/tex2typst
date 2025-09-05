@@ -70,7 +70,7 @@ describe('options', () => {
 });
 
 
-const caseFiles = ["struct-tex2typst.yaml", "symbol.yml", "struct-bidirection.yaml"];
+const caseFiles = ["struct-tex2typst.yaml", "symbol.yml", "struct-bidirection.yaml", "integration-tex2typst.yaml"];
 
 caseFiles.forEach((ymlFilename) => {
   const suite = loadTestCases(ymlFilename);

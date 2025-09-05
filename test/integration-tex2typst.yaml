@@ -1,0 +1,89 @@
+title: integration-tex2typst
+cases:
+  - title: base of natural logarithm
+    tex: \mathrm{e} \overset{\text{def}}{=} \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
+    typst: upright(e) eq.def lim_(n -> infinity)(1 + 1/n)^n
+  - title: Euler's product formula
+    tex: \prod_{p} \frac{1}{1-p^{-s}} = \sum_{n=1}^{\infty} \frac{1}{n^s}
+    typst: product_p 1/(1 - p^(-s)) = sum_(n = 1)^infinity 1/(n^s)
+  - title: Fermat's little theorem
+    tex: a^{p-1} \equiv 1 \mod{p}
+    typst: a^(p - 1) equiv 1 mod p
+  - title: Maxwell's equations
+    tex: |-
+      \begin{aligned}
+      \nabla \times \boldsymbol{H} &= \boldsymbol{J} + \frac{\partial \boldsymbol{D}}{\partial t} \\
+      \nabla \times \boldsymbol{E} &= -\frac{\partial \boldsymbol{B}}{\partial t} \\
+      \nabla \cdot \boldsymbol{B} &= 0 \\
+      \nabla \cdot \boldsymbol{D} &= \rho
+      \end{aligned}
+    typst: |-
+      nabla times bold(H) &= bold(J) + (diff bold(D))/(diff t) \
+      nabla times bold(E) &= - (diff bold(B))/(diff t) \
+      nabla dot.op bold(B) &= 0 \
+      nabla dot.op bold(D) &= rho
+  - title: chemical equation example - bromoethane to ethanol
+    tex: \rm{CH_3CH_2Br} + \rm{OH}^- \longrightarrow \rm{CH_3CH_2OH} + \rm{Br}^-
+    typst: upright(C H_3 C H_2 B r) + upright(O H)^- --> upright(C H_3 C H_2 O H) + upright(B r)^-
+  - title: harmonic series
+    tex: \sum_{k=1}^n \frac{1}{k} = \ln n + \gamma + O\left(\frac{1}{n}\right)
+    typst: sum_(k = 1)^n 1/k = ln n + gamma + O(1/n)
+  - title: Euler's complex exponential formula
+    tex: \mathrm{e}^{\mathrm{i} x} = \cos x + \mathrm{i} \sin x
+    typst: upright(e)^(upright(i) x) = cos x + upright(i) sin x
+  - title: Gauss's divergence theorem
+    tex: \iiint_{\Omega} \operatorname{div}(\vec{F}) \mathrm{d}V = \oiint_{\partial \Omega} \vec{F} \cdot \mathrm{d}\vec{S}
+    typst: integral.triple_Omega op("div")(arrow(F)) upright(d) V = integral.surf_(diff Omega) arrow(F) dot.op upright(d) arrow(S)
+  - title: Stokes' theorem
+    tex: \iint_{\Sigma} \operatorname{curl}(\vec{F}) \cdot \mathrm{d}\vec{S} = \oint_{\partial \Sigma} \vec{F} \times \mathrm{d}\vec{l}
+    typst: integral.double_Sigma op("curl")(arrow(F)) dot.op upright(d) arrow(S) = integral.cont_(diff Sigma) arrow(F) times upright(d) arrow(l)
+  - title: Prime number theorem
+    tex: \pi(x) \sim \frac{x}{\log x}
+    typst: pi(x) ~ x/(log x)
+  - title: current-voltage characteristics of n-channel enhancement MOSFETs
+    tex: i_D = \mu_n C_\text{ox} \frac{W}{L} \left[ (v_\text{GS} - V_t)v_\text{DS} - \frac{1}{2} v_\text{DS}^2 \right]
+    typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2 ]
+  - title: Black-Scholes formula for option pricing
+    tex: |-
+      \begin{aligned}
+      C &= N(d_1) S_t - N(d_2) K e^{-rt} \\
+      d_1 &= \frac{\ln \frac{S_t}{K} + (r + \frac{\sigma^2}{2}) t}{\sigma \sqrt{t}} \\
+      d_2 &= d_1 - \sigma\sqrt{t}
+      \end{aligned}
+    typst: |-
+      C &= N(d_1) S_t - N(d_2) K e^(-r t) \
+      d_1 &= (ln (S_t)/K +(r + (sigma^2)/2) t)/(sigma sqrt(t)) \
+      d_2 &= d_1 - sigma sqrt(t)
+  - title: Cauchy's integral formula
+    tex: f(z_0) = \frac{1}{2\pi \mathrm{i}} \oint_{C} \frac{f(z)}{z-z_0}\, \mathrm{d} z
+    typst: f(z_0) = 1/(2 pi upright(i)) integral.cont_C  (f(z))/(z - z_0) thin upright(d) z
+  - title: determinant of a Vandermonde matrix
+    tex: |-
+      \begin{vmatrix}
+      1 & 1 & \dots & 1 \\
+      x_1 & x_2 & \dots & x_n \\
+      x_1^2 & x_2^2 & \dots & x_n^2 \\
+      \vdots & \vdots & \ddots & \vdots \\
+      x_1^{n-1} & x_2^{n-1} & \dots & x_n^{n-1}
+      \end{vmatrix}
+      = \prod_{1 \leq i < j \leq n} (x_j - x_i)
+    # TODO: There should no spaces after x_n and x_n^2
+    typst: |-
+      mat(delim: "|", 1, 1, ..., 1;
+      x_1, x_2, ..., x_n ;
+      x_1^2, x_2^2, ..., x_n^2 ;
+      dots.v, dots.v, dots.down, dots.v;
+      x_1^(n - 1), x_2^(n - 1), ..., x_n^(n - 1))
+      = product_(1 <= i < j <= n)(x_j - x_i)
+  - title: ReLU function
+    tex: |-
+      \operatorname{ReLU}(x) = \begin{cases}
+      x & \text{if } x > 0 \\
+      0 & \text{if } x \leq 0
+      \end{cases}
+    typst: |-
+      op("ReLU")(x) = cases(x & "if " x > 0,
+      0 & "if " x <= 0)
+  - title: attention mechanism
+    tex: \operatorname{Attention}(Q, K, V) = \operatorname{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V
+    typst: op("Attention")(Q, K, V) = op("softmax")((Q K^T)/sqrt(d_k)) V
