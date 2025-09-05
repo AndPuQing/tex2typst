@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TYPST_TRUE, TypstPrimitiveValue, TypstToken, TypstTokenType, TypstLrData, TexArrayData, TypstNamedParams } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TypstPrimitiveValue, TypstLrData, TexArrayData, TypstNamedParams } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_join } from "./generic";
@@ -241,7 +241,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     [data, arg0]
                 );
             }
-            // \mathbf{a} -> upright(mathbf(a))
+            // \mathbf{a} -> upright(bold(a))
             if (node.content === '\\mathbf') {
                 const inner: TypstNode = new TypstNode(
                     'funcCall',
@@ -253,10 +253,6 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     'upright',
                     [inner]
                 );
-            }
-            // \mathbb{R} -> RR
-            if (node.content === '\\mathbb' && arg0.type === 'atom' && /^[A-Z]$/.test(arg0.content)) {
-                return new TypstNode('symbol', arg0.content + arg0.content);
             }
             // \overrightarrow{AB} -> arrow(A B)
             if (node.content === '\\overrightarrow') {
@@ -276,11 +272,9 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             // \operatorname{opname} -> op("opname")
             if (node.content === '\\operatorname') {
-
                 if (options.optimize) {
-                    const text = arg0.content;
-                    if (TYPST_INTRINSIC_OP.includes(text)) {
-                        return new TypstNode('symbol', text);
+                    if (TYPST_INTRINSIC_OP.includes(arg0.content)) {
+                        return new TypstNode('symbol', arg0.content);
                     }
                 }
                 return new TypstNode('funcCall', 'op', [arg0]);
@@ -294,6 +288,17 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     '#h',
                     [new TypstNode('symbol', text)]
                 );
+            }
+
+            if(options.optimize) {
+                // \mathbb{R} -> RR
+                if (node.content === '\\mathbb' && arg0.type === 'atom' && /^[A-Z]$/.test(arg0.content)) {
+                    return new TypstNode('symbol', arg0.content + arg0.content);
+                }
+                // \mathrm{d} -> dif
+                if (node.content === '\\mathrm' && arg0.eq(new TypstNode('atom', 'd'))) {
+                    return new TypstNode('symbol', 'dif');
+                }
             }
 
             // generic case

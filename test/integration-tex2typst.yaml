@@ -33,10 +33,10 @@ cases:
     typst: upright(e)^(upright(i) x) = cos x + upright(i) sin x
   - title: Gauss's divergence theorem
     tex: \iiint_{\Omega} \operatorname{div}(\vec{F}) \mathrm{d}V = \oiint_{\partial \Omega} \vec{F} \cdot \mathrm{d}\vec{S}
-    typst: integral.triple_Omega op("div")(arrow(F)) upright(d) V = integral.surf_(diff Omega) arrow(F) dot.op upright(d) arrow(S)
+    typst: integral.triple_Omega op("div")(arrow(F)) dif V = integral.surf_(diff Omega) arrow(F) dot.op dif arrow(S)
   - title: Stokes' theorem
     tex: \iint_{\Sigma} \operatorname{curl}(\vec{F}) \cdot \mathrm{d}\vec{S} = \oint_{\partial \Sigma} \vec{F} \times \mathrm{d}\vec{l}
-    typst: integral.double_Sigma op("curl")(arrow(F)) dot.op upright(d) arrow(S) = integral.cont_(diff Sigma) arrow(F) times upright(d) arrow(l)
+    typst: integral.double_Sigma op("curl")(arrow(F)) dot.op dif arrow(S) = integral.cont_(diff Sigma) arrow(F) times dif arrow(l)
   - title: Prime number theorem
     tex: \pi(x) \sim \frac{x}{\log x}
     typst: pi(x) ~ x/(log x)
@@ -56,7 +56,7 @@ cases:
       d_2 &= d_1 - sigma sqrt(t)
   - title: Cauchy's integral formula
     tex: f(z_0) = \frac{1}{2\pi \mathrm{i}} \oint_{C} \frac{f(z)}{z-z_0}\, \mathrm{d} z
-    typst: f(z_0) = 1/(2 pi upright(i)) integral.cont_C  (f(z))/(z - z_0) thin upright(d) z
+    typst: f(z_0) = 1/(2 pi upright(i)) integral.cont_C  (f(z))/(z - z_0) thin dif z
   - title: determinant of a Vandermonde matrix
     tex: |-
       \begin{vmatrix}
