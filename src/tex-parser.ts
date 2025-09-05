@@ -395,7 +395,7 @@ export class LatexParser {
                     case '}':
                         throw new LatexParserError("Unmatched '}'");
                     case '\\\\':
-                    case '\\!':    
+                    case '\\!':
                     case '\\,':
                     case '\\:':
                     case '\\;':
