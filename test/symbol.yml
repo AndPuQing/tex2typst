@@ -121,9 +121,12 @@ cases:
   - title: slash
     tex: 1/2
     typst: 1 \/2
-  - title: backslash |
+  - title: double bar
     tex: \|
-    typst: parallel
+    typst: bar.v.double
+  - title: double bar as left-right delimiter
+    tex: \left\| a + \frac{1}{2} \right.
+    typst: lr(bar.v.double a + 1/2)
   - title: preferShorthands
     tex: \leadsto
     typst: ~>

@@ -22,9 +22,6 @@ function tex_token_to_typst(token: string): string {
         return token;
     } else if (token === '/') {
         return '\\/';
-    } else if (token === '\\|') {
-        // \| in LaTeX is double vertical bar looks like ||
-        return 'parallel';
     } else if (token === '\\\\') {
         return '\\';
     } else if (['\\$', '\\#', '\\&', '\\_'].includes(token)) {
@@ -150,21 +147,23 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return new TypstNode('supsub', '', [], data);
         }
         case 'leftright': {
-            const [left, body, right] = node.args!;
-            
+            const [left, _body, right] = node.args!;
+            const [typ_left, typ_body, typ_right] = node.args!.map((n) => convert_tex_node_to_typst(n, options));
+
             if (left.content === '\\|' && right.content === '\\|') {
                 return new TypstNode(
                     'funcCall',
                     'norm',
-                    [convert_tex_node_to_typst(body, options)]
+                    [typ_body]
                 );
             }
-            // These pairs will be handled by Typst compiler by default. No need to add lr()
-            const group: TypstNode = new TypstNode(
+
+            const group = new TypstNode(
                 'group',
                 '',
-                node.args!.map((n) => convert_tex_node_to_typst(n, options))
+                [typ_left, typ_body, typ_right]
             );
+            // These pairs will be handled by Typst compiler by default. No need to add lr()
             if ([
                 "[]", "()", "\\{\\}",
                 "\\lfloor\\rfloor",
@@ -173,20 +172,27 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             ].includes(left.content + right.content)) {
                 return group;
             }
-            // "\left\{ A \right." -> "{A"
-            // "\left. A \right\}" -> "lr( A} )"
+
+            // "\left\{ a + \frac{1}{3} \right." -> "lr(\{ a + 1/3)"
+            // "\left. a + \frac{1}{3} \right\}" -> "lr( a + \frac{1}{3} \})"
+            // Note that: In lr(), if one side of delimiter doesn't present (i.e. derived from "\\left." or "\\right."),
+            // "(", ")", "{", "[", should be escaped with "\" to be the other side of delimiter.
+            // Simple "lr({ a+1/3)" doesn't compile in Typst.
+            const escape_curly_or_paren = (s: string) => {
+                if (["(", ")", "{", "["].includes(s)) {
+                    return "\\" + s;
+                } else {
+                    return s;
+                }
+            };
             if (right.content === '.') {
-                group.args!.pop();
-                return group;
+                typ_left.content = escape_curly_or_paren(typ_left.content);
+                group.args = [typ_left, typ_body];
             } else if (left.content === '.') {
-                group.args!.shift();
-                return new TypstNode('funcCall', 'lr', [group]);
+                typ_right.content = escape_curly_or_paren(typ_right.content);
+                group.args = [typ_body, typ_right];
             }
-            return new TypstNode(
-                'funcCall',
-                'lr',
-                [group]
-            );
+            return new TypstNode('funcCall', 'lr', [group]);
         }
         case 'binaryFunc': {
             if (node.content === '\\overset') {

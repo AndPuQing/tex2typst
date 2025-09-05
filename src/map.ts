@@ -1,5 +1,7 @@
 const symbolMap = new Map<string, string>([
     ['displaystyle', 'display'],
+
+    ['|', 'bar.v.double'],
     ['!', '#h(-math.thin.amount)'],
     [',', 'thin'],
     [':', 'med'],

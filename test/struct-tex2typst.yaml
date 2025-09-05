@@ -19,7 +19,7 @@ cases:
     typst: 'lr([bold(A))) lr({b))'
   - title: dot as right bracket
     tex: '\left\{ \frac{a}{b} \right.'
-    typst: '{a/b'
+    typst: 'lr(\{a/b)'
   - title: dot as left bracket
     tex: '\left. \frac{a}{b} \right\}'
     typst: 'lr(a/b})'
