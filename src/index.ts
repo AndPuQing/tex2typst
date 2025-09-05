@@ -11,7 +11,6 @@ import { shorthandMap } from "./typst-shorthands";
 export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
     const opt: Tex2TypstOptions = {
         nonStrict: true,
-        preferTypstIntrinsic: true,
         preferShorthands: true,
         keepSpaces: false,
         fracToSlash: true,

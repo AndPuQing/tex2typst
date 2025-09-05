@@ -7,7 +7,6 @@ export interface TestCase {
   tex: string;
   typst: string;
   nonStrict?: boolean;
-  preferTypstIntrinsic?: boolean;
   preferShorthands?: boolean;
   inftyToOo?: boolean;
   customTexMacros: { [key: string]: string };

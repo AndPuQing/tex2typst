@@ -397,7 +397,6 @@ export const TYPST_FALSE: TypstPrimitiveValue = false;
  */
 export interface Tex2TypstOptions {
     nonStrict?: boolean; /** default is true */
-    preferTypstIntrinsic?: boolean; /** default is true */
     preferShorthands?: boolean; /** default is true */
     keepSpaces?: boolean; /** default is false */
     fracToSlash?: boolean; /** default is true */

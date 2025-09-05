@@ -276,17 +276,14 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             // \operatorname{opname} -> op("opname")
             if (node.content === '\\operatorname') {
-                const text = arg0.content;
 
-                if (TYPST_INTRINSIC_SYMBOLS.includes(text)) {
-                    return new TypstNode('symbol', text);
-                } else {
-                    return new TypstNode(
-                        'funcCall',
-                        'op',
-                        [arg0]
-                    );
+                if (options.optimize) {
+                    const text = arg0.content;
+                    if (TYPST_INTRINSIC_SYMBOLS.includes(text)) {
+                        return new TypstNode('symbol', text);
+                    }
                 }
+                return new TypstNode('funcCall', 'op', [arg0]);
             }
             // \hspace{1cm} -> #h(1cm)
             // TODO: reverse conversion support for this

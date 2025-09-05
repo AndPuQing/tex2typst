@@ -83,7 +83,6 @@ caseFiles.forEach((ymlFilename) => {
         try {
           const settings: Tex2TypstOptions = {
             nonStrict: c.nonStrict? c.nonStrict: false,
-            preferTypstIntrinsic: c.preferTypstIntrinsic? c.preferTypstIntrinsic: false,
             preferShorthands: c.preferShorthands !== undefined? c.preferShorthands: true,
             inftyToOo: c.inftyToOo !== undefined? c.inftyToOo: false,
             customTexMacros: c.customTexMacros? c.customTexMacros: {},
