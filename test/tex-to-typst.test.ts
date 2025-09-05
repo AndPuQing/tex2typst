@@ -1,5 +1,6 @@
 import { describe, it, test, expect } from 'vitest';
-import { parseTex, tokenize_tex } from '../src/tex-parser';
+import { tokenize_tex } from '../src/tex-tokenizer';
+import { parseTex } from '../src/tex-parser';
 import { tex2typst } from '../src/index';
 import { TypstWriterError } from '../src/typst-writer';
 import { Tex2TypstOptions, TexNode, TexToken } from '../src/types';
