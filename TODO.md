@@ -1,1 +1,2 @@
 - Typst math `limits(Y)^X` to TeX `\overset{X}{Y}`
+- TeX `C \frac{xy}{z}` should translate to `C (x y)/z` instead of `C(x y)/z`

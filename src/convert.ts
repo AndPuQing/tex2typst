@@ -150,12 +150,22 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             const [left, _body, right] = node.args!;
             const [typ_left, typ_body, typ_right] = node.args!.map((n) => convert_tex_node_to_typst(n, options));
 
-            if (left.content === '\\|' && right.content === '\\|') {
-                return new TypstNode(
-                    'funcCall',
-                    'norm',
-                    [typ_body]
-                );
+            if (options.optimize) {
+                // optimization off: "lr(bar.v.double a + 1/2 bar.v.double)"
+                // optimization on : "norm(a + 1/2)"
+                if (left.content === '\\|' && right.content === '\\|') {
+                    return new TypstNode('funcCall', 'norm', [typ_body]);
+                }
+
+                // These pairs will be handled by Typst compiler by default. No need to add lr()
+                if ([
+                    "[]", "()", "\\{\\}",
+                    "\\lfloor\\rfloor",
+                    "\\lceil\\rceil",
+                    "\\lfloor\\rceil",
+                ].includes(left.content + right.content)) {
+                    return new TypstNode('group', '', [typ_left, typ_body, typ_right]);
+                }
             }
 
             const group = new TypstNode(
@@ -163,22 +173,13 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 '',
                 [typ_left, typ_body, typ_right]
             );
-            // These pairs will be handled by Typst compiler by default. No need to add lr()
-            if ([
-                "[]", "()", "\\{\\}",
-                "\\lfloor\\rfloor",
-                "\\lceil\\rceil",
-                "\\lfloor\\rceil",
-            ].includes(left.content + right.content)) {
-                return group;
-            }
 
             // "\left\{ a + \frac{1}{3} \right." -> "lr(\{ a + 1/3)"
             // "\left. a + \frac{1}{3} \right\}" -> "lr( a + \frac{1}{3} \})"
             // Note that: In lr(), if one side of delimiter doesn't present (i.e. derived from "\\left." or "\\right."),
             // "(", ")", "{", "[", should be escaped with "\" to be the other side of delimiter.
             // Simple "lr({ a+1/3)" doesn't compile in Typst.
-            const escape_curly_or_paren = (s: string) => {
+            const escape_curly_or_paren = function(s: string): string {
                 if (["(", ")", "{", "["].includes(s)) {
                     return "\\" + s;
                 } else {

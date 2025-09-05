@@ -40,6 +40,7 @@ export interface TypstWriterOptions {
     preferShorthands: boolean;
     keepSpaces: boolean;
     inftyToOo: boolean;
+    optimize: boolean;
 }
 
 export class TypstWriter {
@@ -47,17 +48,19 @@ export class TypstWriter {
     private preferShorthands: boolean;
     private keepSpaces: boolean;
     private inftyToOo: boolean;
+    private optimize: boolean;
 
     protected buffer: string = "";
     protected queue: TypstToken[] = [];
 
     private insideFunctionDepth = 0;
 
-    constructor(opt: TypstWriterOptions) {
-        this.nonStrict = opt.nonStrict;
-        this.preferShorthands = opt.preferShorthands;
-        this.keepSpaces = opt.keepSpaces;
-        this.inftyToOo = opt.inftyToOo;
+    constructor(options: TypstWriterOptions) {
+        this.nonStrict = options.nonStrict;
+        this.preferShorthands = options.preferShorthands;
+        this.keepSpaces = options.keepSpaces;
+        this.inftyToOo = options.inftyToOo;
+        this.optimize = options.optimize;
     }
 
 
@@ -67,8 +70,6 @@ export class TypstWriter {
         if (str === '') {
             return;
         }
-
-        // TODO: "C \frac{xy}{z}" should translate to "C (x y)/z" instead of "C(x y)/z"
 
         let no_need_space = false;
         // putting the first token in clause
@@ -163,7 +164,7 @@ export class TypstWriter {
                     // Put prime symbol before '_'. Because $y_1'$ is not displayed properly in Typst (so far)
                     // e.g.
                     // y_1' -> y'_1
-                    // y_{a_1}' -> y'_{a_1}
+                    // y_{a_1}' -> y'_(a_1)
                     this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '\''));
                     trailing_space_needed = false;
                 }
@@ -375,9 +376,11 @@ export class TypstWriter {
             res = res.replace(/round\(\)/g, 'round("")');
             return res;
         }
-        const all_passes = [smartFloorPass, smartCeilPass, smartRoundPass];
-        for (const pass of all_passes) {
-            this.buffer = pass(this.buffer);
+        if (this.optimize) {
+            const all_passes = [smartFloorPass, smartCeilPass, smartRoundPass];
+            for (const pass of all_passes) {
+                this.buffer = pass(this.buffer);
+            }
         }
         return this.buffer;
     }
