@@ -35,6 +35,7 @@ export const TEX_UNARY_COMMANDS = [
     'overleftarrow',
     'overrightarrow',
     'hspace',
+    'substack',
 ]
 
 export const TEX_BINARY_COMMANDS = [
