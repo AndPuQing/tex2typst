@@ -282,12 +282,6 @@ cases:
     tex: e = \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
     typst: e = lim_(n -> infinity)(1 + 1/n)^n
 
-  - title: overset
-    tex: \overset{a}{+}
-    typst: limits(+)^a
-
-
-
   - title: oo
     tex: \infty
     typst: oo

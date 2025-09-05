@@ -113,7 +113,12 @@ cases:
   - title: mod
     tex: a^{p - 1} \equiv 1 \mod p
     typst: a^(p - 1) equiv 1 mod p
-
+  - title: overset
+    tex: \overset{a}{+}
+    typst: limits(+)^a
+  - title: underset
+    tex: \underset{a}{+}
+    typst: limits(+)_a
   - title: overset, special case 1
     tex: \overset{\text{def}}{=}
     typst: eq.def

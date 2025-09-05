@@ -398,3 +398,6 @@ cases:
       a \\ b \\ c
       \end{pmatrix}
     typst: vec(a,b,c)
+  - title: overset & underset
+    tex: \overset{b}{\underset{a}{+}}
+    typst: limits(+)_a^b

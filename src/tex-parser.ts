@@ -47,6 +47,7 @@ const BINARY_COMMANDS = [
     'dfrac',
     'tbinom',
     'overset',
+    'underset',
 ]
 
 const IGNORED_COMMANDS = [

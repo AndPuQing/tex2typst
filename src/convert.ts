@@ -46,40 +46,52 @@ function tex_token_to_typst(token: string): string {
 function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     const [sup, base] = node.args!;
 
-    const is_def = (n: TexNode): boolean => {
-        if (n.eq(new TexNode('text', 'def'))) {
-            return true;
-        }
-        // \overset{def}{=} is also considered as eq.def
-        if (n.type === 'ordgroup' && n.args!.length === 3) {
-            const [a1, a2, a3] = n.args!;
-            const d = new TexNode('element', 'd');
-            const e = new TexNode('element', 'e');
-            const f = new TexNode('element', 'f');
-            if (a1.eq(d) && a2.eq(e) && a3.eq(f)) {
+    if (options.optimize) {
+        const is_def = (n: TexNode): boolean => {
+            if (n.eq(new TexNode('text', 'def'))) {
                 return true;
             }
+            // \overset{def}{=} is also considered as eq.def
+            if (n.type === 'ordgroup' && n.args!.length === 3) {
+                const [a1, a2, a3] = n.args!;
+                const d = new TexNode('element', 'd');
+                const e = new TexNode('element', 'e');
+                const f = new TexNode('element', 'f');
+                if (a1.eq(d) && a2.eq(e) && a3.eq(f)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        const is_eq = (n: TexNode): boolean => n.eq(new TexNode('element', '='));
+        if (is_def(sup) && is_eq(base)) {
+            return new TypstNode('symbol', 'eq.def');
         }
-        return false;
-    };
-    const is_eq = (n: TexNode): boolean => n.eq(new TexNode('element', '='));
-    if (is_def(sup) && is_eq(base)) {
-        return new TypstNode('symbol', 'eq.def');
     }
     const limits_call = new TypstNode(
         'funcCall',
         'limits',
         [convert_tex_node_to_typst(base, options)]
     );
-    return new TypstNode(
-        'supsub',
-        '',
-        [],
-        {
+    return new TypstNode('supsub', '', [], {
             base: limits_call,
             sup: convert_tex_node_to_typst(sup, options),
-        }
+    });
+}
+
+// \underset{X}{Y} -> limits(Y)_X
+function convert_underset(node: TexNode, options: Tex2TypstOptions): TypstNode {
+    const [sub, base] = node.args!;
+
+    const limits_call = new TypstNode(
+        'funcCall',
+        'limits',
+        [convert_tex_node_to_typst(base, options)]
     );
+    return new TypstNode('supsub', '', [], {
+            base: limits_call,
+            sub: convert_tex_node_to_typst(sub, options),
+    });
 }
 
 
@@ -114,7 +126,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
         case 'supsub': {
             let { base, sup, sub } = node.data as TexSupsubData;
 
-            // Special logic for overbrace
+            // special hook for overbrace
             if (base && base.type === 'unaryFunc' && base.content === '\\overbrace' && sup) {
                 return new TypstNode(
                     'funcCall',
@@ -198,6 +210,9 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
         case 'binaryFunc': {
             if (node.content === '\\overset') {
                 return convert_overset(node, options);
+            }
+            if (node.content === '\\underset') {
+                return convert_underset(node, options);
             }
             // \frac{a}{b} -> a / b
             if (node.content === '\\frac') {
@@ -424,6 +439,8 @@ const TYPST_UNARY_FUNCTIONS: string[] = [
     'frak',
     'floor',
     'ceil',
+    'norm',
+    'limits',
 ];
 
 const TYPST_BINARY_FUNCTIONS: string[] = [
@@ -567,15 +584,34 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         }
         case 'supsub': {
             const { base, sup, sub } = node.data as TypstSupsubData;
-            const base_tex = convert_typst_node_to_tex(base);
             let sup_tex: TexNode | undefined;
             let sub_tex: TexNode | undefined;
+
             if (sup) {
                 sup_tex = convert_typst_node_to_tex(sup);
             }
             if (sub) {
                 sub_tex = convert_typst_node_to_tex(sub);
             }
+
+            // special hook for limits
+            // `limits(+)^a` -> `\overset{a}{+}`
+            // `limits(+)_a` -> `\underset{a}{+}`
+            // `limits(+)_a^b` -> `\overset{b}{\underset{a}{+}}`
+            if (base.eq(new TypstNode('funcCall', 'limits'))) {
+                const body_in_limits = convert_typst_node_to_tex(base.args![0]);
+                if (sup_tex !== undefined && sub_tex === undefined) {
+                    return new TexNode('binaryFunc', '\\overset', [sup_tex, body_in_limits]);
+                } else if (sup_tex === undefined && sub_tex !== undefined) {
+                    return new TexNode('binaryFunc', '\\underset', [sub_tex, body_in_limits]);
+                } else {
+                    const underset_call = new TexNode('binaryFunc', '\\underset', [sub_tex!, body_in_limits]);
+                    return new TexNode('binaryFunc', '\\overset', [sup_tex!, underset_call]);
+                }
+            }
+
+            const base_tex = convert_typst_node_to_tex(base);
+
             const res = new TexNode('supsub', '', [], {
                 base: base_tex,
                 sup: sup_tex,
