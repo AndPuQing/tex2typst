@@ -460,8 +460,6 @@ function apply_escape_if_needed(c: string) {
 function typst_token_to_tex(token: string): string {
     if (/^[a-zA-Z0-9]$/.test(token)) {
         return token;
-    } else if (token === 'thin') {
-        return '\\,';
     } else if (reverseSymbolMap.has(token)) {
         return '\\' + reverseSymbolMap.get(token)!;
     }
