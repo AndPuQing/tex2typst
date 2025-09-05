@@ -382,15 +382,21 @@ export const TYPST_NONE = new TypstNode('none', '#none');
 export const TYPST_TRUE: TypstPrimitiveValue = true;
 export const TYPST_FALSE: TypstPrimitiveValue = false;
 
+/**
+ * ATTENTION:
+ * Don't use any options except those explicitly documented in
+ *   https://github.com/qwinsi/tex2typst/blob/main/docs/api-reference.md
+ * Any undocumented options may break in the future!
+ */
 export interface Tex2TypstOptions {
-    nonStrict?: boolean; // default is true
-    preferTypstIntrinsic?: boolean; // default is true,
-    preferShorthands?: boolean; // default is true
-    keepSpaces?: boolean; // default is false
-    fracToSlash?: boolean; // default is true
-    inftyToOo?: boolean; // default is false
-    optimize?: boolean; // default is true
-    nonAsciiWrapper?: string; // default is ""
+    nonStrict?: boolean; /** default is true */
+    preferTypstIntrinsic?: boolean; /** default is true */
+    preferShorthands?: boolean; /** default is true */
+    keepSpaces?: boolean; /** default is false */
+    fracToSlash?: boolean; /** default is true */
+    inftyToOo?: boolean; /** default is false */
+    optimize?: boolean; /** default is true */
+    nonAsciiWrapper?: string; /** default is "" */
     customTexMacros?: { [key: string]: string };
     // TODO: custom typst functions
 }
