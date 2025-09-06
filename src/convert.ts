@@ -290,6 +290,15 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 );
             }
 
+            if (node.content === '\\substack') {
+                // \sum_{\substack{a \\ b}} -> sum_(a \ b)
+                return new TypstNode(
+                    'group',
+                    '',
+                    [arg0]
+                );
+            }
+
             if(options.optimize) {
                 // \mathbb{R} -> RR
                 if (node.content === '\\mathbb' && arg0.type === 'atom' && /^[A-Z]$/.test(arg0.content)) {
@@ -318,6 +327,21 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             if (node.content! === 'cases') {
                 return new TypstNode('cases', '', [], data);
+            }
+            if (node.content! === 'subarray') {
+                console.log(node);
+                const align_node = node.args![0];
+                if (align_node.content == 'r') {
+                    data.forEach(row => row[0].args!.push(new TypstNode('symbol', '&')));
+                }
+                if (align_node.content == 'l') {
+                    data.forEach(row => row[0].args!.unshift(new TypstNode('symbol', '&')));
+                }
+                return new TypstNode(
+                    'group',
+                    '',
+                    [new TypstNode('align', '', [], data)]
+                );
             }
             if (node.content! === 'array') {
                 const res = new TypstNode('matrix', '', [], data);
