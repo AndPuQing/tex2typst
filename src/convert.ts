@@ -329,7 +329,6 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 return new TypstNode('cases', '', [], data);
             }
             if (node.content! === 'subarray') {
-                console.log(node);
                 const align_node = node.args![0];
                 if (align_node.content == 'r') {
                     data.forEach(row => row[0].args!.push(new TypstNode('symbol', '&')));
