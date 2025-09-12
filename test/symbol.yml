@@ -15,9 +15,6 @@ cases:
   - title: uppercase Greek alphabet
     tex: \Gamma \Delta \Theta \Lambda \Xi \Pi \Sigma \Upsilon \Phi \Psi \Omega
     typst: Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega
-  - title: mathbb
-    tex: \mathbb{A} \mathbb{B} \mathbb{C} \mathbb{D} \mathbb{E} \mathbb{F} \mathbb{G} \mathbb{H} \mathbb{I} \mathbb{J} \mathbb{K} \mathbb{L} \mathbb{M} \mathbb{N} \mathbb{O} \mathbb{P} \mathbb{Q} \mathbb{R} \mathbb{S} \mathbb{T} \mathbb{U} \mathbb{V} \mathbb{W} \mathbb{X} \mathbb{Y} \mathbb{Z}
-    typst: AA BB CC DD EE FF GG HH II JJ KK LL MM NN OO PP QQ RR SS TT UU VV WW XX YY ZZ
   - title: mathbb for others
     tex: \mathbb{1 \alpha}
     typst: bb(1 alpha)
