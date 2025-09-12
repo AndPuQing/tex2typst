@@ -8,3 +8,4 @@ vitest.config.ts
 TODO.md
 tools/
 docs/
+justfile
