@@ -1,1 +1,2 @@
 - reverse conversion support for `\hspace{1cm}` -> `#h(1cm)`
+- proper formatter in tex-writer.ts and typst-writer.ts
