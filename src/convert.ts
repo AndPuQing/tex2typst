@@ -385,14 +385,16 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 return res;
             }
             if (node.content!.endsWith('matrix')) {
+                const res = new TypstNode('matrix', '', [], data);
                 let delim: TypstNode;
                 switch (node.content) {
                     case 'matrix':
                         delim = TYPST_NONE;
                         break;
                     case 'pmatrix':
-                        delim = new TypstNode('text', '(');
-                        break;
+                        // delim = new TypstNode('text', '(');
+                        // break;
+                        return res; // typst mat use delim:"(" by default
                     case 'bmatrix':
                         delim = new TypstNode('text', '[');
                         break;
@@ -409,7 +411,6 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     default:
                         throw new TypstWriterError(`Unimplemented beginend: ${node.content}`, node);
                 }
-                const res = new TypstNode('matrix', '', [], data);
                 res.setOptions({ 'delim': delim });
                 return res;
             }
@@ -659,7 +660,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         case 'matrix': {
             const typst_data = node.data as TypstNode[][];
             const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
-            let env_type = 'pmatrix';
+            let env_type = 'pmatrix'; // typst mat use delim:"(" by default
             if (node.options) {
                 if ('delim' in node.options) {
                     const delim = node.options.delim;
@@ -690,7 +691,6 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                             env_type = 'Vmatrix';
                             break;
                         default:
-                            console.warn(`Unexpected [delim]`, delim);
                             throw new Error(`Unexpected delimiter ${delim.content}`);
                     }
                 }
