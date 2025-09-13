@@ -3,6 +3,7 @@ import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_join } from "./generic";
 import { assert } from "./util";
+import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS } from "./tex-tokenizer";
 
 
 // native textual operators in Typst
@@ -432,7 +433,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 }
 
 
-
+/*
 const TYPST_UNARY_FUNCTIONS: string[] = [
     'sqrt',
     'bold',
@@ -463,6 +464,7 @@ const TYPST_BINARY_FUNCTIONS: string[] = [
     'overbrace',
     'underbrace',
 ];
+*/
 
 function apply_escape_if_needed(c: string) {
     if (['{', '}', '%'].includes(c)) {
@@ -534,79 +536,81 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return new TexNode('ordgroup', node.content, args);
         }
         case 'funcCall': {
-            if (TYPST_UNARY_FUNCTIONS.includes(node.content)) {
-                // special hook for lr
-                if (node.content === 'lr') {
-                    const data = node.data as TypstLrData;
-                    if (data.leftDelim !== null) {
-                        let left_delim = apply_escape_if_needed(data.leftDelim);
-                        assert(data.rightDelim !== null, "leftDelim has value but rightDelim not");
-                        let right_delim = apply_escape_if_needed(data.rightDelim!);
-                        // TODO: should be TeXNode('leftright', ...)
-                        // But currently writer will output `\left |` while people commonly prefer `\left|`.
-                        return new TexNode('ordgroup', '', [
-                            new TexNode('element', '\\left' + left_delim),
-                            ...node.args!.map(convert_typst_node_to_tex),
-                            new TexNode('element', '\\right' + right_delim)
-                        ]);
-                    } else {
-                        return new TexNode('ordgroup', '', node.args!.map(convert_typst_node_to_tex));
-                    }
-                }
-                // special hook for norm
-                // `\| a  \|` <- `norm(a)`
-                // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
-                if (node.content === 'norm') {
-                    const arg0 = node.args![0];
-                    const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
-                    return new TexNode(tex_node_type, '', [
-                        new TexNode('symbol', "\\|"),
-                        convert_typst_node_to_tex(arg0),
-                        new TexNode('symbol', "\\|")
+            // special hook for lr
+            if (node.content === 'lr') {
+                const data = node.data as TypstLrData;
+                if (data.leftDelim !== null) {
+                    let left_delim = apply_escape_if_needed(data.leftDelim);
+                    assert(data.rightDelim !== null, "leftDelim has value but rightDelim not");
+                    let right_delim = apply_escape_if_needed(data.rightDelim!);
+                    // TODO: should be TeXNode('leftright', ...)
+                    // But currently writer will output `\left |` while people commonly prefer `\left|`.
+                    return new TexNode('ordgroup', '', [
+                        new TexNode('element', '\\left' + left_delim),
+                        ...node.args!.map(convert_typst_node_to_tex),
+                        new TexNode('element', '\\right' + right_delim)
                     ]);
+                } else {
+                    return new TexNode('ordgroup', '', node.args!.map(convert_typst_node_to_tex));
                 }
-                // special hook for floor, ceil
-                // `\lfloor a \rfloor` <- `floor(a)`
-                // `\lceil a \rceil` <- `ceil(a)`
-                // `\left\lfloor a \right\rfloor` <- `floor(a)`
-                // `\left\lceil a \right\rceil` <- `ceil(a)`
-                if (node.content === 'floor' || node.content === 'ceil') {
-                    const left = "\\l" + node.content;
-                    const right = "\\r" + node.content;
-                    const arg0 = node.args![0];
-                    const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
-                    return new TexNode(tex_node_type, '', [
-                        new TexNode('symbol', left),
-                        convert_typst_node_to_tex(arg0),
-                        new TexNode('symbol', right)
-                    ]);
-                }
-                const command = typst_token_to_tex(node.content);
-                return new TexNode('unaryFunc', command, node.args!.map(convert_typst_node_to_tex));
-            } else if (TYPST_BINARY_FUNCTIONS.includes(node.content)) {
-                // special hook for root
-                if (node.content === 'root') {
-                    const [degree, radicand] = node.args!;
-                    const data: TexSqrtData = convert_typst_node_to_tex(degree);
-                    return new TexNode('unaryFunc', '\\sqrt', [convert_typst_node_to_tex(radicand)], data);
-                }
-                // special hook for overbrace and underbrace
-                if (node.content === 'overbrace' || node.content === 'underbrace') {
-                    const [body, label] = node.args!;
-                    const base = new TexNode('unaryFunc', '\\' + node.content, [convert_typst_node_to_tex(body)]);
-                    const script = convert_typst_node_to_tex(label);
-                    const data = node.content === 'overbrace' ? { base, sup: script } : { base, sub: script };
-                    return new TexNode('supsub', '', [], data);
-                }
-                const command = typst_token_to_tex(node.content);
-                return new TexNode('binaryFunc', command, node.args!.map(convert_typst_node_to_tex));
+            }
+            // special hook for norm
+            // `\| a  \|` <- `norm(a)`
+            // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
+            if (node.content === 'norm') {
+                const arg0 = node.args![0];
+                const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
+                return new TexNode(tex_node_type, '', [
+                    new TexNode('symbol', "\\|"),
+                    convert_typst_node_to_tex(arg0),
+                    new TexNode('symbol', "\\|")
+                ]);
+            }
+            // special hook for floor, ceil
+            // `\lfloor a \rfloor` <- `floor(a)`
+            // `\lceil a \rceil` <- `ceil(a)`
+            // `\left\lfloor a \right\rfloor` <- `floor(a)`
+            // `\left\lceil a \right\rceil` <- `ceil(a)`
+            if (node.content === 'floor' || node.content === 'ceil') {
+                const left = "\\l" + node.content;
+                const right = "\\r" + node.content;
+                const arg0 = node.args![0];
+                const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
+                return new TexNode(tex_node_type, '', [
+                    new TexNode('symbol', left),
+                    convert_typst_node_to_tex(arg0),
+                    new TexNode('symbol', right)
+                ]);
+            }
+            // special hook for root
+            if (node.content === 'root') {
+                const [degree, radicand] = node.args!;
+                const data: TexSqrtData = convert_typst_node_to_tex(degree);
+                return new TexNode('unaryFunc', '\\sqrt', [convert_typst_node_to_tex(radicand)], data);
+            }
+            // special hook for overbrace and underbrace
+            if (node.content === 'overbrace' || node.content === 'underbrace') {
+                const [body, label] = node.args!;
+                const base = new TexNode('unaryFunc', '\\' + node.content, [convert_typst_node_to_tex(body)]);
+                const script = convert_typst_node_to_tex(label);
+                const data = node.content === 'overbrace' ? { base, sup: script } : { base, sub: script };
+                return new TexNode('supsub', '', [], data);
+            }
+
+            // special hook for vec
+            // "vec(a, b, c)" -> "\begin{pmatrix}a\\ b\\ c\end{pmatrix}"
+            if (node.content === 'vec') {
+                const tex_data = node.args!.map(convert_typst_node_to_tex).map((n) => [n]) as TexArrayData;
+                return new TexNode('beginend', 'pmatrix', [], tex_data);
+            }
+
+            // general case
+            const func_name_tex = typst_token_to_tex(node.content);
+            if (func_name_tex.length > 0 && TEX_UNARY_COMMANDS.includes(func_name_tex.substring(1))) {
+                return new TexNode('unaryFunc', func_name_tex, node.args!.map(convert_typst_node_to_tex));
+            } else if (func_name_tex.length > 0 && TEX_BINARY_COMMANDS.includes(func_name_tex.substring(1))) {
+                return new TexNode('binaryFunc', func_name_tex, node.args!.map(convert_typst_node_to_tex));
             } else {
-                // special hook for vec
-                // "vec(a, b, c)" -> "\begin{pmatrix}a\\ b\\ c\end{pmatrix}"
-                if (node.content === 'vec') {
-                    const tex_data = node.args!.map(convert_typst_node_to_tex).map((n) => [n]) as TexArrayData;
-                    return new TexNode('beginend', 'pmatrix', [], tex_data);
-                }
                 return new TexNode('ordgroup', '', [
                     new TexNode('symbol', typst_token_to_tex(node.content)),
                     new TexNode('element', '('),
