@@ -327,8 +327,7 @@ export interface TypstLrData {
 type TypstNodeType = 'atom' | 'symbol' | 'text' | 'literal' | 'control' | 'comment' | 'whitespace'
             | 'none' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
 
-export type TypstPrimitiveValue = string | boolean | TypstNode;
-export type TypstNamedParams = { [key: string]: TypstPrimitiveValue };
+export type TypstNamedParams = { [key: string]: TypstNode };
 
 
 export class TypstNode {
@@ -380,12 +379,21 @@ export class TypstNode {
                 return false;
         }
     }
+
+    public toString(): string {
+        switch (this.type) {
+            case 'text':
+                return `"${this.content}"`;
+            case 'comment':
+                return `//${this.content}`;
+            default:
+                return this.content;
+        }
+    }
 }
 
 // #none
 export const TYPST_NONE = new TypstNode('none', '#none');
-export const TYPST_TRUE: TypstPrimitiveValue = true;
-export const TYPST_FALSE: TypstPrimitiveValue = false;
 
 /**
  * ATTENTION:

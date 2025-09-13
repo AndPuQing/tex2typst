@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TypstPrimitiveValue, TypstLrData, TexArrayData, TypstNamedParams } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TypstLrData, TexArrayData, TypstNamedParams } from "./types";
 import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_intersperse } from "./generic";
@@ -385,22 +385,22 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 return res;
             }
             if (node.content!.endsWith('matrix')) {
-                let delim: TypstPrimitiveValue;
+                let delim: TypstNode;
                 switch (node.content) {
                     case 'matrix':
                         delim = TYPST_NONE;
                         break;
                     case 'pmatrix':
-                        delim = '(';
+                        delim = new TypstNode('text', '(');
                         break;
                     case 'bmatrix':
-                        delim = '[';
+                        delim = new TypstNode('text', '[');
                         break;
                     case 'Bmatrix':
-                        delim = '{';
+                        delim = new TypstNode('text', '{');
                         break;
                     case 'vmatrix':
-                        delim = '|';
+                        delim = new TypstNode('text', '|');
                         break;
                     case 'Vmatrix': {
                         delim = new TypstNode('symbol', 'bar.v.double');
@@ -663,43 +663,35 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if (node.options) {
                 if ('delim' in node.options) {
                     const delim = node.options.delim;
-                    if (delim instanceof TypstNode) {
-                        switch (delim.content) {
-                            case '#none':
-                                env_type = 'matrix';
-                                break;
-                            case 'bar.v.double':
-                                env_type = 'Vmatrix';
-                                break;
-                            case 'bar':
-                            case 'bar.v':
-                                env_type = 'vmatrix';
-                                break;
-                            default:
-                                throw new Error(`Unexpected delimiter ${delim.content}`);
-                        }
-                    } else {
-                        switch (delim) {
-                            case '[':
-                                env_type = 'bmatrix';
-                                break;
-                            case ']':
-                                env_type = 'bmatrix';
-                                break;
-                            case '{':
-                                env_type = 'Bmatrix';
-                                break;
-                            case '}':
-                                env_type = 'Bmatrix';
-                                break;
-                            case '|':
-                                env_type = 'vmatrix';
-                                break;
-                            case ')':
-                            case '(':
-                            default:
-                                env_type = 'pmatrix';
-                        }
+                    switch (delim.content) {
+                        case '#none':
+                            env_type = 'matrix';
+                            break;
+                        case '[':
+                        case ']':
+                            env_type = 'bmatrix';
+                            break;
+                        case '(':
+                        case ')':
+                            env_type = 'pmatrix';
+                            break;
+                        case '{':
+                        case '}':
+                            env_type = 'Bmatrix';
+                            break;
+                        case '|':
+                            env_type = 'vmatrix';
+                            break;
+                        case 'bar':
+                        case 'bar.v':
+                            env_type = 'vmatrix';
+                            break;
+                        case 'bar.v.double':
+                            env_type = 'Vmatrix';
+                            break;
+                        default:
+                            console.warn(`Unexpected [delim]`, delim);
+                            throw new Error(`Unexpected delimiter ${delim.content}`);
                     }
                 }
             }

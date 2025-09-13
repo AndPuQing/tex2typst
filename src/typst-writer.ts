@@ -1,6 +1,5 @@
-import { TexNode, TypstNode, TypstPrimitiveValue, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TexNode, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { shorthandMap } from "./typst-shorthands";
-import { assert } from "./util";
 
 function is_delimiter(c: TypstNode): boolean {
     return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content);
@@ -12,20 +11,6 @@ const TYPST_COMMA: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ',');
 const TYPST_NEWLINE: TypstToken = new TypstToken(TypstTokenType.SYMBOL, '\n');
 
 const SOFT_SPACE = new TypstToken(TypstTokenType.CONTROL, ' ');
-
-function typst_primitive_to_string(value: TypstPrimitiveValue) {
-    switch (typeof value) {
-        case 'string':
-            return `"${value}"`;
-        case 'number':
-            return (value as number).toString();
-        case 'boolean':
-            return (value as boolean) ? '#true' : '#false';
-        default:
-            assert(value instanceof TypstNode, 'Not a valid primitive value');
-            return (value as TypstNode).content;
-    }
-}
 
 export class TypstWriterError extends Error {
     node: TexNode | TypstNode | TypstToken;
@@ -201,8 +186,7 @@ export class TypstWriter {
                 }
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
-                        const value_str = typst_primitive_to_string(value);
-                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `, ${key}: ${value_str}`));
+                        this.queue.push(new TypstToken(TypstTokenType.LITERAL, `, ${key}: ${value.toString()}`));
                     }
                 }
                 this.queue.push(TYPST_RIGHT_PARENTHESIS);
@@ -249,8 +233,7 @@ export class TypstWriter {
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
-                        const value_str = typst_primitive_to_string(value);
-                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `${key}: ${value_str}, `));
+                        this.queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}, `));
                     }
                 }
                 matrix.forEach((row, i) => {
@@ -285,8 +268,7 @@ export class TypstWriter {
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
                 if (node.options) {
                     for (const [key, value] of Object.entries(node.options)) {
-                        const value_str = typst_primitive_to_string(value);
-                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, `${key}: ${value_str}, `));
+                        this.queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}, `));
                     }
                 }
                 cases.forEach((row, i) => {

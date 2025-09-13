@@ -413,22 +413,7 @@ export class TypstParser {
                             if(g.args!.length !== 3) {
                                 throw new TypstParserError('Invalid number of arguments for delim');
                             }
-                             switch (g.args![pos_colon + 1].type) {
-                                case 'text': {
-                                    np['delim'] = g.args![pos_colon + 1].content;
-                                    break;
-                                }
-                                case 'none': {
-                                   np['delim'] = TYPST_NONE;
-                                    break;
-                                }
-                                case 'symbol': {
-                                    np['delim'] = g.args![pos_colon + 1];
-                                    break;
-                                }
-                                default:
-                                    throw new TypstParserError('Not implemented for other types of delim');
-                            }
+                            np['delim'] = g.args![pos_colon + 1];
                         } else {
                             throw new TypstParserError('Not implemented for other named parameters');
                         }
