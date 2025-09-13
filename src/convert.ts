@@ -121,6 +121,9 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             return new TypstNode('text', node.content);
         }
+        case 'literal':
+            // This happens, for example, node={type: 'literal', content: 'myop'} as in `\operatorname{myop}`
+            return new TypstNode('literal', node.content);
         case 'comment':
             return new TypstNode('comment', node.content);
         case 'supsub': {
@@ -277,7 +280,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                         return new TypstNode('symbol', arg0.content);
                     }
                 }
-                return new TypstNode('funcCall', 'op', [arg0]);
+                return new TypstNode('funcCall', 'op', [new TypstNode('text', arg0.content)]);
             }
             // \hspace{1cm} -> #h(1cm)
             // TODO: reverse conversion support for this

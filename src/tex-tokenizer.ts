@@ -67,7 +67,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
             return [
                 new TexToken(TexTokenType.COMMAND, command),
                 new TexToken(TexTokenType.CONTROL, '{'),
-                new TexToken(TexTokenType.TEXT, unescape(text_inside)),
+                new TexToken(TexTokenType.LITERAL, unescape(text_inside)),
                 new TexToken(TexTokenType.CONTROL, '}')
             ]
         }

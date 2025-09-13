@@ -3,7 +3,7 @@ import { array_includes } from "./generic";
 export enum TexTokenType {
     ELEMENT,
     COMMAND,
-    TEXT,
+    LITERAL,
     COMMENT,
     SPACE,
     NEWLINE,
@@ -26,10 +26,8 @@ export class TexToken {
 
     public toString(): string {
         switch (this.type) {
-            case TexTokenType.TEXT:
-                return `\\text{${this.value}}`;
             case TexTokenType.COMMENT:
-                return `%${this.value}`;
+                return "%" + this.value;
             default:
                 return this.value;
         }
@@ -56,7 +54,7 @@ export type TexArrayData = TexNode[][];
  * empty: special type when something is empty. e.g. the base of _{a} or ^{a}
  * whitespace: space, tab, newline
  */
-type TexNodeType = 'element' | 'text' | 'comment' | 'whitespace' | 'control' | 'ordgroup' | 'supsub'
+type TexNodeType = 'element' | 'text'  | 'literal' | 'comment' | 'whitespace' | 'control' | 'ordgroup' | 'supsub'
              | 'unaryFunc' | 'binaryFunc' | 'leftright' | 'beginend' | 'symbol' | 'empty' | 'unknownMacro';
 
 
@@ -89,16 +87,6 @@ export class TexNode {
         return this.type === other.type && this.content === other.content;
     }
 
-    public toString(): string {
-        switch (this.type) {
-            case 'text':
-                return `\\text{${this.content}}`;
-            default:
-                throw new Error(`toString() is not implemented for type ${this.type}`);
-        }
-    }
-
-
     public serialize(): TexToken[] {
         switch (this.type) {
             case 'empty':
@@ -111,7 +99,12 @@ export class TexNode {
             case 'symbol':
                 return [new TexToken(TexTokenType.COMMAND, this.content)];
             case 'text':
-                return [new TexToken(TexTokenType.TEXT, this.content)];
+                return [
+                    new TexToken(TexTokenType.COMMAND, '\\text'),
+                    new TexToken(TexTokenType.ELEMENT, '{'),
+                    new TexToken(TexTokenType.LITERAL, this.content),
+                    new TexToken(TexTokenType.ELEMENT, '}'),
+                ];
             case 'comment':
                 return [new TexToken(TexTokenType.COMMENT, this.content)];
             case 'whitespace': {
@@ -326,7 +319,7 @@ export interface TypstLrData {
     rightDelim: string | null;
 }
 
-type TypstNodeType = 'atom' | 'symbol' | 'text' | 'control' | 'comment' | 'whitespace'
+type TypstNodeType = 'atom' | 'symbol' | 'text' | 'literal' | 'control' | 'comment' | 'whitespace'
             | 'none' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
 
 export type TypstPrimitiveValue = string | boolean | TypstNode;

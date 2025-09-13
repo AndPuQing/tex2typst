@@ -231,8 +231,8 @@ export class LatexParser {
         switch (firstToken.type) {
             case TexTokenType.ELEMENT:
                 return [new TexNode('element', firstToken.value), start + 1];
-            case TexTokenType.TEXT:
-                return [new TexNode('text', firstToken.value), start + 1];
+            case TexTokenType.LITERAL:
+                return [new TexNode('literal', firstToken.value), start + 1];
             case TexTokenType.COMMENT:
                 return [new TexNode('comment', firstToken.value), start + 1];
             case TexTokenType.SPACE:
@@ -321,7 +321,7 @@ export class LatexParser {
                         throw new LatexParserError('Expecting content for \\text command');
                     }
                     assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
-                    assert(tokens[pos + 1].type === TexTokenType.TEXT);
+                    assert(tokens[pos + 1].type === TexTokenType.LITERAL);
                     assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
                     const text = tokens[pos + 1].value;
                     return [new TexNode('text', text), pos + 3];
@@ -412,7 +412,7 @@ export class LatexParser {
 
         let pos = start + 1;
         assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
-        assert(tokens[pos + 1].type === TexTokenType.TEXT);
+        assert(tokens[pos + 1].type === TexTokenType.LITERAL);
         assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
         const envName = tokens[pos + 1].value;
         pos += 3;
@@ -440,7 +440,7 @@ export class LatexParser {
         pos = endIdx + 1;
 
         assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
-        assert(tokens[pos + 1].type === TexTokenType.TEXT);
+        assert(tokens[pos + 1].type === TexTokenType.LITERAL);
         assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
         if (tokens[pos + 1].value !== envName) {
             throw new LatexParserError('Mismatched \\begin and \\end environments');

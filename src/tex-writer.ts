@@ -1,5 +1,5 @@
 import { array_includes, array_split } from "./generic";
-import { TexNode, TexToken, TexSupsubData, TexTokenType } from "./types";
+import { TexNode, TexToken, TexTokenType } from "./types";
 
 
 export class TexWriter {
