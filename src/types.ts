@@ -98,6 +98,8 @@ export class TexNode {
             }
             case 'symbol':
                 return [new TexToken(TexTokenType.COMMAND, this.content)];
+            case 'literal':
+                return [new TexToken(TexTokenType.LITERAL, this.content)];
             case 'text':
                 return [
                     new TexToken(TexTokenType.COMMAND, '\\text'),
@@ -236,6 +238,7 @@ export enum TypstTokenType {
     NONE,
     SYMBOL,
     ELEMENT,
+    LITERAL,
     TEXT,
     COMMENT,
     SPACE,
@@ -264,6 +267,8 @@ export class TypstToken {
         switch(this.type) {
             case TypstTokenType.NONE:
                 return new TypstNode('none', '#none');
+            case TypstTokenType.LITERAL:
+                return new TypstNode('literal', this.value);
             case TypstTokenType.TEXT:
                 return new TypstNode('text', this.value);
             case TypstTokenType.COMMENT:

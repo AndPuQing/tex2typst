@@ -132,6 +132,9 @@ export class TypstWriter {
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, content));
                 break;
             }
+            case 'literal':
+                this.queue.push(new TypstToken(TypstTokenType.LITERAL, node.content));
+                break;
             case 'text':
                 this.queue.push(new TypstToken(TypstTokenType.TEXT, node.content));
                 break;

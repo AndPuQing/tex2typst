@@ -275,22 +275,13 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             // \operatorname{opname} -> op("opname")
             if (node.content === '\\operatorname') {
+                // arg0 must be of type 'literal' in this situation
                 if (options.optimize) {
                     if (TYPST_INTRINSIC_OP.includes(arg0.content)) {
                         return new TypstNode('symbol', arg0.content);
                     }
                 }
                 return new TypstNode('funcCall', 'op', [new TypstNode('text', arg0.content)]);
-            }
-            // \hspace{1cm} -> #h(1cm)
-            // TODO: reverse conversion support for this
-            if (node.content === '\\hspace') {
-                const text = arg0.content;
-                return new TypstNode(
-                    'funcCall',
-                    '#h',
-                    [new TypstNode('symbol', text)]
-                );
             }
 
             if (node.content === '\\substack') {
@@ -463,6 +454,7 @@ const TYPST_UNARY_FUNCTIONS: string[] = [
     'ceil',
     'norm',
     'limits',
+    '#h',
 ];
 
 const TYPST_BINARY_FUNCTIONS: string[] = [
@@ -524,6 +516,8 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             }
             return new TexNode('symbol', typst_token_to_tex(node.content));
         }
+        case 'literal':
+            return new TexNode('literal', node.content);
         case 'text':
             return new TexNode('text', node.content);
         case 'comment':

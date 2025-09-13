@@ -59,6 +59,15 @@ const rules_map = new Map<string, (a: Scanner<TypstToken>) => TypstToken | Typst
     ],
     [String.raw`[0-9]+(\.[0-9]+)?`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
     [String.raw`[+\-*/=\'<>!.,;?()\[\]|]`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
+    [String.raw`#h\((.+?)\)`, (s) => {
+        const match = s.reMatchArray()!;
+        return [
+            new TypstToken(TypstTokenType.SYMBOL, "#h"),
+            new TypstToken(TypstTokenType.ELEMENT, "("),
+            new TypstToken(TypstTokenType.LITERAL, match[1]),
+            new TypstToken(TypstTokenType.ELEMENT, ")"),
+        ];
+    }],
     [String.raw`[a-zA-Z\.]+`, (s) => {
         return new TypstToken(s.text()!.length === 1? TypstTokenType.ELEMENT: TypstTokenType.SYMBOL, s.text()!);
     }],
