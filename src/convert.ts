@@ -351,16 +351,10 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 
                 const align_args = node.args!;
                 if (align_args.length > 0) {
-                    const align_node = align_args[0];
-                    const align_str = (() => {
-                        if (align_node.type === 'element') return align_node.content;
-                        if (align_node.type === 'ordgroup') {
-                            return align_node.args!.map(n => n.type === 'element' ? n.content : '').join('');
-                        }
-                        return '';
-                    })();
+                    const having_literal = (align_args[0].type === 'literal'); // e.g. `cc` as in `\begin{array}{cc}`
 
-                    if (align_str) {
+                    if (having_literal) {
+                        const align_str = align_args[0].content;
                         const alignMap: Record<string, string> = { l: '#left', c: '#center', r: '#right' };
                         const chars = Array.from(align_str);
 

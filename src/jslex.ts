@@ -15,9 +15,8 @@ interface IRule<T> {
 
 interface IMatch<T> {
     index: number;
-    text: string;
-    len: number;
     rule: IRule<T>;
+    reMatchArray: RegExpMatchArray;
 }
 
 
@@ -31,8 +30,10 @@ const EOF = {};
  * @return {int} Difference between the matches.
  */
 function matchcompare<T>(m1: IMatch<T>, m2: IMatch<T>): number {
-    if(m2.len !== m1.len) {
-        return m2.len - m1.len;
+    const m1_len = m1.reMatchArray[0].length;
+    const m2_len = m2.reMatchArray[0].length;
+    if(m2_len !== m1_len) {
+        return m2_len - m1_len;
     } else {
         return m1.index - m2.index;
     }
@@ -59,6 +60,7 @@ export class Scanner<T> {
 
     private _text: string | null = null;
     private _leng: number | null = null;
+    private _reMatchArray: RegExpMatchArray | null = null;
 
     constructor(input: string, lexer: JSLex<T>) {
         this._input = input;
@@ -75,6 +77,10 @@ export class Scanner<T> {
 
     public leng(): number | null {
         return this._leng;
+    }
+
+    public reMatchArray(): RegExpMatchArray | null {
+        return this._reMatchArray;
     }
 
     /**
@@ -180,9 +186,8 @@ export class Scanner<T> {
             if (mt !== null && mt[0].length > 0) {
                 matches.push({
                     index: i,
-                    text: mt[0],
-                    len: mt[0].length,
-                    rule: rule
+                    rule: rule,
+                    reMatchArray: mt,
                 });
             }
         }
@@ -193,22 +198,24 @@ export class Scanner<T> {
         this._go = true;
 
         let result: T | T[];
-        let m: IMatch<T>;
+        let matched_text: string;
         for (let j = 0, n = matches.length; j < n && this._go; j++) {
             this._offset = 0;
             this._less = null;
             this._go = false;
             this._newstate = null;
-            m = matches[j];
-            this._text = m.text;
-            this._leng = m.len;
+            const m = matches[j];
+            matched_text = m.reMatchArray[0];
+            this._text = matched_text;
+            this._leng = matched_text.length;
+            this._reMatchArray = m.reMatchArray;
             result = m.rule.action(this);
             if (this._newstate && this._newstate != this._state) {
                 this._state = this._newstate;
                 break;
             }
         }
-        const text = this._less === null ? m!.text : m!.text.substring(0, this._less);
+        const text = this._less === null ? matched_text! : matched_text!.substring(0, this._less);
         const len = text.length;
         this._pos += len + this._offset;
 

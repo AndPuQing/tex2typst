@@ -59,15 +59,28 @@ function unescape(str: string): string {
 }
 
 const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[]>([
+    // math `\begin{array}{cc}`
     [
-        String.raw`\\(text|operatorname|begin|end|hspace){.+?}`, (s) => {
-            const text = s.text()!;
-            const command = text.substring(0, text.indexOf('{'));
-            const text_inside = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
+        String.raw`\\begin{array}{(.+?)}`, (s) => {
+            const match = s.reMatchArray()!;
             return [
-                new TexToken(TexTokenType.COMMAND, command),
+                new TexToken(TexTokenType.COMMAND, '\\begin'),
                 new TexToken(TexTokenType.CONTROL, '{'),
-                new TexToken(TexTokenType.LITERAL, unescape(text_inside)),
+                new TexToken(TexTokenType.LITERAL, 'array'),
+                new TexToken(TexTokenType.CONTROL, '}'),
+                new TexToken(TexTokenType.CONTROL, '{'),
+                new TexToken(TexTokenType.LITERAL, match[1]),
+                new TexToken(TexTokenType.CONTROL, '}'),
+            ]
+        }
+    ],
+    [
+        String.raw`\\(text|operatorname|begin|end|hspace|array){(.+?)}`, (s) => {
+            const match = s.reMatchArray()!;
+            return [
+                new TexToken(TexTokenType.COMMAND, '\\' + match[1]),
+                new TexToken(TexTokenType.CONTROL, '{'),
+                new TexToken(TexTokenType.LITERAL, unescape(match[2])),
                 new TexToken(TexTokenType.CONTROL, '}')
             ]
         }
@@ -80,10 +93,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     [String.raw`\\[{}%$&#_|]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     // e.g. match `\frac13`, `\frac1 b`, `\frac a b`
     [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])\s*([0-9a-zA-Z])`, (s) => {
-        const text = s.text()!;
-        const regex = RegExp(String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])\s*([0-9a-zA-Z])`);
-        const match = text.match(regex);
-        assert(match !== null);
+        const match = s.reMatchArray()!;
         const command = match![1];
         if (TEX_BINARY_COMMANDS.includes(command.substring(1))) {
             const arg1 = match![2].trimStart();
@@ -100,10 +110,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     }],
     // e.g. match `\sqrt3`, `\sqrt a`
     [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`, (s) => {
-        const text = s.text()!;
-        const regex = RegExp(String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`);
-        const match = text.match(regex);
-        assert(match !== null);
+        const match = s.reMatchArray()!;
         const command = match![1];
         if (TEX_UNARY_COMMANDS.includes(command.substring(1))) {
             const arg1 = match![2].trimStart();
@@ -116,10 +123,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
             return [];
         }
     }],
-    [String.raw`\\[a-zA-Z]+`, (s) => {
-        const command = s.text()!;
-        return [ new TexToken(TexTokenType.COMMAND, command), ];
-    }],
+    [String.raw`\\[a-zA-Z]+`, (s) => new TexToken(TexTokenType.COMMAND, s.text()!)],
     // Numbers like "123", "3.14"
     [String.raw`[0-9]+(\.[0-9]+)?`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
     [String.raw`[a-zA-Z]`, (s) => new TexToken(TexTokenType.ELEMENT, s.text()!)],
