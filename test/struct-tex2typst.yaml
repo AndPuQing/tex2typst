@@ -235,6 +235,10 @@ cases:
     typst: |-
       mat(delim: #none, augment: #1, align: #center, a, b, c;
       c, d, e)
+  # should not mistakenly ignore `{x}` in  `\begin{matrix} {x} ... \end{matrix}`
+  - title: should not parse arg if envName is not one of array, subarray
+    tex: \begin{matrix} {x} & {y} \\ {z} & {w} \end{matrix}
+    typst: "mat(delim: #none, x, y; z, w)"
   - title: Test3
     tex: \boldsymbol{x}
     typst: bold(x)
