@@ -301,7 +301,7 @@ export class TypstWriter {
     }
 
     private appendWithBracketsIfNeeded(node: TypstNode): boolean {
-        let need_to_wrap = ['group', 'supsub', 'fraction','empty'].includes(node.type);
+        let need_to_wrap = ['group', 'supsub', 'align', 'fraction','empty'].includes(node.type);
 
         if (node.type === 'group') {
             if (node.args!.length === 0) {

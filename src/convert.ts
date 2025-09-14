@@ -95,6 +95,44 @@ function convert_underset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     });
 }
 
+function convert_tex_array_align_literal(alignLiteral: string): TypstNamedParams {
+    const np: TypstNamedParams = {};
+    const alignMap: Record<string, string> = { l: '#left', c: '#center', r: '#right' };
+    const chars = Array.from(alignLiteral);
+
+    const vlinePositions: number[] = [];
+    let columnIndex = 0;
+    for (const c of chars) {
+        if (c === '|') {
+            vlinePositions.push(columnIndex);
+        } else if (c === 'l' || c === 'c' || c === 'r') {
+            columnIndex++;
+        }
+    }
+
+    if (vlinePositions.length > 0) {
+        let augment_str: string;
+        if (vlinePositions.length === 1) {
+            augment_str = `#${vlinePositions[0]}`;
+        } else {
+            augment_str = `#(vline: (${vlinePositions.join(', ')}))`;
+        }
+
+        np['augment'] = new TypstNode('literal', augment_str);
+    }
+
+    const alignments = chars
+        .map(c => alignMap[c])
+        .filter((x) => x !== undefined)
+        .map(s => new TypstNode('literal', s!));
+
+    if (alignments.length > 0) {
+        const all_same = alignments.every(item => item.eq(alignments[0]));
+        np['align'] = all_same ? alignments[0] : new TypstNode('literal', '#center');
+    }
+    return np;
+}
+
 
 export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptions = {}): TypstNode {
     switch (node.type) {
@@ -285,13 +323,10 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 return new TypstNode('funcCall', 'op', [new TypstNode('text', arg0.content)]);
             }
 
+            // \substack{a \\ b} -> `a \ b`
+            // as in translation from \sum_{\substack{a \\ b}} to sum_(a \ b)
             if (node.content === '\\substack') {
-                // \sum_{\substack{a \\ b}} -> sum_(a \ b)
-                return new TypstNode(
-                    'group',
-                    '',
-                    [arg0]
-                );
+                return arg0;
             }
 
             if(options.optimize) {
@@ -316,75 +351,39 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             const matrix = node.data as TexNode[][];
             const data = matrix.map((row) => row.map((n) => convert_tex_node_to_typst(n, options)));
 
-            if (node.content!.startsWith('align')) {
+            if (node.content.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.
                 return new TypstNode('align', '', [], data);
             }
-            if (node.content! === 'cases') {
+            if (node.content === 'cases') {
                 return new TypstNode('cases', '', [], data);
             }
-            if (node.content! === 'subarray') {
+            if (node.content === 'subarray') {
                 const align_node = node.args![0];
-                if (align_node.content == 'r') {
-                    data.forEach(row => row[0].args!.push(new TypstNode('symbol', '&')));
+                switch (align_node.content) {
+                    case 'r':
+                        data.forEach(row => row[0].args!.push(new TypstNode('symbol', '&')));
+                        break;
+                    case 'l':
+                        data.forEach(row => row[0].args!.unshift(new TypstNode('symbol', '&')));
+                        break;
+                    default:
+                        break;
                 }
-                if (align_node.content == 'l') {
-                    data.forEach(row => row[0].args!.unshift(new TypstNode('symbol', '&')));
-                }
-                return new TypstNode(
-                    'group',
-                    '',
-                    [new TypstNode('align', '', [], data)]
-                );
+                return new TypstNode('align', '', [], data);
             }
-            if (node.content! === 'array') {
+            if (node.content === 'array') {
+                const np: TypstNamedParams = { 'delim': TYPST_NONE };
+
+                assert(node.args!.length > 0 && node.args![0].type === 'literal');
+                const np_new = convert_tex_array_align_literal(node.args![0].content);
+                Object.assign(np, np_new);
+
                 const res = new TypstNode('matrix', '', [], data);
-                const options: TypstNamedParams = { 'delim': TYPST_NONE };
-
-                const align_args = node.args!;
-                if (align_args.length > 0) {
-                    const having_literal = (align_args[0].type === 'literal'); // e.g. `cc` as in `\begin{array}{cc}`
-
-                    if (having_literal) {
-                        const align_str = align_args[0].content;
-                        const alignMap: Record<string, string> = { l: '#left', c: '#center', r: '#right' };
-                        const chars = Array.from(align_str);
-
-                        const alignments = chars
-                            .map(c => alignMap[c])
-                            .filter(Boolean)
-                            .map(s => new TypstNode('symbol', s!));
-
-                        const vlinePositions: number[] = [];
-                        let columnIndex = 0;
-                        for (const c of chars) {
-                            if (c === '|') {
-                                vlinePositions.push(columnIndex);
-                            } else if (c === 'l' || c === 'c' || c === 'r') {
-                                columnIndex++;
-                            }
-                        }
-
-                        if (vlinePositions.length > 0) {
-                            if (vlinePositions.length === 1) {
-                                options['augment'] = new TypstNode('symbol', `#${vlinePositions[0]}`);
-                            } else {
-                                options['augment'] = new TypstNode('symbol', `#(vline: (${vlinePositions.join(', ')}))`);
-                            }
-                        }
-
-                        if (alignments.length > 0) {
-                            const first_align = alignments[0].content;
-                            const all_same = alignments.every(item => item.content === first_align);
-                            options['align'] = all_same ? alignments[0] : new TypstNode('symbol', '#center');
-                        }
-                    }
-                }
-
-                res.setOptions(options);
+                res.setOptions(np);
                 return res;
             }
-            if (node.content!.endsWith('matrix')) {
+            if (node.content.endsWith('matrix')) {
                 const res = new TypstNode('matrix', '', [], data);
                 let delim: TypstNode;
                 switch (node.content) {
@@ -420,7 +419,13 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return new TypstNode('unknown', tex_token_to_typst(node.content));
         case 'control':
             if (node.content === '\\\\') {
+                // \\ -> \
                 return new TypstNode('symbol', '\\');
+            } else if (node.content === '\\!') {
+                // \! -> #h(-math.thin.amount)
+                return new TypstNode('funcCall', '#h', [
+                    new TypstNode('literal', '-math.thin.amount')
+                ]);
             } else if (symbolMap.has(node.content.substring(1))) {
                 // node.content is one of \, \: \;
                 const typst_symbol = symbolMap.get(node.content.substring(1))!;

@@ -3,7 +3,6 @@ const symbolMap = new Map<string, string>([
     ['hspace', '#h'],
 
     ['|', 'bar.v.double'],
-    ['!', '#h(-math.thin.amount)'],
     [',', 'thin'],
     [':', 'med'],
     [';', 'thick'],

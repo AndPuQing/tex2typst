@@ -60,15 +60,15 @@ function unescape(str: string): string {
 const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[]>([
     // math `\begin{array}{cc}`
     [
-        String.raw`\\begin{array}{(.+?)}`, (s) => {
+        String.raw`\\begin{(array|subarry)}{(.+?)}`, (s) => {
             const match = s.reMatchArray()!;
             return [
                 new TexToken(TexTokenType.COMMAND, '\\begin'),
                 new TexToken(TexTokenType.CONTROL, '{'),
-                new TexToken(TexTokenType.LITERAL, 'array'),
+                new TexToken(TexTokenType.LITERAL, match[1]),
                 new TexToken(TexTokenType.CONTROL, '}'),
                 new TexToken(TexTokenType.CONTROL, '{'),
-                new TexToken(TexTokenType.LITERAL, match[1]),
+                new TexToken(TexTokenType.LITERAL, match[2]),
                 new TexToken(TexTokenType.CONTROL, '}'),
             ]
         }
@@ -95,8 +95,8 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
         const match = s.reMatchArray()!;
         const command = match![1];
         if (TEX_BINARY_COMMANDS.includes(command.substring(1))) {
-            const arg1 = match![2].trimStart();
-            const arg2 = match![3];
+            const arg1 = match[2].trimStart();
+            const arg2 = match[3];
             return [
                 new TexToken(TexTokenType.COMMAND, command),
                 new TexToken(TexTokenType.ELEMENT, arg1),
@@ -110,9 +110,9 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
     // e.g. match `\sqrt3`, `\sqrt a`
     [String.raw`(\\[a-zA-Z]+)(\s*\d|\s+[a-zA-Z])`, (s) => {
         const match = s.reMatchArray()!;
-        const command = match![1];
+        const command = match[1];
         if (TEX_UNARY_COMMANDS.includes(command.substring(1))) {
-            const arg1 = match![2].trimStart();
+            const arg1 = match[2].trimStart();
             return [
                 new TexToken(TexTokenType.COMMAND, command),
                 new TexToken(TexTokenType.ELEMENT, arg1),

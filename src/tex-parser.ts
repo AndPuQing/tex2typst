@@ -417,18 +417,19 @@ export class LatexParser {
         const envName = tokens[pos + 1].value;
         pos += 3;
 
-        const args: TexNode[] = [];
-        while (pos < tokens.length) {
-            const whitespaceCount = eat_whitespaces(tokens, pos).length;
-            pos += whitespaceCount;
 
+        const args: TexNode[] = [];
+        if(['array', 'subarray'].includes(envName)) {
             if (pos >= tokens.length || !tokens[pos].eq(LEFT_CURLY_BRACKET)) {
-                break;
+                throw new LatexParserError(`Missing arg for \\begin{${envName}}`);
             }
             const [arg, newPos] = this.parseNextArg(tokens, pos);
             args.push(arg);
             pos = newPos;
         }
+
+        pos += eat_whitespaces(tokens, pos).length; // ignore whitespaces and '\n' after \begin{envName}
+
 
         const exprInsideStart = pos;
 
