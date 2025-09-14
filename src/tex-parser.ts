@@ -342,9 +342,9 @@ export class LatexParser {
     /*
     Extract a non-space argument from the token stream.
     So that `\frac{12} 3` is parsed as
-        TexCommand{ content: '\frac', args: ['12', '3'] }
+        TexNode{ type: 'binaryFunc', content: '\frac', args: [ELEMENT_12, ELEMENT_3] }
         rather than
-        TexCommand{ content: '\frac', args: ['12', ' '] }, TexElement{ content: '3' }
+        TexNode{ type: 'binaryFunc', content: '\frac', args: [ELEMENT_12, SPACE] }, ELEMENT_3
     */
     parseNextArg(tokens: TexToken[], start: number): ParseResult {
         let pos = start;
