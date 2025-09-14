@@ -507,6 +507,10 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if(node.content === 'comma') {
                 return new TexNode('element', ',');
             }
+            // special hook for dif
+            if(node.content === 'dif') {
+                return new TexNode('unaryFunc', '\\mathrm', [new TexNode('element', 'd')]);
+            }
             // special hook for hyph and hyph.minus
             if(node.content === 'hyph' || node.content === 'hyph.minus') {
                 return new TexNode('text', '-');
