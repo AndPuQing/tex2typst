@@ -420,9 +420,7 @@ export class LatexParser {
 
         const args: TexNode[] = [];
         if(['array', 'subarray'].includes(envName)) {
-            if (pos >= tokens.length || !tokens[pos].eq(LEFT_CURLY_BRACKET)) {
-                throw new LatexParserError(`Missing arg for \\begin{${envName}}`);
-            }
+            pos += eat_whitespaces(tokens, pos).length;
             const [arg, newPos] = this.parseNextArg(tokens, pos);
             args.push(arg);
             pos = newPos;

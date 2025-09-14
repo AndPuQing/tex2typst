@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TYPST_NONE, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { tokenize_typst } from "./typst-tokenizer";
 import { assert, isalpha } from "./util";
 
@@ -24,7 +24,7 @@ function _find_closing_match(tokens: TypstToken[], start: number,
 
     while (count > 0) {
         if (pos >= tokens.length) {
-            throw new Error('Unmatched brackets');
+            throw new Error('Unmatched brackets or parentheses');
         }
         if (tokens[pos].isOneOf(rightBrackets)) {
             count -= 1;
@@ -68,7 +68,7 @@ function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
 
     while (count > 0) {
         if (pos >= nodes.length) {
-            throw new Error('Unmatched brackets');
+            throw new Error("Unmatched '('");
         }
         if (nodes[pos].eq(left_parenthesis)) {
             count += 1;
