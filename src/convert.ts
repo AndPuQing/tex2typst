@@ -1,10 +1,19 @@
 import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TypstLrData, TexArrayData, TypstNamedParams } from "./types";
-import { TypstWriterError } from "./typst-writer";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_intersperse } from "./generic";
 import { assert } from "./util";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS } from "./tex-tokenizer";
 
+
+export class ConverterError extends Error {
+    node: TexNode | TypstNode;
+
+    constructor(message: string, node: TexNode | TypstNode) {
+        super(message);
+        this.name = "ConverterError";
+        this.node = node;
+    }
+}
 
 // native textual operators in Typst
 const TYPST_INTRINSIC_OP = [
@@ -408,12 +417,12 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                         break;
                     }
                     default:
-                        throw new TypstWriterError(`Unimplemented beginend: ${node.content}`, node);
+                        throw new ConverterError(`Unimplemented beginend: ${node.content}`, node);
                 }
                 res.setOptions({ 'delim': delim });
                 return res;
             }
-            throw new TypstWriterError(`Unimplemented beginend: ${node.content}`, node);
+            throw new ConverterError(`Unimplemented beginend: ${node.content}`, node);
         }
         case 'unknownMacro':
             return new TypstNode('unknown', tex_token_to_typst(node.content));
@@ -431,10 +440,10 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 const typst_symbol = symbolMap.get(node.content.substring(1))!;
                 return new TypstNode('symbol', typst_symbol);
             } else {
-                throw new TypstWriterError(`Unknown control sequence: ${node.content}`, node);
+                throw new ConverterError(`Unknown control sequence: ${node.content}`, node);
             }
         default:
-            throw new TypstWriterError(`Unimplemented node type: ${node.type}`, node);
+            throw new ConverterError(`Unimplemented node type: ${node.type}`, node);
     }
 }
 
