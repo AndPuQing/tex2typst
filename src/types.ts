@@ -253,6 +253,53 @@ export class TexNode {
                 throw new Error('[TexNode.serialize] Unimplemented type: ' + this.type);
         }
     }
+
+    // Note: toString() is expensive. Do not use it on performance-critical code path.
+    public toString(): string {
+        let buffer = '';
+        const tokens = this.serialize();
+        for (let i = 0; i < tokens.length; i++) {
+            buffer = writeTexTokenBuffer(buffer, tokens[i]);
+        }
+        return buffer;
+    }
+}
+
+export function writeTexTokenBuffer(buffer: string, token: TexToken): string {
+    const str = token.toString();
+
+    let no_need_space = false;
+    if (token.type === TexTokenType.SPACE) {
+        no_need_space = true;
+    } else {
+        // putting the first token in clause
+        no_need_space ||= /[{\(\[\|]$/.test(buffer);
+        // opening a optional [] parameter for a command
+        no_need_space ||= /\\\w+$/.test(buffer) && str === '[';
+        // putting a punctuation
+        no_need_space ||= /^[\.,;:!\?\(\)\]{}_^]$/.test(str);
+        no_need_space ||= ['\\{', '\\}'].includes(str);
+        // putting a prime
+        no_need_space ||= str === "'";
+        // putting a subscript or superscript
+        no_need_space ||= buffer.endsWith('_') || buffer.endsWith('^');
+        // buffer ends with a whitespace
+        no_need_space ||= /\s$/.test(buffer);
+        // token starts with a space
+        no_need_space ||= /^\s/.test(str);
+        // buffer is empty
+        no_need_space ||= buffer === '';
+        // leading sign. e.g. produce "+1" instead of " +1"
+        no_need_space ||= /[\(\[{]\s*(-|\+)$/.test(buffer) || buffer === '-' || buffer === '+';
+        // "&=" instead of "& ="
+        no_need_space ||= buffer.endsWith('&') && str === '=';
+    }
+
+    if (!no_need_space) {
+        buffer += ' ';
+    }
+
+    return buffer + str;
 }
 
 export enum TypstTokenType {

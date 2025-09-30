@@ -1,6 +1,6 @@
 import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TypstLrData, TexArrayData, TypstNamedParams, TexToken, TexTokenType, TypstToken, TypstTokenType } from "./types";
 import { symbolMap, reverseSymbolMap } from "./map";
-import { array_equal, array_intersperse } from "./generic";
+import { array_includes, array_intersperse, array_split } from "./generic";
 import { assert } from "./util";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS } from "./tex-tokenizer";
 
@@ -102,25 +102,8 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     const [sup, base] = node.args!;
 
     if (options.optimize) {
-        const is_def = function (n: TexNode): boolean {
-            // \overset{\text{def}}{=} is considered as eq.def
-            if (n.eq(new TexNode('text', new TexToken(TexTokenType.LITERAL, 'def')))) {
-                return true;
-            }
-            // \overset{def}{=} is also considered as eq.def
-            if (n.type === 'ordgroup') {
-                return array_equal(n.args!, [
-                    new TexToken(TexTokenType.ELEMENT, 'd').toNode(),
-                    new TexToken(TexTokenType.ELEMENT, 'e').toNode(),
-                    new TexToken(TexTokenType.ELEMENT, 'f').toNode()
-                ]);
-            }
-            return false;
-        };
-        const is_eq = function (n: TexNode): boolean {
-            return n.eq(new TexToken(TexTokenType.ELEMENT, '=').toNode());
-        };
-        if (is_def(sup) && is_eq(base)) {
+        // \overset{\text{def}}{=} or \overset{def}{=} are considered as eq.def
+        if (["\\overset{\\text{def}}{=}", "\\overset{d e f}{=}"].includes(node.toString())) {
             return new TypstToken(TypstTokenType.SYMBOL, 'eq.def').toNode();
         }
     }
@@ -376,11 +359,11 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 
             if(options.optimize) {
                 // \mathbb{R} -> RR
-                if (node.head.value === '\\mathbb' && arg0.head.type === TypstTokenType.ELEMENT && /^[A-Z]$/.test(arg0.head.value)) {
+                if (node.head.value === '\\mathbb' && /^\\mathbb{[A-Z]}$/.test(node.toString())) {
                     return new TypstToken(TypstTokenType.SYMBOL, arg0.head.value + arg0.head.value).toNode();
                 }
                 // \mathrm{d} -> dif
-                if (node.head.value === '\\mathrm' && arg0.eq(new TypstToken(TypstTokenType.ELEMENT, 'd').toNode())) {
+                if (node.head.value === '\\mathrm' && node.toString() === '\\mathrm{d}') {
                     return new TypstToken(TypstTokenType.SYMBOL, 'dif').toNode();
                 }
             }
@@ -570,7 +553,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
     }
     switch (node.type) {
         case 'terminal': {
-                if (node.head.type === TypstTokenType.SYMBOL) {
+            if (node.head.type === TypstTokenType.SYMBOL) {
                 // special hook for comma
                 if(node.head.value === 'comma') {
                     return new TexToken(TexTokenType.ELEMENT, ',').toNode();
@@ -598,6 +581,18 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
 
         case 'group': {
             const args = node.args!.map(convert_typst_node_to_tex);
+            const alignment_char = new TexToken(TexTokenType.CONTROL, '&').toNode();
+            const newline_char = new TexToken(TexTokenType.CONTROL, '\\\\').toNode();
+            if (array_includes(args, alignment_char)) {
+                // wrap the whole math formula with \begin{aligned} and \end{aligned}
+                const rows = array_split(args, newline_char);
+                const data: TexNode[][] = [];
+                for(const row of rows) {
+                    const cells = array_split(row, alignment_char);
+                    data.push(cells.map(cell => new TexNode('ordgroup', TEX_EMPTY_TOKEN, cell)));
+                }
+                return new TexNode('beginend', new TexToken(TexTokenType.CONTROL, 'aligned'), [], data);
+            }
             if (node.head.value === 'parenthesis') {
                 const is_over_high = node.isOverHigh();
                 const left_delim = is_over_high ? '\\left(' : '(';

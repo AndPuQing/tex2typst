@@ -213,6 +213,7 @@ const VERTICAL_BAR = new TypstToken(TypstTokenType.ELEMENT, '|');
 const COMMA = new TypstToken(TypstTokenType.ELEMENT, ',');
 const SEMICOLON = new TypstToken(TypstTokenType.ELEMENT, ';');
 const SINGLE_SPACE = new TypstToken(TypstTokenType.SPACE, ' ');
+const CONTROL_AND = new TypstToken(TypstTokenType.CONTROL, '&');
 
 export class TypstParser {
     space_sensitive: boolean;
@@ -325,13 +326,13 @@ export class TypstParser {
         if ([TypstTokenType.ELEMENT, TypstTokenType.SYMBOL].includes(firstToken.type)) {
             if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
                 if(firstToken.value === 'mat') {
-                    const [matrix, named_params, newPos] = this.parseGroupsOfArguments(tokens, start + 1);
+                    const [matrix, named_params, newPos] = this.parseMatrix(tokens, start + 1, SEMICOLON, COMMA);
                     const mat = new TypstNode('matrix', NONE_TOKEN, [], matrix);
                     mat.setOptions(named_params);
                     return [mat, newPos];
                 }
                 if(firstToken.value === 'cases') {
-                    const [cases, named_params, newPos] = this.parseGroupsOfArguments(tokens, start + 1, COMMA);
+                    const [cases, named_params, newPos] = this.parseMatrix(tokens, start + 1, COMMA, CONTROL_AND);
                     const casesNode = new TypstNode('cases', NONE_TOKEN, [], cases);
                     casesNode.setOptions(named_params);
                     return [casesNode, newPos];
@@ -353,7 +354,7 @@ export class TypstParser {
     // start: the position of the left parentheses
     parseArguments(tokens: TypstToken[], start: number): [TypstNode[], number] {
         const end = find_closing_match(tokens, start);
-        return [this.parseCommaSeparatedArguments(tokens, start + 1, end), end + 1];
+        return [this.parseArgumentsWithSeparator(tokens, start + 1, end, COMMA), end + 1];
     }
 
     // start: the position of the left parentheses
@@ -362,7 +363,7 @@ export class TypstParser {
             const end = find_closing_match(tokens, start);
             const inner_start = start + 1;
             const inner_end = find_closing_delim(tokens, inner_start);
-            const inner_args= this.parseCommaSeparatedArguments(tokens, inner_start + 1, inner_end);
+            const inner_args= this.parseArgumentsWithSeparator(tokens, inner_start + 1, inner_end, COMMA);
             return [
                 inner_args,
                 end + 1,
@@ -379,7 +380,7 @@ export class TypstParser {
     }
 
     // start: the position of the left parentheses
-    parseGroupsOfArguments(tokens: TypstToken[], start: number, newline_token = SEMICOLON): [TypstNode[][], TypstNamedParams, number] {
+    parseMatrix(tokens: TypstToken[], start: number, rowSepToken: TypstToken, cellSepToken: TypstToken): [TypstNode[][], TypstNamedParams, number] {
         const end = find_closing_match(tokens, start);
         tokens = tokens.slice(0, end);
 
@@ -389,12 +390,12 @@ export class TypstParser {
         let pos = start + 1;
         while (pos < end) {
             while(pos < end) {
-                let next_stop = array_find(tokens, newline_token, pos);
+                let next_stop = array_find(tokens, rowSepToken, pos);
                 if (next_stop === -1) {
                     next_stop = end;
                 }
 
-                let row = this.parseCommaSeparatedArguments(tokens, pos, next_stop);
+                let row = this.parseArgumentsWithSeparator(tokens, pos, next_stop, cellSepToken);
                 let np: TypstNamedParams = {};
 
                 function extract_named_params(arr: TypstNode[]): [TypstNode[], TypstNamedParams] {
@@ -440,13 +441,13 @@ export class TypstParser {
     }
 
     // start: the position of the first token of arguments
-    parseCommaSeparatedArguments(tokens: TypstToken[], start: number, end: number): TypstNode[] {
+    parseArgumentsWithSeparator(tokens: TypstToken[], start: number, end: number, sepToken: TypstToken): TypstNode[] {
         const args: TypstNode[] = [];
         let pos = start;
         while (pos < end) {
             let nodes: TypstNode[] = [];
             while(pos < end) {
-                if(tokens[pos].eq(COMMA)) {
+                if(tokens[pos].eq(sepToken)) {
                     pos += 1;
                     break;
                 } else if(tokens[pos].eq(SINGLE_SPACE)) {
