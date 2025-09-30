@@ -628,6 +628,13 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 return new TexNode('beginend', 'pmatrix', [], tex_data);
             }
 
+            // special hook for op
+            if (node.content === 'op') {
+                const arg0 = node.args![0];
+                assert(arg0.type === 'text');
+                return new TexNode('unaryFunc', '\\operatorname', [new TexNode('literal', arg0.content)]);
+            }
+
             // general case
             const func_name_tex = typst_token_to_tex(node.content);
             if (func_name_tex.length > 0 && TEX_UNARY_COMMANDS.includes(func_name_tex.substring(1))) {

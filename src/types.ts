@@ -137,15 +137,6 @@ export class TexNode {
                     tokens = tokens.concat((this.data! as TexSqrtData).serialize());
                     tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
                 }
-                // special hook for \operatorname
-                if (this.content === '\\operatorname' && this.args!.length === 1 && this.args![0].type === 'text') {
-                    const text = this.args![0].content;
-                    tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                    // this.serialize(new TexNode('symbol', text));
-                    tokens.push(new TexToken(TexTokenType.COMMAND, text));
-                    tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                    return tokens;
-                }
 
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
                 tokens = tokens.concat(this.args![0].serialize());
