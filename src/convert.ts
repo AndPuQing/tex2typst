@@ -1,6 +1,6 @@
 import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TYPST_NONE, TypstLrData, TexArrayData, TypstNamedParams } from "./types";
 import { symbolMap, reverseSymbolMap } from "./map";
-import { array_intersperse } from "./generic";
+import { array_equal, array_intersperse } from "./generic";
 import { assert } from "./util";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS } from "./tex-tokenizer";
 
@@ -58,18 +58,17 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
 
     if (options.optimize) {
         const is_def = (n: TexNode): boolean => {
+            // \overset{\text{def}}{=} is considered as eq.def
             if (n.eq(new TexNode('text', 'def'))) {
                 return true;
             }
             // \overset{def}{=} is also considered as eq.def
-            if (n.type === 'ordgroup' && n.args!.length === 3) {
-                const [a1, a2, a3] = n.args!;
-                const d = new TexNode('element', 'd');
-                const e = new TexNode('element', 'e');
-                const f = new TexNode('element', 'f');
-                if (a1.eq(d) && a2.eq(e) && a3.eq(f)) {
-                    return true;
-                }
+            if (n.type === 'ordgroup') {
+                return array_equal(n.args!, [
+                    new TexNode('element', 'd'),
+                    new TexNode('element', 'e'),
+                    new TexNode('element', 'f')
+                ]);
             }
             return false;
         };
@@ -100,7 +99,7 @@ function convert_underset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     );
     return new TypstNode('supsub', '', [], {
             base: limits_call,
-            sub: convert_tex_node_to_typst(sub, options),
+            sub: convert_tex_node_to_typst(node=sub, options=options),
     });
 }
 

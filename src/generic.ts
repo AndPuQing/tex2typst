@@ -2,6 +2,17 @@ interface IEquatable {
     eq(other: IEquatable): boolean;
 }
 
+export function array_equal<T extends IEquatable>(a: T[], b: T[]): boolean {
+    if (a.length !== b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (!a[i].eq(b[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 
 export function array_find<T extends IEquatable>(array: T[], item: T, start: number = 0): number {
     for (let i = start; i < array.length; i++) {
@@ -13,6 +24,7 @@ export function array_find<T extends IEquatable>(array: T[], item: T, start: num
 }
 
 export function array_includes<T extends IEquatable>(array: T[], item: T): boolean {
+    // return array.some((i) => i.eq(item));
     for (const i of array) {
         if (i.eq(item)) {
             return true;
@@ -21,6 +33,8 @@ export function array_includes<T extends IEquatable>(array: T[], item: T): boole
     return false;
 }
 
+// e.g. input array=['a', 'b', '+', 'c', '+', 'd', 'e'], sep = '+'
+// return [['a', 'b'], ['c'], ['d', 'e']]
 export function array_split<T extends IEquatable>(array: T[], sep: T): T[][] {
     const res: T[][] = [];
     let current_slice: T[] = [];
