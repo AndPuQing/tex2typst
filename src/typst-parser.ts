@@ -59,8 +59,8 @@ function find_closing_delim(tokens: TypstToken[], start: number): number {
 
 
 function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
-    const left_parenthesis = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '('));
-    const right_parenthesis = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, ')'));
+    const left_parenthesis = new TypstToken(TypstTokenType.ELEMENT, '(').toNode();
+    const right_parenthesis = new TypstToken(TypstTokenType.ELEMENT, ')').toNode();
 
 
 
@@ -87,12 +87,12 @@ function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
 function primes(num: number): TypstNode[] {
     const res: TypstNode[] = [];
     for (let i = 0; i < num; i++) {
-        res.push(new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, "'")));
+        res.push(new TypstToken(TypstTokenType.ELEMENT, "'").toNode());
     }
     return res;
 }
 
-const DIV = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '/'));
+const DIV = new TypstToken(TypstTokenType.ELEMENT, '/').toNode();
 
 
 
@@ -132,8 +132,8 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
 
     nodes = trim_whitespace_around_operators(nodes);
 
-    const opening_bracket = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '('));
-    const closing_bracket = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, ')'));
+    const opening_bracket = new TypstToken(TypstTokenType.ELEMENT, '(').toNode();
+    const closing_bracket = new TypstToken(TypstTokenType.ELEMENT, ')').toNode();
 
     const stack: TypstNode[] = [];
 
@@ -398,7 +398,7 @@ export class TypstParser {
                 let np: TypstNamedParams = {};
 
                 function extract_named_params(arr: TypstNode[]): [TypstNode[], TypstNamedParams] {
-                    const COLON = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, ':'));
+                    const COLON = new TypstToken(TypstTokenType.ELEMENT, ':').toNode();
                     const np: TypstNamedParams = {};
 
                     const to_delete: number[] = [];
@@ -414,7 +414,7 @@ export class TypstParser {
                         }
                         to_delete.push(i);
                         const param_name = g.args![pos_colon - 1];
-                        if(param_name.eq(new TypstNode('symbol', new TypstToken(TypstTokenType.SYMBOL, 'delim')))) {
+                        if(param_name.eq(new TypstToken(TypstTokenType.SYMBOL, 'delim').toNode())) {
                             if(g.args!.length !== 3) {
                                 throw new TypstParserError('Invalid number of arguments for delim');
                             }

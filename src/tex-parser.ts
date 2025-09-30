@@ -12,7 +12,7 @@ const IGNORED_COMMANDS = [
 ];
 
 const EMPTY_TOKEN: TexToken = new TexToken(TexTokenType.EMPTY, '');
-const EMPTY_NODE: TexNode = new TexNode('empty', EMPTY_TOKEN);
+const EMPTY_NODE: TexNode = EMPTY_TOKEN.toNode();
 
 function get_command_param_num(command: string): number {
     if (TEX_UNARY_COMMANDS.includes(command)) {
@@ -208,7 +208,7 @@ export class LatexParser {
             if (num_prime > 0) {
                 res.sup = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 for (let i = 0; i < num_prime; i++) {
-                    res.sup.args!.push(new TexNode('element', new TexToken(TexTokenType.ELEMENT, "'")));
+                    res.sup.args!.push(new TexToken(TexTokenType.ELEMENT, "'").toNode());
                 }
                 if (sup) {
                     res.sup.args!.push(sup);
@@ -300,7 +300,7 @@ export class LatexParser {
                 if (!symbolMap.has(command.slice(1))) {
                     return [new TexNode('unknownMacro', command_token), pos];
                 }
-                return [new TexNode('symbol', command_token), pos];
+                return [command_token.toNode(), pos];
             case 1: {
                 // TODO: JavaScript gives undefined instead of throwing an error when accessing an index out of bounds,
                 // so index checking like this should be everywhere. This is rough.
@@ -399,9 +399,9 @@ export class LatexParser {
 
         const [body, _] = this.parseGroup(tokens, exprInsideStart, exprInsideEnd);
         const args: TexNode[] = [
-            new TexNode('element', leftDelimiter),
+            leftDelimiter.toNode(),
             body,
-            new TexNode('element', rightDelimiter)
+            rightDelimiter.toNode()
         ]
         const res = new TexNode('leftright', EMPTY_TOKEN, args);
         return [res, pos];

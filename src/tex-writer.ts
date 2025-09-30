@@ -44,8 +44,8 @@ export class TexWriter {
     }
 
     public append(node: TexNode) {
-        const alignment_char = new TexNode('control', new TexToken(TexTokenType.CONTROL, '&'));
-        const newline_char = new TexNode('control', new TexToken(TexTokenType.CONTROL, '\\\\'));
+        const alignment_char = new TexToken(TexTokenType.CONTROL, '&').toNode();
+        const newline_char = new TexToken(TexTokenType.CONTROL, '\\\\').toNode();
 
         // TODO: this should happen in the converter instead
         if (node.type === 'ordgroup' && array_includes(node.args!, alignment_char)) {
