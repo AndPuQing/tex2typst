@@ -256,12 +256,15 @@ export class TexNode {
 
     // Note: toString() is expensive. Do not use it on performance-critical code path.
     public toString(): string {
+        /*
         let buffer = '';
         const tokens = this.serialize();
         for (let i = 0; i < tokens.length; i++) {
             buffer = writeTexTokenBuffer(buffer, tokens[i]);
         }
         return buffer;
+        */
+       return this.serialize().reduce(writeTexTokenBuffer, '');
     }
 }
 
