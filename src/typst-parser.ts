@@ -277,7 +277,7 @@ export class TypstParser {
         }
 
         if (sub !== null || sup !== null) {
-            const res: TypstSupsubData = { base };
+            const res: TypstSupsubData = { base, sup: null, sub: null };
             if (sub) {
                 res.sub = sub;
             }

@@ -37,8 +37,8 @@ export class TexToken {
 
 export interface TexSupsubData {
     base: TexNode;
-    sup?: TexNode;
-    sub?: TexNode;
+    sup: TexNode | null;
+    sub: TexNode | null;
 }
 
 export type TexSqrtData = TexNode;
@@ -314,8 +314,8 @@ export class TypstToken {
 
 export interface TypstSupsubData {
     base: TypstNode;
-    sup?: TypstNode;
-    sub?: TypstNode;
+    sup: TypstNode | null;
+    sub: TypstNode | null;
 }
 
 export type TypstArrayData = TypstNode[][];

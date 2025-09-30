@@ -102,6 +102,7 @@ describe('typst-parser', () => {
                 new TypstNode('whitespace', ' '),
                 new TypstNode('atom', '0'),
             ]),
+            sup: null,
         }));
     });
 

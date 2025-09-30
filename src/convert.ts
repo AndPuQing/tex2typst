@@ -613,7 +613,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 const [body, label] = node.args!;
                 const base = new TexNode('unaryFunc', '\\' + node.content, [convert_typst_node_to_tex(body)]);
                 const script = convert_typst_node_to_tex(label);
-                const data = node.content === 'overbrace' ? { base, sup: script } : { base, sub: script };
+                const data = node.content === 'overbrace' ? { base, sup: script, sub: null } : { base, sub: script, sup: null };
                 return new TexNode('supsub', '', [], data);
             }
 
@@ -641,8 +641,8 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         }
         case 'supsub': {
             const { base, sup, sub } = node.data as TypstSupsubData;
-            let sup_tex: TexNode | undefined;
-            let sub_tex: TexNode | undefined;
+            let sup_tex: TexNode | null = null;
+            let sub_tex: TexNode | null = null;
 
             if (sup) {
                 sup_tex = convert_typst_node_to_tex(sup);
@@ -657,9 +657,9 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             // `limits(+)_a^b` -> `\overset{b}{\underset{a}{+}}`
             if (base.eq(new TypstNode('funcCall', 'limits'))) {
                 const body_in_limits = convert_typst_node_to_tex(base.args![0]);
-                if (sup_tex !== undefined && sub_tex === undefined) {
+                if (sup_tex !== null && sub_tex === null) {
                     return new TexNode('binaryFunc', '\\overset', [sup_tex, body_in_limits]);
-                } else if (sup_tex === undefined && sub_tex !== undefined) {
+                } else if (sup_tex === null && sub_tex !== null) {
                     return new TexNode('binaryFunc', '\\underset', [sub_tex, body_in_limits]);
                 } else {
                     const underset_call = new TexNode('binaryFunc', '\\underset', [sub_tex!, body_in_limits]);

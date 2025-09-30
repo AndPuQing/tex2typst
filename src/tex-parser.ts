@@ -199,12 +199,12 @@ export class LatexParser {
         }
 
         if (sub !== null || sup !== null || num_prime > 0) {
-            const res: TexSupsubData = { base };
+            const res: TexSupsubData = { base, sup: null, sub: null };
             if (sub) {
                 res.sub = sub;
             }
             if (num_prime > 0) {
-                res.sup = new TexNode('ordgroup', '',  []);
+                res.sup = new TexNode('ordgroup', '', []);
                 for (let i = 0; i < num_prime; i++) {
                     res.sup.args!.push(new TexNode('element', "'"));
                 }
