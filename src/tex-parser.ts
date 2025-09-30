@@ -146,7 +146,7 @@ export class LatexParser {
         while (pos < end) {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
-            if(res.type === 'whitespace') {
+            if(res.content.type === TexTokenType.SPACE || res.content.type === TexTokenType.NEWLINE) {
                 if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
@@ -154,7 +154,7 @@ export class LatexParser {
                     continue;
                 }
             }
-            if (res.type === 'control' && res.content.value === '&') {
+            if (res.content.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
                 throw new LatexParserError('Unexpected & outside of an alignment');
             }
             results.push(res);
@@ -352,7 +352,7 @@ export class LatexParser {
         while (pos < tokens.length) {
             let node: TexNode;
             [node, pos] = this.parseNextExprWithoutSupSub(tokens, pos);
-            if (node.type !== 'whitespace') {
+            if (!(node.content.type === TexTokenType.SPACE || node.content.type === TexTokenType.NEWLINE)) {
                 arg = node;
                 break;
             }
@@ -468,7 +468,7 @@ export class LatexParser {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
 
-            if (res.type === 'whitespace') {
+            if (res.content.type === TexTokenType.SPACE || res.content.type === TexTokenType.NEWLINE) {
                 if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
@@ -477,12 +477,12 @@ export class LatexParser {
                 }
             }
 
-            if (res.type === 'control' && res.content.value === '\\\\') {
+            if (res.content.eq(new TexToken(TexTokenType.CONTROL, '\\\\'))) {
                 row = [];
                 group = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 row.push(group);
                 allRows.push(row);
-            } else if (res.type === 'control' && res.content.value === '&') {
+            } else if (res.content.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
                 group = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 row.push(group);
             } else {

@@ -94,7 +94,11 @@ export class TypstWriter {
     public serialize(node: TypstNode) {
         switch (node.type) {
             case 'none':
-                this.queue.push(new TypstToken(TypstTokenType.NONE, '#none'));
+            case 'literal':
+            case 'text':
+            case 'control':
+            case 'comment':
+                this.queue.push(node.content);
                 break;
             case 'atom': {
                 if (node.content.value === ',' && this.insideFunctionDepth > 0) {
@@ -117,15 +121,6 @@ export class TypstWriter {
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, symbol_name));
                 break;
             }
-            case 'literal':
-                this.queue.push(node.content);
-                break;
-            case 'text':
-                this.queue.push(node.content);
-                break;
-            case 'comment':
-                this.queue.push(node.content);
-                break;
             case 'whitespace':
                 for (const c of node.content.value) {
                     if (c === ' ') {

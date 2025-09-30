@@ -37,20 +37,14 @@ export class TexToken {
     public toNode(): TexNode {
         switch (this.type) {
             case TexTokenType.EMPTY:
-                return new TexNode('empty', this);
             case TexTokenType.ELEMENT:
-                return new TexNode('element', this);
             case TexTokenType.LITERAL:
-                return new TexNode('literal', this);
             case TexTokenType.COMMENT:
-                return new TexNode('comment', this);
             case TexTokenType.SPACE:
             case TexTokenType.NEWLINE:
-                return new TexNode('whitespace', this);
             case TexTokenType.COMMAND:
-                return new TexNode('control', this);
             case TexTokenType.CONTROL:
-                return new TexNode('control', this);
+                return new TexNode('terminal', this);
             case TexTokenType.UNKNOWN:
             default:
                 throw new Error(`Unknown token type: ${this.type}`);
@@ -78,8 +72,8 @@ export type TexArrayData = TexNode[][];
  * empty: special type when something is empty. e.g. the base of _{a} or ^{a}
  * whitespace: space, tab, newline
  */
-type TexNodeType = 'element' | 'text'  | 'literal' | 'comment' | 'whitespace' | 'control' | 'ordgroup' | 'supsub'
-             | 'unaryFunc' | 'binaryFunc' | 'leftright' | 'beginend' | 'symbol' | 'empty' | 'unknownMacro';
+type TexNodeType = 'terminal' | 'text' | 'ordgroup' | 'supsub'
+             | 'unaryFunc' | 'binaryFunc' | 'leftright' | 'beginend' | 'unknownMacro';
 
 
 function apply_escape_if_needed(c: string) {
@@ -113,17 +107,34 @@ export class TexNode {
 
     public serialize(): TexToken[] {
         switch (this.type) {
-            case 'empty':
-                return [];
-            case 'element': {
-                let c = this.content.value;
-                c = apply_escape_if_needed(c);
-                return [new TexToken(TexTokenType.ELEMENT, c)];
+            case 'terminal': {
+                switch(this.content.type) {
+                    case TexTokenType.EMPTY:
+                        return [];
+                    case TexTokenType.ELEMENT: {
+                        let c = this.content.value;
+                        c = apply_escape_if_needed(c);
+                        return [new TexToken(TexTokenType.ELEMENT, c)];
+                    }
+                    case TexTokenType.COMMAND:
+                    case TexTokenType.LITERAL:
+                    case TexTokenType.COMMENT:
+                    case TexTokenType.CONTROL: {
+                        return [this.content];
+                    }
+                    case TexTokenType.SPACE:
+                    case TexTokenType.NEWLINE: {
+                        const tokens: TexToken[] = [];
+                        for (const c of this.content.value) {
+                            const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
+                            tokens.push(new TexToken(token_type, c));
+                        }
+                        return tokens;
+                    }
+                    default:
+                        throw new Error(`Unknown terminal token type: ${this.content.type}`);
+                }
             }
-            case 'symbol':
-                return [this.content];
-            case 'literal':
-                return [this.content];
             case 'text':
                 return [
                     new TexToken(TexTokenType.COMMAND, '\\text'),
@@ -131,16 +142,6 @@ export class TexNode {
                     this.content,
                     new TexToken(TexTokenType.ELEMENT, '}'),
                 ];
-            case 'comment':
-                return [this.content];
-            case 'whitespace': {
-                const tokens: TexToken[] = [];
-                for (const c of this.content.value) {
-                    const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
-                    tokens.push(new TexToken(token_type, c));
-                }
-                return tokens;
-            }
             case 'ordgroup': {
                 return this.args!.map((n) => n.serialize()).flat();
             }
@@ -186,9 +187,9 @@ export class TexNode {
 
                 // TODO: should return true for more cases e.g. a_{\theta} instead of a_\theta
                 function should_wrap_in_braces(node: TexNode): boolean {
-                    if(node.type === 'ordgroup' || node.type === 'supsub' || node.type === 'empty') {
+                    if(node.type === 'ordgroup' || node.type === 'supsub' || node.content.type === TexTokenType.EMPTY) {
                         return true;
-                    } else if(node.type === 'element' && /\d+(\.\d+)?/.test(node.content.value) && node.content.value.length > 1) {
+                    } else if(node.content.type === TexTokenType.ELEMENT && /\d+(\.\d+)?/.test(node.content.value) && node.content.value.length > 1) {
                         // a number with more than 1 digit as a subscript/superscript should be wrapped in braces
                         return true;
                     } else {
@@ -217,9 +218,6 @@ export class TexNode {
                     }
                 }
                 return tokens;
-            }
-            case 'control': {
-                return [this.content];
             }
             case 'beginend': {
                 let tokens: TexToken[] = [];
