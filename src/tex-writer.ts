@@ -1,6 +1,7 @@
 import { array_includes, array_split } from "./generic";
 import { TexNode, TexToken, TexTokenType } from "./types";
 
+const EMPTY_TOKEN: TexToken = new TexToken(TexTokenType.EMPTY, '');
 
 export class TexWriter {
     protected buffer: string = "";
@@ -43,18 +44,19 @@ export class TexWriter {
     }
 
     public append(node: TexNode) {
-        const alignment_char = new TexNode('control', '&');
-        const newline_char = new TexNode('control', '\\\\');
+        const alignment_char = new TexNode('control', new TexToken(TexTokenType.CONTROL, '&'));
+        const newline_char = new TexNode('control', new TexToken(TexTokenType.CONTROL, '\\\\'));
 
+        // TODO: this should happen in the converter instead
         if (node.type === 'ordgroup' && array_includes(node.args!, alignment_char)) {
             // wrap the whole math formula with \begin{aligned} and \end{aligned}
             const rows = array_split(node.args!, newline_char);
             const data: TexNode[][] = [];
             for(const row of rows) {
                 const cells = array_split(row, alignment_char);
-                data.push(cells.map(cell => new TexNode('ordgroup', '', cell)));
+                data.push(cells.map(cell => new TexNode('ordgroup', EMPTY_TOKEN, cell)));
             }
-            node = new TexNode('beginend', 'aligned', [], data);
+            node = new TexNode('beginend', new TexToken(TexTokenType.CONTROL, 'aligned'), [], data);
         }
         this.queue = this.queue.concat(node.serialize());
     }

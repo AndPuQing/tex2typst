@@ -2,7 +2,7 @@ import { TexNode, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from 
 import { shorthandMap } from "./typst-shorthands";
 
 function is_delimiter(c: TypstNode): boolean {
-    return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content);
+    return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content.value);
 }
 
 const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
@@ -97,37 +97,37 @@ export class TypstWriter {
                 this.queue.push(new TypstToken(TypstTokenType.NONE, '#none'));
                 break;
             case 'atom': {
-                if (node.content === ',' && this.insideFunctionDepth > 0) {
+                if (node.content.value === ',' && this.insideFunctionDepth > 0) {
                     this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'comma'));
                 } else {
-                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, node.content));
+                    this.queue.push(node.content);
                 }
                 break;
             }
             case 'symbol': {
-                let content = node.content;
+                let symbol_name = node.content.value;
                 if(this.preferShorthands) {
-                    if (shorthandMap.has(content)) {
-                        content = shorthandMap.get(content)!;
+                    if (shorthandMap.has(symbol_name)) {
+                        symbol_name = shorthandMap.get(symbol_name)!;
                     }
                 }
-                if (this.inftyToOo && content === 'infinity') {
-                    content = 'oo';
+                if (this.inftyToOo && symbol_name === 'infinity') {
+                    symbol_name = 'oo';
                 }
-                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, content));
+                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, symbol_name));
                 break;
             }
             case 'literal':
-                this.queue.push(new TypstToken(TypstTokenType.LITERAL, node.content));
+                this.queue.push(node.content);
                 break;
             case 'text':
-                this.queue.push(new TypstToken(TypstTokenType.TEXT, node.content));
+                this.queue.push(node.content);
                 break;
             case 'comment':
-                this.queue.push(new TypstToken(TypstTokenType.COMMENT, node.content));
+                this.queue.push(node.content);
                 break;
             case 'whitespace':
-                for (const c of node.content) {
+                for (const c of node.content.value) {
                     if (c === ' ') {
                         if (this.keepSpaces) {
                             this.queue.push(new TypstToken(TypstTokenType.SPACE, c));
@@ -149,7 +149,7 @@ export class TypstWriter {
                 this.appendWithBracketsIfNeeded(base);
 
                 let trailing_space_needed = false;
-                const has_prime = (sup && sup.type === 'atom' && sup.content === '\'');
+                const has_prime = (sup && sup.type === 'atom' && sup.content.value === '\'');
                 if (has_prime) {
                     // Put prime symbol before '_'. Because $y_1'$ is not displayed properly in Typst (so far)
                     // e.g.
@@ -172,9 +172,9 @@ export class TypstWriter {
                 break;
             }
             case 'funcCall': {
-                const func_symbol: TypstToken = new TypstToken(TypstTokenType.SYMBOL, node.content);
+                const func_symbol: TypstToken = node.content;
                 this.queue.push(func_symbol);
-                if (node.content !== 'lr') {
+                if (node.content.value !== 'lr') {
                     this.insideFunctionDepth++;
                 }
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
@@ -190,7 +190,7 @@ export class TypstWriter {
                     }
                 }
                 this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                if (node.content !== 'lr') {
+                if (node.content.value !== 'lr') {
                     this.insideFunctionDepth--;
                 }
                 break;
@@ -289,9 +289,9 @@ export class TypstWriter {
             }
             case 'unknown': {
                 if (this.nonStrict) {
-                    this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content));
+                    this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.content.value));
                 } else {
-                    throw new TypstWriterError(`Unknown macro: ${node.content}`, node);
+                    throw new TypstWriterError(`Unknown macro: ${node.content.value}`, node);
                 }
                 break;
             }

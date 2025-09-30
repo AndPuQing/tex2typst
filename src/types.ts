@@ -1,6 +1,7 @@
 import { array_includes } from "./generic";
 
 export enum TexTokenType {
+    EMPTY,
     ELEMENT,
     COMMAND,
     LITERAL,
@@ -30,6 +31,29 @@ export class TexToken {
                 return "%" + this.value;
             default:
                 return this.value;
+        }
+    }
+
+    public toNode(): TexNode {
+        switch (this.type) {
+            case TexTokenType.EMPTY:
+                return new TexNode('empty', this);
+            case TexTokenType.ELEMENT:
+                return new TexNode('element', this);
+            case TexTokenType.LITERAL:
+                return new TexNode('literal', this);
+            case TexTokenType.COMMENT:
+                return new TexNode('comment', this);
+            case TexTokenType.SPACE:
+            case TexTokenType.NEWLINE:
+                return new TexNode('whitespace', this);
+            case TexTokenType.COMMAND:
+                return new TexNode('control', this);
+            case TexTokenType.CONTROL:
+                return new TexNode('control', this);
+            case TexTokenType.UNKNOWN:
+            default:
+                throw new Error(`Unknown token type: ${this.type}`);
         }
     }
 }
@@ -67,14 +91,14 @@ function apply_escape_if_needed(c: string) {
 
 export class TexNode {
     type: TexNodeType;
-    content: string;
+    content: TexToken;
     args?: TexNode[];
     // For type="sqrt", it's additional argument wrapped square bracket. e.g. 3 in \sqrt[3]{x}
     // For type="supsub", it's base, sup, and sub.
     // For type="beginend", it's the 2-dimensional matrix.
     data?: TexSqrtData | TexSupsubData | TexArrayData;
 
-    constructor(type: TexNodeType, content: string, args?: TexNode[],
+    constructor(type: TexNodeType, content: TexToken, args?: TexNode[],
             data?: TexSqrtData | TexSupsubData | TexArrayData) {
         this.type = type;
         this.content = content;
@@ -84,7 +108,7 @@ export class TexNode {
 
     // Note that this is only shallow equality.
     public eq(other: TexNode): boolean {
-        return this.type === other.type && this.content === other.content;
+        return this.type === other.type && this.content.eq(other.content);
     }
 
     public serialize(): TexToken[] {
@@ -92,26 +116,26 @@ export class TexNode {
             case 'empty':
                 return [];
             case 'element': {
-                let c = this.content;
+                let c = this.content.value;
                 c = apply_escape_if_needed(c);
                 return [new TexToken(TexTokenType.ELEMENT, c)];
             }
             case 'symbol':
-                return [new TexToken(TexTokenType.COMMAND, this.content)];
+                return [this.content];
             case 'literal':
-                return [new TexToken(TexTokenType.LITERAL, this.content)];
+                return [this.content];
             case 'text':
                 return [
                     new TexToken(TexTokenType.COMMAND, '\\text'),
                     new TexToken(TexTokenType.ELEMENT, '{'),
-                    new TexToken(TexTokenType.LITERAL, this.content),
+                    this.content,
                     new TexToken(TexTokenType.ELEMENT, '}'),
                 ];
             case 'comment':
-                return [new TexToken(TexTokenType.COMMENT, this.content)];
+                return [this.content];
             case 'whitespace': {
                 const tokens: TexToken[] = [];
-                for (const c of this.content) {
+                for (const c of this.content.value) {
                     const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
                     tokens.push(new TexToken(token_type, c));
                 }
@@ -129,10 +153,10 @@ export class TexNode {
             }
             case 'unaryFunc': {
                 let tokens: TexToken[] = [];
-                tokens.push(new TexToken(TexTokenType.COMMAND, this.content));
+                tokens.push(this.content);
 
                 // special hook for \sqrt
-                if (this.content === '\\sqrt' && this.data) {
+                if (this.content.value === '\\sqrt' && this.data) {
                     tokens.push(new TexToken(TexTokenType.ELEMENT, '['));
                     tokens = tokens.concat((this.data! as TexSqrtData).serialize());
                     tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
@@ -146,7 +170,7 @@ export class TexNode {
             }
             case 'binaryFunc': {
                 let tokens: TexToken[] = [];
-                tokens.push(new TexToken(TexTokenType.COMMAND, this.content));
+                tokens.push(this.content);
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
                 tokens = tokens.concat(this.args![0].serialize());
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
@@ -164,7 +188,7 @@ export class TexNode {
                 function should_wrap_in_braces(node: TexNode): boolean {
                     if(node.type === 'ordgroup' || node.type === 'supsub' || node.type === 'empty') {
                         return true;
-                    } else if(node.type === 'element' && /\d+(\.\d+)?/.test(node.content) && node.content.length > 1) {
+                    } else if(node.type === 'element' && /\d+(\.\d+)?/.test(node.content.value) && node.content.value.length > 1) {
                         // a number with more than 1 digit as a subscript/superscript should be wrapped in braces
                         return true;
                     } else {
@@ -195,12 +219,16 @@ export class TexNode {
                 return tokens;
             }
             case 'control': {
-                return [new TexToken(TexTokenType.CONTROL, this.content)];
+                return [this.content];
             }
             case 'beginend': {
                 let tokens: TexToken[] = [];
                 const matrix = this.data as TexArrayData;
-                tokens.push(new TexToken(TexTokenType.COMMAND, `\\begin{${this.content}}`));
+                // tokens.push(new TexToken(TexTokenType.COMMAND, `\\begin{${this.content}}`));
+                tokens.push(new TexToken(TexTokenType.COMMAND, '\\begin'));
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                tokens = tokens.concat(this.content);
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
                 tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
                 for (let i = 0; i < matrix.length; i++) {
                     const row = matrix[i];
@@ -216,7 +244,11 @@ export class TexNode {
                     }
                 }
                 tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
-                tokens.push(new TexToken(TexTokenType.COMMAND, `\\end{${this.content}}`));
+                // tokens.push(new TexToken(TexTokenType.COMMAND, `\\end{${this.content}}`));
+                tokens.push(new TexToken(TexTokenType.COMMAND, '\\end'));
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                tokens = tokens.concat(this.content);
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
                 return tokens;
             }
             default:
@@ -257,20 +289,20 @@ export class TypstToken {
     public toNode(): TypstNode {
         switch(this.type) {
             case TypstTokenType.NONE:
-                return new TypstNode('none', '#none');
+                return new TypstNode('none', this);
             case TypstTokenType.LITERAL:
-                return new TypstNode('literal', this.value);
+                return new TypstNode('literal', this);
             case TypstTokenType.TEXT:
-                return new TypstNode('text', this.value);
+                return new TypstNode('text', this);
             case TypstTokenType.COMMENT:
-                return new TypstNode('comment', this.value);
+                return new TypstNode('comment', this);
             case TypstTokenType.SPACE:
             case TypstTokenType.NEWLINE:
-                return new TypstNode('whitespace', this.value);
+                return new TypstNode('whitespace', this);
             case TypstTokenType.ELEMENT:
-                return new TypstNode('atom', this.value);
+                return new TypstNode('atom', this);
             case TypstTokenType.SYMBOL:
-                return new TypstNode('symbol', this.value);
+                return new TypstNode('symbol', this);
             case TypstTokenType.CONTROL: {
                 const controlChar = this.value;
                 switch (controlChar) {
@@ -279,9 +311,9 @@ export class TypstToken {
                     case '^':
                         throw new Error(`Should not convert ${controlChar} to a node`);
                     case '&':
-                        return new TypstNode('control', '&');
+                        return new TypstNode('control', this);
                     case '\\':
-                        return new TypstNode('control', '\\');
+                        return new TypstNode('control', this);
                     default:
                         throw new Error(`Unexpected control character ${controlChar}`);
                 }
@@ -323,13 +355,13 @@ export type TypstNamedParams = { [key: string]: TypstNode };
 
 export class TypstNode {
     type: TypstNodeType;
-    content: string;
+    content: TypstToken;
     args?: TypstNode[];
     data?: TypstSupsubData | TypstArrayData | TypstLrData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
-    constructor(type: TypstNodeType, content: string, args?: TypstNode[],
+    constructor(type: TypstNodeType, content: TypstToken, args?: TypstNode[],
             data?: TypstSupsubData | TypstArrayData| TypstLrData) {
         this.type = type;
         this.content = content;
@@ -343,7 +375,7 @@ export class TypstNode {
 
     // Note that this is only shallow equality.
     public eq(other: TypstNode): boolean {
-        return this.type === other.type && this.content === other.content;
+        return this.type === other.type && this.content.eq(other.content);
     }
 
     // whether the node is over high so that if it's wrapped in braces, \left and \right should be used in its TeX form
@@ -353,7 +385,7 @@ export class TypstNode {
             case 'fraction':
                 return true;
             case 'funcCall': {
-                if (this.content === 'frac') {
+                if (this.content.value === 'frac') {
                     return true;
                 }
                 return this.args!.some((n) => n.isOverHigh());
@@ -374,17 +406,17 @@ export class TypstNode {
     public toString(): string {
         switch (this.type) {
             case 'text':
-                return `"${this.content}"`;
+                return `"${this.content.value}"`;
             case 'comment':
-                return `//${this.content}`;
+                return `//${this.content.value}`;
             default:
-                return this.content;
+                return this.content.value;
         }
     }
 }
 
 // #none
-export const TYPST_NONE = new TypstNode('none', '#none');
+export const TYPST_NONE = new TypstNode('none', new TypstToken(TypstTokenType.NONE, '#none'));
 
 /**
  * ATTENTION:

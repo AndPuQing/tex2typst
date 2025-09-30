@@ -11,7 +11,8 @@ const IGNORED_COMMANDS = [
     'Biggl', 'Biggr',
 ];
 
-const EMPTY_NODE: TexNode = new TexNode('empty', '');
+const EMPTY_TOKEN: TexToken = new TexToken(TexTokenType.EMPTY, '');
+const EMPTY_NODE: TexNode = new TexNode('empty', EMPTY_TOKEN);
 
 function get_command_param_num(command: string): number {
     if (TEX_UNARY_COMMANDS.includes(command)) {
@@ -120,7 +121,8 @@ export class LatexParser {
     }
 
     parse(tokens: TexToken[]): TexNode {
-        const idx = array_find(tokens, new TexToken(TexTokenType.COMMAND, '\\displaystyle'));
+        const token_displaystyle = new TexToken(TexTokenType.COMMAND, '\\displaystyle');
+        const idx = array_find(tokens, token_displaystyle);
         if (idx === -1) {
             // no \displaystyle, normal execution path
             const [tree, _] = this.parseGroup(tokens, 0, tokens.length);
@@ -128,13 +130,13 @@ export class LatexParser {
         } else if (idx === 0) {
             // \displaystyle at the beginning. Wrap the whole thing in \displaystyle
             const [tree, _] = this.parseGroup(tokens, 1, tokens.length);
-            return new TexNode('unaryFunc', '\\displaystyle', [tree]);
+            return new TexNode('unaryFunc', token_displaystyle, [tree]);
         } else {
             // \displaystyle somewhere in the middle. Split the expression to two parts
             const [tree1, _1] = this.parseGroup(tokens, 0, idx);
             const [tree2, _2] = this.parseGroup(tokens, idx + 1, tokens.length);
-            const display = new TexNode('unaryFunc', '\\displaystyle', [tree2]);
-            return new TexNode('ordgroup', '', [tree1, display]);
+            const display = new TexNode('unaryFunc', token_displaystyle, [tree2]);
+            return new TexNode('ordgroup', EMPTY_TOKEN, [tree1, display]);
         }
     }
 
@@ -145,14 +147,14 @@ export class LatexParser {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
             if(res.type === 'whitespace') {
-                if (!this.space_sensitive && res.content.replace(/ /g, '').length === 0) {
+                if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
-                if (!this.newline_sensitive && res.content === '\n') {
+                if (!this.newline_sensitive && res.content.value === '\n') {
                     continue;
                 }
             }
-            if (res.type === 'control' && res.content === '&') {
+            if (res.type === 'control' && res.content.value === '&') {
                 throw new LatexParserError('Unexpected & outside of an alignment');
             }
             results.push(res);
@@ -162,7 +164,7 @@ export class LatexParser {
         if (results.length === 1) {
             node = results[0];
         } else {
-            node = new TexNode('ordgroup', '', results);
+            node = new TexNode('ordgroup', EMPTY_TOKEN, results);
         }
         return [node, end + 1];
     }
@@ -204,9 +206,9 @@ export class LatexParser {
                 res.sub = sub;
             }
             if (num_prime > 0) {
-                res.sup = new TexNode('ordgroup', '', []);
+                res.sup = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 for (let i = 0; i < num_prime; i++) {
-                    res.sup.args!.push(new TexNode('element', "'"));
+                    res.sup.args!.push(new TexNode('element', new TexToken(TexTokenType.ELEMENT, "'")));
                 }
                 if (sup) {
                     res.sup.args!.push(sup);
@@ -217,7 +219,7 @@ export class LatexParser {
             } else if (sup) {
                 res.sup = sup;
             }
-            return [new TexNode('supsub', '', [], res), pos];
+            return [new TexNode('supsub', EMPTY_TOKEN, [], res), pos];
         } else {
             return [base, pos];
         }
@@ -230,14 +232,11 @@ export class LatexParser {
         const firstToken = tokens[start];
         switch (firstToken.type) {
             case TexTokenType.ELEMENT:
-                return [new TexNode('element', firstToken.value), start + 1];
             case TexTokenType.LITERAL:
-                return [new TexNode('literal', firstToken.value), start + 1];
             case TexTokenType.COMMENT:
-                return [new TexNode('comment', firstToken.value), start + 1];
             case TexTokenType.SPACE:
             case TexTokenType.NEWLINE:
-                return [new TexNode('whitespace', firstToken.value), start + 1];
+                return [firstToken.toNode(), start + 1];
             case TexTokenType.COMMAND:
                 const commandName = firstToken.value.slice(1);
                 if (IGNORED_COMMANDS.includes(commandName)) {
@@ -266,14 +265,14 @@ export class LatexParser {
                     case '\\,':
                     case '\\:':
                     case '\\;':
-                        return [new TexNode('control', controlChar), start + 1];
+                        return [firstToken.toNode(), start + 1];
                     case '\\ ':
-                        return [new TexNode('control', '\\:'), start + 1];
+                        return [firstToken.toNode(), start + 1];
                     case '_':
                     case '^':
                         return [ EMPTY_NODE, start];
                     case '&':
-                        return [new TexNode('control', '&'), start + 1];
+                        return [firstToken.toNode(), start + 1];
                     default:
                         throw new LatexParserError('Unknown control sequence');
                 }
@@ -285,7 +284,8 @@ export class LatexParser {
     parseCommandExpr(tokens: TexToken[], start: number): ParseResult {
         assert(tokens[start].type === TexTokenType.COMMAND);
 
-        const command = tokens[start].value; // command name starts with a \
+        const command_token = tokens[start];
+        const command = command_token.value; // command name starts with a \
 
         let pos = start + 1;
 
@@ -298,9 +298,9 @@ export class LatexParser {
         switch (paramNum) {
             case 0:
                 if (!symbolMap.has(command.slice(1))) {
-                    return [new TexNode('unknownMacro', command), pos];
+                    return [new TexNode('unknownMacro', command_token), pos];
                 }
-                return [new TexNode('symbol', command), pos];
+                return [new TexNode('symbol', command_token), pos];
             case 1: {
                 // TODO: JavaScript gives undefined instead of throwing an error when accessing an index out of bounds,
                 // so index checking like this should be everywhere. This is rough.
@@ -315,7 +315,7 @@ export class LatexParser {
                     }
                     const [exponent, _] = this.parseGroup(tokens, posLeftSquareBracket + 1, posRightSquareBracket);
                     const [arg1, newPos] = this.parseNextArg(tokens, posRightSquareBracket + 1);
-                    return [new TexNode('unaryFunc', command, [arg1], exponent), newPos];
+                    return [new TexNode('unaryFunc', command_token, [arg1], exponent), newPos];
                 } else if (command === '\\text') {
                     if (pos + 2 >= tokens.length) {
                         throw new LatexParserError('Expecting content for \\text command');
@@ -323,16 +323,16 @@ export class LatexParser {
                     assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
                     assert(tokens[pos + 1].type === TexTokenType.LITERAL);
                     assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
-                    const text = tokens[pos + 1].value;
-                    return [new TexNode('text', text), pos + 3];
+                    const literal = tokens[pos + 1];
+                    return [new TexNode('text', literal), pos + 3];
                 }
                 let [arg1, newPos] = this.parseNextArg(tokens, pos);
-                return [new TexNode('unaryFunc', command, [arg1]), newPos];
+                return [new TexNode('unaryFunc', command_token, [arg1]), newPos];
             }
             case 2: {
                 const [arg1, pos1] = this.parseNextArg(tokens, pos);
                 const [arg2, pos2] = this.parseNextArg(tokens, pos1);
-                return [new TexNode('binaryFunc', command, [arg1, arg2]), pos2];
+                return [new TexNode('binaryFunc', command_token, [arg1, arg2]), pos2];
             }
             default:
                 throw new Error( 'Invalid number of parameters');
@@ -399,11 +399,11 @@ export class LatexParser {
 
         const [body, _] = this.parseGroup(tokens, exprInsideStart, exprInsideEnd);
         const args: TexNode[] = [
-            new TexNode('element', leftDelimiter.value),
+            new TexNode('element', leftDelimiter),
             body,
-            new TexNode('element', rightDelimiter.value)
+            new TexNode('element', rightDelimiter)
         ]
-        const res = new TexNode('leftright', '', args);
+        const res = new TexNode('leftright', EMPTY_TOKEN, args);
         return [res, pos];
     }
 
@@ -452,7 +452,7 @@ export class LatexParser {
             exprInside.pop();
         }
         const body = this.parseAligned(exprInside);
-        const res = new TexNode('beginend', envName, args, body);
+        const res = new TexNode('beginend', new TexToken(TexTokenType.LITERAL, envName), args, body);
         return [res, pos];
     }
 
@@ -461,7 +461,7 @@ export class LatexParser {
         const allRows: TexNode[][] = [];
         let row: TexNode[] = [];
         allRows.push(row);
-        let group = new TexNode('ordgroup', '', []);
+        let group = new TexNode('ordgroup', EMPTY_TOKEN, []);
         row.push(group);
 
         while (pos < tokens.length) {
@@ -469,21 +469,21 @@ export class LatexParser {
             pos = newPos;
 
             if (res.type === 'whitespace') {
-                if (!this.space_sensitive && res.content.replace(/ /g, '').length === 0) {
+                if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
-                if (!this.newline_sensitive && res.content === '\n') {
+                if (!this.newline_sensitive && res.content.value === '\n') {
                     continue;
                 }
             }
 
-            if (res.type === 'control' && res.content === '\\\\') {
+            if (res.type === 'control' && res.content.value === '\\\\') {
                 row = [];
-                group = new TexNode('ordgroup', '', []);
+                group = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 row.push(group);
                 allRows.push(row);
-            } else if (res.type === 'control' && res.content === '&') {
-                group = new TexNode('ordgroup', '', []);
+            } else if (res.type === 'control' && res.content.value === '&') {
+                group = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 row.push(group);
             } else {
                 group.args!.push(res);

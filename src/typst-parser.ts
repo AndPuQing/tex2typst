@@ -4,6 +4,7 @@ import { TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, 
 import { tokenize_typst } from "./typst-tokenizer";
 import { assert, isalpha } from "./util";
 
+const NONE_TOKEN = new TypstToken(TypstTokenType.NONE, '#none');
 
 // TODO: In Typst, y' ' is not the same as y''.
 // The parser should be able to parse the former correctly.
@@ -58,8 +59,10 @@ function find_closing_delim(tokens: TypstToken[], start: number): number {
 
 
 function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
-    const left_parenthesis = new TypstNode('atom', '(');
-    const right_parenthesis = new TypstNode('atom', ')');
+    const left_parenthesis = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '('));
+    const right_parenthesis = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, ')'));
+
+
 
     assert(nodes[start].eq(left_parenthesis));
 
@@ -84,12 +87,12 @@ function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
 function primes(num: number): TypstNode[] {
     const res: TypstNode[] = [];
     for (let i = 0; i < num; i++) {
-        res.push(new TypstNode('atom', "'"));
+        res.push(new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, "'")));
     }
     return res;
 }
 
-const DIV = new TypstNode('atom', '/');
+const DIV = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '/'));
 
 
 
@@ -125,10 +128,12 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
 }
 
 function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
+    const SPECIAL_PAREN_TOKEN = new TypstToken(TypstTokenType.LITERAL, 'parenthesis');
+
     nodes = trim_whitespace_around_operators(nodes);
 
-    const opening_bracket = new TypstNode('atom', '(');
-    const closing_bracket = new TypstNode('atom', ')');
+    const opening_bracket = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '('));
+    const closing_bracket = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, ')'));
 
     const stack: TypstNode[] = [];
 
@@ -161,14 +166,14 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                 }
                 const numerator = args.pop()!;
 
-                if(denominator.type === 'group' && denominator.content === 'parenthesis') {
-                    denominator.content = '';
+                if(denominator.type === 'group' && denominator.content.eq(SPECIAL_PAREN_TOKEN)) {
+                    denominator.content = NONE_TOKEN;
                 }
-                if(numerator.type === 'group' && numerator.content === 'parenthesis') {
-                    numerator.content = '';
+                if(numerator.type === 'group' && numerator.content.eq(SPECIAL_PAREN_TOKEN)) {
+                    numerator.content = NONE_TOKEN;
                 }
 
-                args.push(new TypstNode('fraction', '', [numerator, denominator]));
+                args.push(new TypstNode('fraction', NONE_TOKEN, [numerator, denominator]));
                 stack.pop(); // drop the '/' operator
             } else {
                 args.push(current_tree);
@@ -176,12 +181,12 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
         }
     }
     if(parenthesis) {
-        return new TypstNode('group', 'parenthesis', args);
+        return new TypstNode('group', SPECIAL_PAREN_TOKEN, args);
     } else {
         if(args.length === 1) {
             return args[0];
         } else {
-            return new TypstNode('group', '', args);
+            return new TypstNode('group', NONE_TOKEN, args);
         }
     }
 }
@@ -231,10 +236,10 @@ export class TypstParser {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
             if (res.type === 'whitespace') {
-                if (!this.space_sensitive && res.content.replace(/ /g, '').length === 0) {
+                if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
-                if (!this.newline_sensitive && res.content === '\n') {
+                if (!this.newline_sensitive && res.content.value === '\n') {
                     continue;
                 }
             }
@@ -261,7 +266,7 @@ export class TypstParser {
 
         const num_base_prime = eat_primes(tokens, pos);
         if (num_base_prime > 0) {
-            base = new TypstNode('group', '', [base].concat(primes(num_base_prime)));
+            base = new TypstNode('group', NONE_TOKEN, [base].concat(primes(num_base_prime)));
             pos += num_base_prime;
         }
         if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
@@ -284,7 +289,7 @@ export class TypstParser {
             if (sup) {
                 res.sup = sup;
             }
-            return [new TypstNode('supsub', '', [], res), pos];
+            return [new TypstNode('supsub', NONE_TOKEN, [], res), pos];
         } else {
             return [base, pos];
         }
@@ -301,7 +306,7 @@ export class TypstParser {
         }
         const num_prime = eat_primes(tokens, end);
         if (num_prime > 0) {
-            node = new TypstNode('group', '', [node].concat(primes(num_prime)));
+            node = new TypstNode('group', NONE_TOKEN, [node].concat(primes(num_prime)));
             end += num_prime;
         }
         return [node, end];
@@ -321,23 +326,23 @@ export class TypstParser {
             if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
                 if(firstToken.value === 'mat') {
                     const [matrix, named_params, newPos] = this.parseGroupsOfArguments(tokens, start + 1);
-                    const mat = new TypstNode('matrix', '', [], matrix);
+                    const mat = new TypstNode('matrix', NONE_TOKEN, [], matrix);
                     mat.setOptions(named_params);
                     return [mat, newPos];
                 }
                 if(firstToken.value === 'cases') {
                     const [cases, named_params, newPos] = this.parseGroupsOfArguments(tokens, start + 1, COMMA);
-                    const casesNode = new TypstNode('cases', '', [], cases);
+                    const casesNode = new TypstNode('cases', NONE_TOKEN, [], cases);
                     casesNode.setOptions(named_params);
                     return [casesNode, newPos];
                 }
                 if (firstToken.value === 'lr') {
                     const [args, newPos, lrData] = this.parseLrArguments(tokens, start + 1);
-                    const func_call = new TypstNode('funcCall', firstToken.value, args, lrData);
+                    const func_call = new TypstNode('funcCall', firstToken, args, lrData);
                     return [func_call, newPos];
                 }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
-                const func_call = new TypstNode('funcCall', firstToken.value, args);
+                const func_call = new TypstNode('funcCall', firstToken, args);
                 return [func_call, newPos];
             }
         }
@@ -393,7 +398,7 @@ export class TypstParser {
                 let np: TypstNamedParams = {};
 
                 function extract_named_params(arr: TypstNode[]): [TypstNode[], TypstNamedParams] {
-                    const COLON = new TypstNode('atom', ':');
+                    const COLON = new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, ':'));
                     const np: TypstNamedParams = {};
 
                     const to_delete: number[] = [];
@@ -409,7 +414,7 @@ export class TypstParser {
                         }
                         to_delete.push(i);
                         const param_name = g.args![pos_colon - 1];
-                        if(param_name.eq(new TypstNode('symbol', 'delim'))) {
+                        if(param_name.eq(new TypstNode('symbol', new TypstToken(TypstTokenType.SYMBOL, 'delim')))) {
                             if(g.args!.length !== 3) {
                                 throw new TypstParserError('Invalid number of arguments for delim');
                             }

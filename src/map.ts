@@ -5,6 +5,7 @@ const symbolMap = new Map<string, string>([
     ['|', 'bar.v.double'],
     [',', 'thin'],
     [':', 'med'],
+    [' ', 'med'],
     [';', 'thick'],
 
     /* textual operators */
