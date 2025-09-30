@@ -194,16 +194,16 @@ function convert_tex_array_align_literal(alignLiteral: string): TypstNamedParams
 export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptions = {}): TypstNode {
     switch (node.type) {
         case 'terminal':
-            return tex_token_to_typst(node.content).toNode();
+            return tex_token_to_typst(node.head).toNode();
         case 'text': {
-            if ((/[^\x00-\x7F]+/).test(node.content.value) && options.nonAsciiWrapper !== "") {
+            if ((/[^\x00-\x7F]+/).test(node.head.value) && options.nonAsciiWrapper !== "") {
                 return new TypstNode(
                     'funcCall',
                     new TypstToken(TypstTokenType.SYMBOL, options.nonAsciiWrapper!),
-                    [new TypstToken(TypstTokenType.TEXT, node.content.value).toNode()]
+                    [new TypstToken(TypstTokenType.TEXT, node.head.value).toNode()]
                 );
             }
-            return new TypstToken(TypstTokenType.TEXT, node.content.value).toNode();
+            return new TypstToken(TypstTokenType.TEXT, node.head.value).toNode();
         }
         case 'ordgroup':
             return new TypstNode(
@@ -215,13 +215,13 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             let { base, sup, sub } = node.data as TexSupsubData;
 
             // special hook for overbrace
-            if (base && base.type === 'unaryFunc' && base.content.value === '\\overbrace' && sup) {
+            if (base && base.type === 'unaryFunc' && base.head.value === '\\overbrace' && sup) {
                 return new TypstNode(
                     'funcCall',
                     new TypstToken(TypstTokenType.SYMBOL, 'overbrace'),
                     [convert_tex_node_to_typst(base.args![0], options), convert_tex_node_to_typst(sup, options)]
                 );
-            } else if (base && base.type === 'unaryFunc' && base.content.value === '\\underbrace' && sub) {
+            } else if (base && base.type === 'unaryFunc' && base.head.value === '\\underbrace' && sub) {
                 return new TypstNode(
                     'funcCall',
                     new TypstToken(TypstTokenType.SYMBOL, 'underbrace'),
@@ -252,7 +252,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             if (options.optimize) {
                 // optimization off: "lr(bar.v.double a + 1/2 bar.v.double)"
                 // optimization on : "norm(a + 1/2)"
-                if (left.content.value === '\\|' && right.content.value === '\\|') {
+                if (left.head.value === '\\|' && right.head.value === '\\|') {
                     return new TypstNode('funcCall', new TypstToken(TypstTokenType.SYMBOL, 'norm'), [typ_body]);
                 }
 
@@ -262,7 +262,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     "\\lfloor\\rfloor",
                     "\\lceil\\rceil",
                     "\\lfloor\\rceil",
-                ].includes(left.content.value + right.content.value)) {
+                ].includes(left.head.value + right.head.value)) {
                     return new TypstNode('group', TYPST_NONE_TOKEN, [typ_left, typ_body, typ_right]);
                 }
             }
@@ -285,24 +285,24 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     return s;
                 }
             };
-            if (right.content.value === '.') {
-                typ_left.content.value = escape_curly_or_paren(typ_left.content.value);
+            if (right.head.value === '.') {
+                typ_left.head.value = escape_curly_or_paren(typ_left.head.value);
                 group.args = [typ_left, typ_body];
-            } else if (left.content.value === '.') {
-                typ_right.content.value = escape_curly_or_paren(typ_right.content.value);
+            } else if (left.head.value === '.') {
+                typ_right.head.value = escape_curly_or_paren(typ_right.head.value);
                 group.args = [typ_body, typ_right];
             }
             return new TypstNode('funcCall', new TypstToken(TypstTokenType.SYMBOL, 'lr'), [group]);
         }
         case 'binaryFunc': {
-            if (node.content.value === '\\overset') {
+            if (node.head.value === '\\overset') {
                 return convert_overset(node, options);
             }
-            if (node.content.value === '\\underset') {
+            if (node.head.value === '\\underset') {
                 return convert_underset(node, options);
             }
             // \frac{a}{b} -> a / b
-            if (node.content.value === '\\frac') {
+            if (node.head.value === '\\frac') {
                 if (options.fracToSlash) {
                     return new TypstNode(
                         'fraction',
@@ -313,14 +313,14 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             return new TypstNode(
                 'funcCall',
-                tex_token_to_typst(node.content),
+                tex_token_to_typst(node.head),
                 node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         }
         case 'unaryFunc': {
             const arg0 = convert_tex_node_to_typst(node.args![0], options);
             // \sqrt{3}{x} -> root(3, x)
-            if (node.content.value === '\\sqrt' && node.data) {
+            if (node.head.value === '\\sqrt' && node.data) {
                 const data = convert_tex_node_to_typst(node.data as TexSqrtData, options); // the number of times to take the root
                 return new TypstNode(
                     'funcCall',
@@ -329,7 +329,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 );
             }
             // \mathbf{a} -> upright(bold(a))
-            if (node.content.value === '\\mathbf') {
+            if (node.head.value === '\\mathbf') {
                 const inner: TypstNode = new TypstNode(
                     'funcCall',
                     new TypstToken(TypstTokenType.SYMBOL, 'bold'),
@@ -342,7 +342,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 );
             }
             // \overrightarrow{AB} -> arrow(A B)
-            if (node.content.value === '\\overrightarrow') {
+            if (node.head.value === '\\overrightarrow') {
                 return new TypstNode(
                     'funcCall',
                     new TypstToken(TypstTokenType.SYMBOL, 'arrow'),
@@ -350,7 +350,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 );
             }
             // \overleftarrow{AB} -> accent(A B, arrow.l)
-            if (node.content.value === '\\overleftarrow') {
+            if (node.head.value === '\\overleftarrow') {
                 return new TypstNode(
                     'funcCall',
                     new TypstToken(TypstTokenType.SYMBOL, 'accent'),
@@ -358,29 +358,29 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 );
             }
             // \operatorname{opname} -> op("opname")
-            if (node.content.value === '\\operatorname') {
+            if (node.head.value === '\\operatorname') {
                 // arg0 must be of type 'literal' in this situation
                 if (options.optimize) {
-                    if (TYPST_INTRINSIC_OP.includes(arg0.content.value)) {
-                        return new TypstToken(TypstTokenType.SYMBOL, arg0.content.value).toNode();
+                    if (TYPST_INTRINSIC_OP.includes(arg0.head.value)) {
+                        return new TypstToken(TypstTokenType.SYMBOL, arg0.head.value).toNode();
                     }
                 }
-                return new TypstNode('funcCall', new TypstToken(TypstTokenType.SYMBOL, 'op'), [new TypstToken(TypstTokenType.TEXT, arg0.content.value).toNode()]);
+                return new TypstNode('funcCall', new TypstToken(TypstTokenType.SYMBOL, 'op'), [new TypstToken(TypstTokenType.TEXT, arg0.head.value).toNode()]);
             }
 
             // \substack{a \\ b} -> `a \ b`
             // as in translation from \sum_{\substack{a \\ b}} to sum_(a \ b)
-            if (node.content.value === '\\substack') {
+            if (node.head.value === '\\substack') {
                 return arg0;
             }
 
             if(options.optimize) {
                 // \mathbb{R} -> RR
-                if (node.content.value === '\\mathbb' && arg0.content.type === TypstTokenType.ELEMENT && /^[A-Z]$/.test(arg0.content.value)) {
-                    return new TypstToken(TypstTokenType.SYMBOL, arg0.content.value + arg0.content.value).toNode();
+                if (node.head.value === '\\mathbb' && arg0.head.type === TypstTokenType.ELEMENT && /^[A-Z]$/.test(arg0.head.value)) {
+                    return new TypstToken(TypstTokenType.SYMBOL, arg0.head.value + arg0.head.value).toNode();
                 }
                 // \mathrm{d} -> dif
-                if (node.content.value === '\\mathrm' && arg0.eq(new TypstToken(TypstTokenType.ELEMENT, 'd').toNode())) {
+                if (node.head.value === '\\mathrm' && arg0.eq(new TypstToken(TypstTokenType.ELEMENT, 'd').toNode())) {
                     return new TypstToken(TypstTokenType.SYMBOL, 'dif').toNode();
                 }
             }
@@ -388,7 +388,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             // generic case
             return new TypstNode(
                 'funcCall',
-                tex_token_to_typst(node.content),
+                tex_token_to_typst(node.head),
                 node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         }
@@ -396,16 +396,16 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             const matrix = node.data as TexNode[][];
             const data = matrix.map((row) => row.map((n) => convert_tex_node_to_typst(n, options)));
 
-            if (node.content.value.startsWith('align')) {
+            if (node.head.value.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.
                 return new TypstNode('align', TYPST_NONE_TOKEN, [], data);
             }
-            if (node.content.value === 'cases') {
+            if (node.head.value === 'cases') {
                 return new TypstNode('cases', TYPST_NONE_TOKEN, [], data);
             }
-            if (node.content.value === 'subarray') {
+            if (node.head.value === 'subarray') {
                 const align_node = node.args![0];
-                switch (align_node.content.value) {
+                switch (align_node.head.value) {
                     case 'r':
                         data.forEach(row => row[0].args!.push(new TypstToken(TypstTokenType.CONTROL, '&').toNode()));
                         break;
@@ -417,21 +417,21 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 }
                 return new TypstNode('align', TYPST_NONE_TOKEN, [], data);
             }
-            if (node.content.value === 'array') {
+            if (node.head.value === 'array') {
                 const np: TypstNamedParams = { 'delim': TYPST_NONE };
 
-                assert(node.args!.length > 0 && node.args![0].content.type === TexTokenType.LITERAL);
-                const np_new = convert_tex_array_align_literal(node.args![0].content.value);
+                assert(node.args!.length > 0 && node.args![0].head.type === TexTokenType.LITERAL);
+                const np_new = convert_tex_array_align_literal(node.args![0].head.value);
                 Object.assign(np, np_new);
 
                 const res = new TypstNode('matrix', TYPST_NONE_TOKEN, [], data);
                 res.setOptions(np);
                 return res;
             }
-            if (node.content.value.endsWith('matrix')) {
+            if (node.head.value.endsWith('matrix')) {
                 const res = new TypstNode('matrix', TYPST_NONE_TOKEN, [], data);
                 let delim: TypstToken;
-                switch (node.content.value) {
+                switch (node.head.value) {
                     case 'matrix':
                         delim = TYPST_NONE_TOKEN;
                         break;
@@ -453,15 +453,15 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                         break;
                     }
                     default:
-                        throw new ConverterError(`Unimplemented beginend: ${node.content}`, node);
+                        throw new ConverterError(`Unimplemented beginend: ${node.head}`, node);
                 }
                 res.setOptions({ 'delim': delim.toNode()});
                 return res;
             }
-            throw new ConverterError(`Unimplemented beginend: ${node.content}`, node);
+            throw new ConverterError(`Unimplemented beginend: ${node.head}`, node);
         }
         case 'unknownMacro':
-            return new TypstNode('unknown', tex_token_to_typst(node.content));
+            return new TypstNode('unknown', tex_token_to_typst(node.head));
 
         default:
             throw new ConverterError(`Unimplemented node type: ${node.type}`, node);
@@ -562,7 +562,7 @@ const TEX_NODE_COMMA = new TexToken(TexTokenType.ELEMENT, ',').toNode();
 
 export function convert_typst_node_to_tex(node: TypstNode): TexNode {
     // special hook for eq.def
-    if (node.content.eq(new TypstToken(TypstTokenType.SYMBOL, 'eq.def'))) {
+    if (node.head.eq(new TypstToken(TypstTokenType.SYMBOL, 'eq.def'))) {
         return new TexNode('binaryFunc', new TexToken(TexTokenType.COMMAND, '\\overset'), [
             new TexNode('text', new TexToken(TexTokenType.LITERAL, 'def')),
             new TexToken(TexTokenType.ELEMENT, '=').toNode()
@@ -570,35 +570,35 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
     }
     switch (node.type) {
         case 'terminal': {
-                if (node.content.type === TypstTokenType.SYMBOL) {
+                if (node.head.type === TypstTokenType.SYMBOL) {
                 // special hook for comma
-                if(node.content.value === 'comma') {
+                if(node.head.value === 'comma') {
                     return new TexToken(TexTokenType.ELEMENT, ',').toNode();
                 }
                 // special hook for dif
-                if(node.content.value === 'dif') {
+                if(node.head.value === 'dif') {
                     return new TexNode('unaryFunc', new TexToken(TexTokenType.COMMAND, '\\mathrm'), [new TexToken(TexTokenType.ELEMENT, 'd').toNode()]);
                 }
                 // special hook for hyph and hyph.minus
-                if(node.content.value === 'hyph' || node.content.value === 'hyph.minus') {
+                if(node.head.value === 'hyph' || node.head.value === 'hyph.minus') {
                     return new TexNode('text', new TexToken(TexTokenType.LITERAL, '-'));
                 }
                 // special hook for mathbb{R} <-- RR
-                if(/^([A-Z])\1$/.test(node.content.value)) {
+                if(/^([A-Z])\1$/.test(node.head.value)) {
                     return new TexNode('unaryFunc', new TexToken(TexTokenType.COMMAND, '\\mathbb'), [
-                        new TexToken(TexTokenType.ELEMENT, node.content.value[0]).toNode()
+                        new TexToken(TexTokenType.ELEMENT, node.head.value[0]).toNode()
                     ]);
                 }
             }
-            if (node.content.type === TypstTokenType.TEXT) {
-                return new TexNode('text', new TexToken(TexTokenType.LITERAL, node.content.value));
+            if (node.head.type === TypstTokenType.TEXT) {
+                return new TexNode('text', new TexToken(TexTokenType.LITERAL, node.head.value));
             }
-            return typst_token_to_tex(node.content).toNode();
+            return typst_token_to_tex(node.head).toNode();
         }
 
         case 'group': {
             const args = node.args!.map(convert_typst_node_to_tex);
-            if (node.content.value === 'parenthesis') {
+            if (node.head.value === 'parenthesis') {
                 const is_over_high = node.isOverHigh();
                 const left_delim = is_over_high ? '\\left(' : '(';
                 const right_delim = is_over_high ? '\\right)' : ')';
@@ -609,7 +609,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         }
         case 'funcCall': {
             // special hook for lr
-            if (node.content.value === 'lr') {
+            if (node.head.value === 'lr') {
                 const data = node.data as TypstLrData;
                 if (data.leftDelim !== null) {
                     let left_delim = apply_escape_if_needed(data.leftDelim);
@@ -629,7 +629,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             // special hook for norm
             // `\| a  \|` <- `norm(a)`
             // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
-            if (node.content.value === 'norm') {
+            if (node.head.value === 'norm') {
                 const arg0 = node.args![0];
                 const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
                 return new TexNode(tex_node_type, TEX_EMPTY_TOKEN, [
@@ -643,9 +643,9 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             // `\lceil a \rceil` <- `ceil(a)`
             // `\left\lfloor a \right\rfloor` <- `floor(a)`
             // `\left\lceil a \right\rceil` <- `ceil(a)`
-            if (node.content.value === 'floor' || node.content.value === 'ceil') {
-                const left = "\\l" + node.content.value;
-                const right = "\\r" + node.content.value;
+            if (node.head.value === 'floor' || node.head.value === 'ceil') {
+                const left = "\\l" + node.head.value;
+                const right = "\\r" + node.head.value;
                 const arg0 = node.args![0];
                 const tex_node_type = node.isOverHigh() ? 'leftright' : 'ordgroup';
                 return new TexNode(tex_node_type, TEX_EMPTY_TOKEN, [
@@ -655,43 +655,43 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 ]);
             }
             // special hook for root
-            if (node.content.value === 'root') {
+            if (node.head.value === 'root') {
                 const [degree, radicand] = node.args!;
                 const data: TexSqrtData = convert_typst_node_to_tex(degree);
                 return new TexNode('unaryFunc', new TexToken(TexTokenType.COMMAND, '\\sqrt'), [convert_typst_node_to_tex(radicand)], data);
             }
             // special hook for overbrace and underbrace
-            if (node.content.value === 'overbrace' || node.content.value === 'underbrace') {
+            if (node.head.value === 'overbrace' || node.head.value === 'underbrace') {
                 const [body, label] = node.args!;
-                const base = new TexNode('unaryFunc', typst_token_to_tex(node.content), [convert_typst_node_to_tex(body)]);
+                const base = new TexNode('unaryFunc', typst_token_to_tex(node.head), [convert_typst_node_to_tex(body)]);
                 const script = convert_typst_node_to_tex(label);
-                const data = node.content.value === 'overbrace' ? { base, sup: script, sub: null } : { base, sub: script, sup: null };
+                const data = node.head.value === 'overbrace' ? { base, sup: script, sub: null } : { base, sub: script, sup: null };
                 return new TexNode('supsub', TEX_EMPTY_TOKEN, [], data);
             }
 
             // special hook for vec
             // "vec(a, b, c)" -> "\begin{pmatrix}a\\ b\\ c\end{pmatrix}"
-            if (node.content.value === 'vec') {
+            if (node.head.value === 'vec') {
                 const tex_data = node.args!.map(convert_typst_node_to_tex).map((n) => [n]) as TexArrayData;
                 return new TexNode('beginend', new TexToken(TexTokenType.LITERAL, 'pmatrix'), [], tex_data);
             }
 
             // special hook for op
-            if (node.content.value === 'op') {
+            if (node.head.value === 'op') {
                 const arg0 = node.args![0];
-                assert(arg0.content.type === TypstTokenType.TEXT);
-                return new TexNode('unaryFunc', typst_token_to_tex(node.content), [new TexToken(TexTokenType.LITERAL, arg0.content.value).toNode()]);
+                assert(arg0.head.type === TypstTokenType.TEXT);
+                return new TexNode('unaryFunc', typst_token_to_tex(node.head), [new TexToken(TexTokenType.LITERAL, arg0.head.value).toNode()]);
             }
 
             // general case
-            const func_name_tex = typst_token_to_tex(node.content);
+            const func_name_tex = typst_token_to_tex(node.head);
             if (func_name_tex.value.length > 0 && TEX_UNARY_COMMANDS.includes(func_name_tex.value.substring(1))) {
                 return new TexNode('unaryFunc', func_name_tex, node.args!.map(convert_typst_node_to_tex));
             } else if (func_name_tex.value.length > 0 && TEX_BINARY_COMMANDS.includes(func_name_tex.value.substring(1))) {
                 return new TexNode('binaryFunc', func_name_tex, node.args!.map(convert_typst_node_to_tex));
             } else {
                 return new TexNode('ordgroup', TEX_EMPTY_TOKEN, [
-                    typst_token_to_tex(node.content).toNode(),
+                    typst_token_to_tex(node.head).toNode(),
                     new TexToken(TexTokenType.ELEMENT, '(').toNode(),
                     ...array_intersperse(node.args!.map(convert_typst_node_to_tex), TEX_NODE_COMMA),
                     new TexToken(TexTokenType.ELEMENT, ')').toNode()
@@ -714,7 +714,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             // `limits(+)^a` -> `\overset{a}{+}`
             // `limits(+)_a` -> `\underset{a}{+}`
             // `limits(+)_a^b` -> `\overset{b}{\underset{a}{+}}`
-            if (base.content.eq(new TypstToken(TypstTokenType.SYMBOL, 'limits'))) {
+            if (base.head.eq(new TypstToken(TypstTokenType.SYMBOL, 'limits'))) {
                 const body_in_limits = convert_typst_node_to_tex(base.args![0]);
                 if (sup_tex !== null && sub_tex === null) {
                     return new TexNode('binaryFunc', new TexToken(TexTokenType.COMMAND, '\\overset'), [sup_tex, body_in_limits]);
@@ -742,7 +742,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             if (node.options) {
                 if ('delim' in node.options) {
                     const delim = node.options.delim;
-                    switch (delim.content.value) {
+                    switch (delim.head.value) {
                         case '#none':
                             env_type = 'matrix';
                             break;
@@ -769,7 +769,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                             env_type = 'Vmatrix';
                             break;
                         default:
-                            throw new Error(`Unexpected delimiter ${delim.content}`);
+                            throw new Error(`Unexpected delimiter ${delim.head}`);
                     }
                 }
             }

@@ -98,7 +98,7 @@ const DIV = new TypstToken(TypstTokenType.ELEMENT, '/').toNode();
 
 function next_non_whitespace(nodes: TypstNode[], start: number): TypstNode | null {
     let pos = start;
-    while (pos < nodes.length && (nodes[pos].content.type === TypstTokenType.SPACE || nodes[pos].content.type === TypstTokenType.NEWLINE)) {
+    while (pos < nodes.length && (nodes[pos].head.type === TypstTokenType.SPACE || nodes[pos].head.type === TypstTokenType.NEWLINE)) {
         pos++;
     }
     return pos === nodes.length ? null : nodes[pos];
@@ -109,7 +109,7 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
     const res: TypstNode[] = [];
     for (let i = 0; i < nodes.length; i++) {
         const current = nodes[i];
-        if (current.content.type === TypstTokenType.SPACE || current.content.type === TypstTokenType.NEWLINE) {
+        if (current.head.type === TypstTokenType.SPACE || current.head.type === TypstTokenType.NEWLINE) {
             if(after_operator) {
                 continue;
             }
@@ -166,11 +166,11 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                 }
                 const numerator = args.pop()!;
 
-                if(denominator.type === 'group' && denominator.content.eq(SPECIAL_PAREN_TOKEN)) {
-                    denominator.content = NONE_TOKEN;
+                if(denominator.type === 'group' && denominator.head.eq(SPECIAL_PAREN_TOKEN)) {
+                    denominator.head = NONE_TOKEN;
                 }
-                if(numerator.type === 'group' && numerator.content.eq(SPECIAL_PAREN_TOKEN)) {
-                    numerator.content = NONE_TOKEN;
+                if(numerator.type === 'group' && numerator.head.eq(SPECIAL_PAREN_TOKEN)) {
+                    numerator.head = NONE_TOKEN;
                 }
 
                 args.push(new TypstNode('fraction', NONE_TOKEN, [numerator, denominator]));
@@ -235,11 +235,11 @@ export class TypstParser {
         while (pos < end) {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
-            if (res.content.type === TypstTokenType.SPACE || res.content.type === TypstTokenType.NEWLINE) {
-                if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
+            if (res.head.type === TypstTokenType.SPACE || res.head.type === TypstTokenType.NEWLINE) {
+                if (!this.space_sensitive && res.head.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
-                if (!this.newline_sensitive && res.content.value === '\n') {
+                if (!this.newline_sensitive && res.head.value === '\n') {
                     continue;
                 }
             }

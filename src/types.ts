@@ -85,34 +85,34 @@ function apply_escape_if_needed(c: string) {
 
 export class TexNode {
     type: TexNodeType;
-    content: TexToken;
+    head: TexToken;
     args?: TexNode[];
     // For type="sqrt", it's additional argument wrapped square bracket. e.g. 3 in \sqrt[3]{x}
     // For type="supsub", it's base, sup, and sub.
     // For type="beginend", it's the 2-dimensional matrix.
     data?: TexSqrtData | TexSupsubData | TexArrayData;
 
-    constructor(type: TexNodeType, content: TexToken, args?: TexNode[],
+    constructor(type: TexNodeType, head: TexToken, args?: TexNode[],
             data?: TexSqrtData | TexSupsubData | TexArrayData) {
         this.type = type;
-        this.content = content;
+        this.head = head;
         this.args = args;
         this.data = data;
     }
 
     // Note that this is only shallow equality.
     public eq(other: TexNode): boolean {
-        return this.type === other.type && this.content.eq(other.content);
+        return this.type === other.type && this.head.eq(other.head);
     }
 
     public serialize(): TexToken[] {
         switch (this.type) {
             case 'terminal': {
-                switch(this.content.type) {
+                switch(this.head.type) {
                     case TexTokenType.EMPTY:
                         return [];
                     case TexTokenType.ELEMENT: {
-                        let c = this.content.value;
+                        let c = this.head.value;
                         c = apply_escape_if_needed(c);
                         return [new TexToken(TexTokenType.ELEMENT, c)];
                     }
@@ -120,26 +120,26 @@ export class TexNode {
                     case TexTokenType.LITERAL:
                     case TexTokenType.COMMENT:
                     case TexTokenType.CONTROL: {
-                        return [this.content];
+                        return [this.head];
                     }
                     case TexTokenType.SPACE:
                     case TexTokenType.NEWLINE: {
                         const tokens: TexToken[] = [];
-                        for (const c of this.content.value) {
+                        for (const c of this.head.value) {
                             const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
                             tokens.push(new TexToken(token_type, c));
                         }
                         return tokens;
                     }
                     default:
-                        throw new Error(`Unknown terminal token type: ${this.content.type}`);
+                        throw new Error(`Unknown terminal token type: ${this.head.type}`);
                 }
             }
             case 'text':
                 return [
                     new TexToken(TexTokenType.COMMAND, '\\text'),
                     new TexToken(TexTokenType.ELEMENT, '{'),
-                    this.content,
+                    this.head,
                     new TexToken(TexTokenType.ELEMENT, '}'),
                 ];
             case 'ordgroup': {
@@ -154,10 +154,10 @@ export class TexNode {
             }
             case 'unaryFunc': {
                 let tokens: TexToken[] = [];
-                tokens.push(this.content);
+                tokens.push(this.head);
 
                 // special hook for \sqrt
-                if (this.content.value === '\\sqrt' && this.data) {
+                if (this.head.value === '\\sqrt' && this.data) {
                     tokens.push(new TexToken(TexTokenType.ELEMENT, '['));
                     tokens = tokens.concat((this.data! as TexSqrtData).serialize());
                     tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
@@ -171,7 +171,7 @@ export class TexNode {
             }
             case 'binaryFunc': {
                 let tokens: TexToken[] = [];
-                tokens.push(this.content);
+                tokens.push(this.head);
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
                 tokens = tokens.concat(this.args![0].serialize());
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
@@ -187,9 +187,9 @@ export class TexNode {
 
                 // TODO: should return true for more cases e.g. a_{\theta} instead of a_\theta
                 function should_wrap_in_braces(node: TexNode): boolean {
-                    if(node.type === 'ordgroup' || node.type === 'supsub' || node.content.type === TexTokenType.EMPTY) {
+                    if(node.type === 'ordgroup' || node.type === 'supsub' || node.head.type === TexTokenType.EMPTY) {
                         return true;
-                    } else if(node.content.type === TexTokenType.ELEMENT && /\d+(\.\d+)?/.test(node.content.value) && node.content.value.length > 1) {
+                    } else if(node.head.type === TexTokenType.ELEMENT && /\d+(\.\d+)?/.test(node.head.value) && node.head.value.length > 1) {
                         // a number with more than 1 digit as a subscript/superscript should be wrapped in braces
                         return true;
                     } else {
@@ -225,7 +225,7 @@ export class TexNode {
                 // tokens.push(new TexToken(TexTokenType.COMMAND, `\\begin{${this.content}}`));
                 tokens.push(new TexToken(TexTokenType.COMMAND, '\\begin'));
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                tokens = tokens.concat(this.content);
+                tokens = tokens.concat(this.head);
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
                 tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
                 for (let i = 0; i < matrix.length; i++) {
@@ -245,7 +245,7 @@ export class TexNode {
                 // tokens.push(new TexToken(TexTokenType.COMMAND, `\\end{${this.content}}`));
                 tokens.push(new TexToken(TexTokenType.COMMAND, '\\end'));
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                tokens = tokens.concat(this.content);
+                tokens = tokens.concat(this.head);
                 tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
                 return tokens;
             }
@@ -346,16 +346,16 @@ export type TypstNamedParams = { [key: string]: TypstNode };
 
 export class TypstNode {
     type: TypstNodeType;
-    content: TypstToken;
+    head: TypstToken;
     args?: TypstNode[];
     data?: TypstSupsubData | TypstArrayData | TypstLrData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
-    constructor(type: TypstNodeType, content: TypstToken, args?: TypstNode[],
+    constructor(type: TypstNodeType, head: TypstToken, args?: TypstNode[],
             data?: TypstSupsubData | TypstArrayData| TypstLrData) {
         this.type = type;
-        this.content = content;
+        this.head = head;
         this.args = args;
         this.data = data;
     }
@@ -366,7 +366,7 @@ export class TypstNode {
 
     // Note that this is only shallow equality.
     public eq(other: TypstNode): boolean {
-        return this.type === other.type && this.content.eq(other.content);
+        return this.type === other.type && this.head.eq(other.head);
     }
 
     // whether the node is over high so that if it's wrapped in braces, \left and \right should be used in its TeX form
@@ -376,7 +376,7 @@ export class TypstNode {
             case 'fraction':
                 return true;
             case 'funcCall': {
-                if (this.content.value === 'frac') {
+                if (this.head.value === 'frac') {
                     return true;
                 }
                 return this.args!.some((n) => n.isOverHigh());
@@ -398,7 +398,7 @@ export class TypstNode {
         if (this.type !== 'terminal') {
             throw new Error(`Unimplemented toString() for non-terminal`);
         }
-        return this.content.toString();
+        return this.head.toString();
     }
 }
 

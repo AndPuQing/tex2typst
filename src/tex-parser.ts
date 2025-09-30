@@ -146,15 +146,15 @@ export class LatexParser {
         while (pos < end) {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
-            if(res.content.type === TexTokenType.SPACE || res.content.type === TexTokenType.NEWLINE) {
-                if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
+            if(res.head.type === TexTokenType.SPACE || res.head.type === TexTokenType.NEWLINE) {
+                if (!this.space_sensitive && res.head.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
-                if (!this.newline_sensitive && res.content.value === '\n') {
+                if (!this.newline_sensitive && res.head.value === '\n') {
                     continue;
                 }
             }
-            if (res.content.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
+            if (res.head.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
                 throw new LatexParserError('Unexpected & outside of an alignment');
             }
             results.push(res);
@@ -352,7 +352,7 @@ export class LatexParser {
         while (pos < tokens.length) {
             let node: TexNode;
             [node, pos] = this.parseNextExprWithoutSupSub(tokens, pos);
-            if (!(node.content.type === TexTokenType.SPACE || node.content.type === TexTokenType.NEWLINE)) {
+            if (!(node.head.type === TexTokenType.SPACE || node.head.type === TexTokenType.NEWLINE)) {
                 arg = node;
                 break;
             }
@@ -468,21 +468,21 @@ export class LatexParser {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
 
-            if (res.content.type === TexTokenType.SPACE || res.content.type === TexTokenType.NEWLINE) {
-                if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
+            if (res.head.type === TexTokenType.SPACE || res.head.type === TexTokenType.NEWLINE) {
+                if (!this.space_sensitive && res.head.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
-                if (!this.newline_sensitive && res.content.value === '\n') {
+                if (!this.newline_sensitive && res.head.value === '\n') {
                     continue;
                 }
             }
 
-            if (res.content.eq(new TexToken(TexTokenType.CONTROL, '\\\\'))) {
+            if (res.head.eq(new TexToken(TexTokenType.CONTROL, '\\\\'))) {
                 row = [];
                 group = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 row.push(group);
                 allRows.push(row);
-            } else if (res.content.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
+            } else if (res.head.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
                 group = new TexNode('ordgroup', EMPTY_TOKEN, []);
                 row.push(group);
             } else {
