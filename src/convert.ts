@@ -57,7 +57,7 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     const [sup, base] = node.args!;
 
     if (options.optimize) {
-        const is_def = (n: TexNode): boolean => {
+        const is_def = function (n: TexNode): boolean {
             // \overset{\text{def}}{=} is considered as eq.def
             if (n.eq(new TexNode('text', 'def'))) {
                 return true;
@@ -72,7 +72,9 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
             }
             return false;
         };
-        const is_eq = (n: TexNode): boolean => n.eq(new TexNode('element', '='));
+        const is_eq = function (n: TexNode): boolean {
+            return n.eq(new TexNode('element', '='));
+        };
         if (is_def(sup) && is_eq(base)) {
             return new TypstNode('symbol', 'eq.def');
         }
@@ -148,12 +150,6 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return TYPST_NONE;
         case 'whitespace':
             return new TypstNode('whitespace', node.content);
-        case 'ordgroup':
-            return new TypstNode(
-                'group',
-                '',
-                node.args!.map((n) => convert_tex_node_to_typst(n, options))
-            );
         case 'element':
             return new TypstNode('atom', tex_token_to_typst(node.content));
         case 'symbol':
@@ -173,6 +169,12 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return new TypstNode('literal', node.content);
         case 'comment':
             return new TypstNode('comment', node.content);
+        case 'ordgroup':
+            return new TypstNode(
+                'group',
+                '',
+                node.args!.map((n) => convert_tex_node_to_typst(n, options))
+            );
         case 'supsub': {
             let { base, sup, sub } = node.data as TexSupsubData;
 
