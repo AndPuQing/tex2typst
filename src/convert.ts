@@ -87,6 +87,7 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     return new TypstNode('supsub', '', [], {
             base: limits_call,
             sup: convert_tex_node_to_typst(sup, options),
+            sub: null,
     });
 }
 
@@ -102,6 +103,7 @@ function convert_underset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     return new TypstNode('supsub', '', [], {
             base: limits_call,
             sub: convert_tex_node_to_typst(node=sub, options=options),
+            sup: null,
     });
 }
 
@@ -195,6 +197,8 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 
             const data: TypstSupsubData = {
                 base: convert_tex_node_to_typst(base, options),
+                sup: null,
+                sub: null,
             };
             if (data.base.type === 'none') {
                 data.base = new TypstNode('none', '');
