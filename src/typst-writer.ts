@@ -2,7 +2,7 @@ import { TexNode, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from 
 import { shorthandMap } from "./typst-shorthands";
 
 function is_delimiter(c: TypstNode): boolean {
-    return c.type === 'atom' && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content.value);
+    return c.content.type === TypstTokenType.ELEMENT && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.content.value);
 }
 
 const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
@@ -93,47 +93,44 @@ export class TypstWriter {
     // Serialize a tree of TypstNode into a list of TypstToken
     public serialize(node: TypstNode) {
         switch (node.type) {
-            case 'none':
-            case 'literal':
-            case 'text':
-            case 'control':
-            case 'comment':
-                this.queue.push(node.content);
-                break;
-            case 'atom': {
-                if (node.content.value === ',' && this.insideFunctionDepth > 0) {
-                    this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'comma'));
+            case 'terminal': {
+                if (node.content.type === TypstTokenType.ELEMENT) {
+                    if (node.content.value === ',' && this.insideFunctionDepth > 0) {
+                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'comma'));
+                    } else {
+                        this.queue.push(node.content);
+                    }
+                    break;
+                } else if (node.content.type === TypstTokenType.SYMBOL) {
+                    let symbol_name = node.content.value;
+                    if(this.preferShorthands) {
+                        if (shorthandMap.has(symbol_name)) {
+                            symbol_name = shorthandMap.get(symbol_name)!;
+                        }
+                    }
+                    if (this.inftyToOo && symbol_name === 'infinity') {
+                        symbol_name = 'oo';
+                    }
+                    this.queue.push(new TypstToken(TypstTokenType.SYMBOL, symbol_name));
+                    break;
+                } else if (node.content.type === TypstTokenType.SPACE || node.content.type === TypstTokenType.NEWLINE) {
+                    for (const c of node.content.value) {
+                        if (c === ' ') {
+                            if (this.keepSpaces) {
+                                this.queue.push(new TypstToken(TypstTokenType.SPACE, c));
+                            }
+                        } else if (c === '\n') {
+                            this.queue.push(new TypstToken(TypstTokenType.SYMBOL, c));
+                        } else {
+                            throw new TypstWriterError(`Unexpected whitespace character: ${c}`, node);
+                        }
+                    }
+                    break;
                 } else {
                     this.queue.push(node.content);
+                    break;
                 }
-                break;
             }
-            case 'symbol': {
-                let symbol_name = node.content.value;
-                if(this.preferShorthands) {
-                    if (shorthandMap.has(symbol_name)) {
-                        symbol_name = shorthandMap.get(symbol_name)!;
-                    }
-                }
-                if (this.inftyToOo && symbol_name === 'infinity') {
-                    symbol_name = 'oo';
-                }
-                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, symbol_name));
-                break;
-            }
-            case 'whitespace':
-                for (const c of node.content.value) {
-                    if (c === ' ') {
-                        if (this.keepSpaces) {
-                            this.queue.push(new TypstToken(TypstTokenType.SPACE, c));
-                        }
-                    } else if (c === '\n') {
-                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, c));
-                    } else {
-                        throw new TypstWriterError(`Unexpected whitespace character: ${c}`, node);
-                    }
-                }
-                break;
             case 'group':
                 for (const item of node.args!) {
                     this.serialize(item);
@@ -144,7 +141,7 @@ export class TypstWriter {
                 this.appendWithBracketsIfNeeded(base);
 
                 let trailing_space_needed = false;
-                const has_prime = (sup && sup.type === 'atom' && sup.content.value === '\'');
+                const has_prime = (sup && sup.content.eq(new TypstToken(TypstTokenType.ELEMENT, "'")));
                 if (has_prime) {
                     // Put prime symbol before '_'. Because $y_1'$ is not displayed properly in Typst (so far)
                     // e.g.

@@ -55,8 +55,7 @@ function tex_token_to_typst(token: TexToken): TypstToken {
     let token_type: TypstTokenType;
     switch (token.type) {
         case TexTokenType.EMPTY:
-            token_type = TypstTokenType.NONE;
-            break;
+            return TYPST_NONE_TOKEN;
         case TexTokenType.COMMAND:
             token_type = TypstTokenType.SYMBOL;
             break;
@@ -235,9 +234,6 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 sup: null,
                 sub: null,
             };
-            if (data.base.type === 'none') {
-                data.base = TYPST_NONE_TOKEN.toNode();
-            }
 
             if (sup) {
                 data.sup = convert_tex_node_to_typst(sup, options);
@@ -380,7 +376,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 
             if(options.optimize) {
                 // \mathbb{R} -> RR
-                if (node.content.value === '\\mathbb' && arg0.type === 'atom' && /^[A-Z]$/.test(arg0.content.value)) {
+                if (node.content.value === '\\mathbb' && arg0.content.type === TypstTokenType.ELEMENT && /^[A-Z]$/.test(arg0.content.value)) {
                     return new TypstToken(TypstTokenType.SYMBOL, arg0.content.value + arg0.content.value).toNode();
                 }
                 // \mathrm{d} -> dif
@@ -517,6 +513,7 @@ function apply_escape_if_needed(c: string) {
 function typst_token_to_tex(token: TypstToken): TexToken {
     switch (token.type) {
         case TypstTokenType.NONE:
+            // e.g. Typst `#none^2` is converted to TeX `^2`
             return TEX_EMPTY_TOKEN;
         case TypstTokenType.SYMBOL: {
             const _typst_symbol_to_tex = function(symbol: string): string {
@@ -572,37 +569,33 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         ]);
     }
     switch (node.type) {
-        case 'none':
-            // e.g. Typst `#none^2` is converted to TeX `^2`
-        case 'whitespace':
-        case 'atom':
-        case 'literal':
-        case 'comment':
-        case 'control':
-            return typst_token_to_tex(node.content).toNode();
-        case 'symbol': {
-            // special hook for comma
-            if(node.content.value === 'comma') {
-                return new TexToken(TexTokenType.ELEMENT, ',').toNode();
+        case 'terminal': {
+                if (node.content.type === TypstTokenType.SYMBOL) {
+                // special hook for comma
+                if(node.content.value === 'comma') {
+                    return new TexToken(TexTokenType.ELEMENT, ',').toNode();
+                }
+                // special hook for dif
+                if(node.content.value === 'dif') {
+                    return new TexNode('unaryFunc', new TexToken(TexTokenType.COMMAND, '\\mathrm'), [new TexToken(TexTokenType.ELEMENT, 'd').toNode()]);
+                }
+                // special hook for hyph and hyph.minus
+                if(node.content.value === 'hyph' || node.content.value === 'hyph.minus') {
+                    return new TexNode('text', new TexToken(TexTokenType.LITERAL, '-'));
+                }
+                // special hook for mathbb{R} <-- RR
+                if(/^([A-Z])\1$/.test(node.content.value)) {
+                    return new TexNode('unaryFunc', new TexToken(TexTokenType.COMMAND, '\\mathbb'), [
+                        new TexToken(TexTokenType.ELEMENT, node.content.value[0]).toNode()
+                    ]);
+                }
             }
-            // special hook for dif
-            if(node.content.value === 'dif') {
-                return new TexNode('unaryFunc', new TexToken(TexTokenType.COMMAND, '\\mathrm'), [new TexToken(TexTokenType.ELEMENT, 'd').toNode()]);
-            }
-            // special hook for hyph and hyph.minus
-            if(node.content.value === 'hyph' || node.content.value === 'hyph.minus') {
-                return new TexNode('text', new TexToken(TexTokenType.LITERAL, '-'));
-            }
-            // special hook for mathbb{R} <-- RR
-            if(/^([A-Z])\1$/.test(node.content.value)) {
-                return new TexNode('unaryFunc', new TexToken(TexTokenType.COMMAND, '\\mathbb'), [
-                    new TexToken(TexTokenType.ELEMENT, node.content.value[0]).toNode()
-                ]);
+            if (node.content.type === TypstTokenType.TEXT) {
+                return new TexNode('text', new TexToken(TexTokenType.LITERAL, node.content.value));
             }
             return typst_token_to_tex(node.content).toNode();
         }
-        case 'text':
-            return new TexNode('text', new TexToken(TexTokenType.LITERAL, node.content.value));
+
         case 'group': {
             const args = node.args!.map(convert_typst_node_to_tex);
             if (node.content.value === 'parenthesis') {
@@ -686,7 +679,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             // special hook for op
             if (node.content.value === 'op') {
                 const arg0 = node.args![0];
-                assert(arg0.type === 'text');
+                assert(arg0.content.type === TypstTokenType.TEXT);
                 return new TexNode('unaryFunc', typst_token_to_tex(node.content), [new TexToken(TexTokenType.LITERAL, arg0.content.value).toNode()]);
             }
 

@@ -55,11 +55,11 @@ describe('typst-parser', () => {
         const tokens = tokenize_typst('a + b');
         const res = parser.parse(tokens);
         expect(res).toEqual(new TypstNode('group', TYPST_NONE_TOKEN, [
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'a')),
-            new TypstNode('whitespace', new TypstToken(TypstTokenType.SPACE, ' ')),
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '+')),
-            new TypstNode('whitespace', new TypstToken(TypstTokenType.SPACE, ' ')),
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'b')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'a')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, '+')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'b')),
         ]));
     });
 
@@ -67,10 +67,10 @@ describe('typst-parser', () => {
         const tokens = tokenize_typst('a (x)');
         const res = parser.parse(tokens);
         expect(res).toEqual(new TypstNode('group', TYPST_NONE_TOKEN, [
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'a')),
-            new TypstNode('whitespace', new TypstToken(TypstTokenType.SPACE, ' ')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'a')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
             new TypstNode('group', new TypstToken(TypstTokenType.LITERAL, 'parenthesis'), [
-                new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'x')),
+                new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'x')),
             ])
         ]));
     });
@@ -79,7 +79,7 @@ describe('typst-parser', () => {
         const tokens = tokenize_typst('f(x)');
         const res = parser.parse(tokens);
         expect(res).toEqual(new TypstNode('funcCall', new TypstToken(TypstTokenType.ELEMENT, 'f'), [
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'x')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'x')),
         ]));
     });
 
@@ -87,8 +87,8 @@ describe('typst-parser', () => {
         const tokens = tokenize_typst('root(x, 3)');
         const res = parser.parse(tokens);
         expect(res).toEqual(new TypstNode('funcCall', new TypstToken(TypstTokenType.SYMBOL, 'root'), [
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'x')),
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '3')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'x')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, '3')),
         ]));
     });
 
@@ -96,13 +96,13 @@ describe('typst-parser', () => {
         const tokens = tokenize_typst('lim_(x arrow.r 0)');
         const res = parser.parse(tokens);
         expect(res).toEqual(new TypstNode('supsub', TYPST_NONE_TOKEN, [], {
-            base: new TypstNode('symbol', new TypstToken(TypstTokenType.SYMBOL, 'lim')),
+            base: new TypstNode('terminal', new TypstToken(TypstTokenType.SYMBOL, 'lim')),
             sub: new TypstNode('group', TYPST_NONE_TOKEN, [
-                new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'x')),
-                new TypstNode('whitespace', new TypstToken(TypstTokenType.SPACE, ' ')),
-                new TypstNode('symbol', new TypstToken(TypstTokenType.SYMBOL, 'arrow.r')),
-                new TypstNode('whitespace', new TypstToken(TypstTokenType.SPACE, ' ')),
-                new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, '0')),
+                new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'x')),
+                new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
+                new TypstNode('terminal', new TypstToken(TypstTokenType.SYMBOL, 'arrow.r')),
+                new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
+                new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, '0')),
             ]),
             sup: null,
         }));
@@ -112,11 +112,11 @@ describe('typst-parser', () => {
         const tokens = tokenize_typst('a -> b');
         const res = parser.parse(tokens);
         expect(res).toEqual(new TypstNode('group', TYPST_NONE_TOKEN, [
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'a')),
-            new TypstNode('whitespace', new TypstToken(TypstTokenType.SPACE, ' ')),
-            new TypstNode('symbol', new TypstToken(TypstTokenType.SYMBOL, 'arrow.r')),
-            new TypstNode('whitespace', new TypstToken(TypstTokenType.SPACE, ' ')),
-            new TypstNode('atom', new TypstToken(TypstTokenType.ELEMENT, 'b')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'a')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.SYMBOL, 'arrow.r')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
+            new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'b')),
         ]));
     });
 });

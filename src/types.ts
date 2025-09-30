@@ -287,20 +287,14 @@ export class TypstToken {
     public toNode(): TypstNode {
         switch(this.type) {
             case TypstTokenType.NONE:
-                return new TypstNode('none', this);
             case TypstTokenType.LITERAL:
-                return new TypstNode('literal', this);
             case TypstTokenType.TEXT:
-                return new TypstNode('text', this);
             case TypstTokenType.COMMENT:
-                return new TypstNode('comment', this);
             case TypstTokenType.SPACE:
             case TypstTokenType.NEWLINE:
-                return new TypstNode('whitespace', this);
             case TypstTokenType.ELEMENT:
-                return new TypstNode('atom', this);
             case TypstTokenType.SYMBOL:
-                return new TypstNode('symbol', this);
+                return new TypstNode('terminal', this);
             case TypstTokenType.CONTROL: {
                 const controlChar = this.value;
                 switch (controlChar) {
@@ -309,9 +303,9 @@ export class TypstToken {
                     case '^':
                         throw new Error(`Should not convert ${controlChar} to a node`);
                     case '&':
-                        return new TypstNode('control', this);
+                        return new TypstNode('terminal', this);
                     case '\\':
-                        return new TypstNode('control', this);
+                        return new TypstNode('terminal', this);
                     default:
                         throw new Error(`Unexpected control character ${controlChar}`);
                 }
@@ -345,8 +339,7 @@ export interface TypstLrData {
     rightDelim: string | null;
 }
 
-type TypstNodeType = 'atom' | 'symbol' | 'text' | 'literal' | 'control' | 'comment' | 'whitespace'
-            | 'none' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
+type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
 
 export type TypstNamedParams = { [key: string]: TypstNode };
 
@@ -402,19 +395,15 @@ export class TypstNode {
     }
 
     public toString(): string {
-        switch (this.type) {
-            case 'text':
-                return `"${this.content.value}"`;
-            case 'comment':
-                return `//${this.content.value}`;
-            default:
-                return this.content.value;
+        if (this.type !== 'terminal') {
+            throw new Error(`Unimplemented toString() for non-terminal`);
         }
+        return this.content.toString();
     }
 }
 
 // #none
-export const TYPST_NONE = new TypstNode('none', new TypstToken(TypstTokenType.NONE, '#none'));
+export const TYPST_NONE = new TypstNode('terminal', new TypstToken(TypstTokenType.NONE, '#none'));
 
 /**
  * ATTENTION:

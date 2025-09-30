@@ -98,7 +98,7 @@ const DIV = new TypstToken(TypstTokenType.ELEMENT, '/').toNode();
 
 function next_non_whitespace(nodes: TypstNode[], start: number): TypstNode | null {
     let pos = start;
-    while (pos < nodes.length && nodes[pos].type === 'whitespace') {
+    while (pos < nodes.length && (nodes[pos].content.type === TypstTokenType.SPACE || nodes[pos].content.type === TypstTokenType.NEWLINE)) {
         pos++;
     }
     return pos === nodes.length ? null : nodes[pos];
@@ -109,7 +109,7 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
     const res: TypstNode[] = [];
     for (let i = 0; i < nodes.length; i++) {
         const current = nodes[i];
-        if (current.type === 'whitespace') {
+        if (current.content.type === TypstTokenType.SPACE || current.content.type === TypstTokenType.NEWLINE) {
             if(after_operator) {
                 continue;
             }
@@ -235,7 +235,7 @@ export class TypstParser {
         while (pos < end) {
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
-            if (res.type === 'whitespace') {
+            if (res.content.type === TypstTokenType.SPACE || res.content.type === TypstTokenType.NEWLINE) {
                 if (!this.space_sensitive && res.content.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
