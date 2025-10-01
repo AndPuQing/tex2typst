@@ -131,7 +131,7 @@ function convert_underset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     );
     return new TypstNode('supsub', null, [], {
             base: limits_call,
-            sub: convert_tex_node_to_typst(node=sub, options=options),
+            sub: convert_tex_node_to_typst(sub, options),
             sup: null,
     });
 }

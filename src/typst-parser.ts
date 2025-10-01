@@ -282,13 +282,7 @@ export class TypstParser {
         }
 
         if (sub !== null || sup !== null) {
-            const res: TypstSupsubData = { base, sup: null, sub: null };
-            if (sub) {
-                res.sub = sub;
-            }
-            if (sup) {
-                res.sup = sup;
-            }
+            const res: TypstSupsubData = { base, sup, sub };
             return [new TypstNode('supsub', null, [], res), pos];
         } else {
             return [base, pos];
