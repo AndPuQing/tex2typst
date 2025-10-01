@@ -129,12 +129,12 @@ export class LatexParser {
         } else if (idx === 0) {
             // \displaystyle at the beginning. Wrap the whole thing in \displaystyle
             const [tree, _] = this.parseGroup(tokens, 1, tokens.length);
-            return new TexNode('unaryFunc', token_displaystyle, [tree]);
+            return new TexNode('funcCall', token_displaystyle, [tree]);
         } else {
             // \displaystyle somewhere in the middle. Split the expression to two parts
             const [tree1, _1] = this.parseGroup(tokens, 0, idx);
             const [tree2, _2] = this.parseGroup(tokens, idx + 1, tokens.length);
-            const display = new TexNode('unaryFunc', token_displaystyle, [tree2]);
+            const display = new TexNode('funcCall', token_displaystyle, [tree2]);
             return new TexNode('ordgroup', null, [tree1, display]);
         }
     }
@@ -314,7 +314,7 @@ export class LatexParser {
                     }
                     const [exponent, _] = this.parseGroup(tokens, posLeftSquareBracket + 1, posRightSquareBracket);
                     const [arg1, newPos] = this.parseNextArg(tokens, posRightSquareBracket + 1);
-                    return [new TexNode('unaryFunc', command_token, [arg1], exponent), newPos];
+                    return [new TexNode('funcCall', command_token, [arg1], exponent), newPos];
                 } else if (command === '\\text') {
                     if (pos + 2 >= tokens.length) {
                         throw new LatexParserError('Expecting content for \\text command');
@@ -326,12 +326,12 @@ export class LatexParser {
                     return [new TexNode('text', literal), pos + 3];
                 }
                 let [arg1, newPos] = this.parseNextArg(tokens, pos);
-                return [new TexNode('unaryFunc', command_token, [arg1]), newPos];
+                return [new TexNode('funcCall', command_token, [arg1]), newPos];
             }
             case 2: {
                 const [arg1, pos1] = this.parseNextArg(tokens, pos);
                 const [arg2, pos2] = this.parseNextArg(tokens, pos1);
-                return [new TexNode('binaryFunc', command_token, [arg1, arg2]), pos2];
+                return [new TexNode('funcCall', command_token, [arg1, arg2]), pos2];
             }
             default:
                 throw new Error( 'Invalid number of parameters');
@@ -341,9 +341,9 @@ export class LatexParser {
     /*
     Extract a non-space argument from the token stream.
     So that `\frac{12} 3` is parsed as
-        TexNode{ type: 'binaryFunc', content: '\frac', args: [ELEMENT_12, ELEMENT_3] }
+        TexNode{ type: 'funcCall', content: '\frac', args: [ELEMENT_12, ELEMENT_3] }
         rather than
-        TexNode{ type: 'binaryFunc', content: '\frac', args: [ELEMENT_12, SPACE] }, ELEMENT_3
+        TexNode{ type: 'funcCall', content: '\frac', args: [ELEMENT_12, SPACE] }, ELEMENT_3
     */
     parseNextArg(tokens: TexToken[], start: number): ParseResult {
         let pos = start;

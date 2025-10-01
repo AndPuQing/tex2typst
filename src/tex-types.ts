@@ -66,14 +66,13 @@ export type TexArrayData = TexNode[][];
 /**
  * element: 0-9, a-z, A-Z, punctuations such as +-/*,:; etc.
  * symbol: LaTeX macro with no parameter. e.g. \sin \cos \int \sum
- * unaryFunc: LaTeX macro with 1 parameter. e.g. \sqrt{3} \log{x} \exp{x}
- * binaryFunc: LaTeX macro with 2 parameters. e.g. \frac{1}{2}
+ * funcCall: LaTeX macro with 1 or more parameters. e.g. \sqrt{3} \log{x} \exp{x} \frac{1}{2}
  * text: text enclosed by braces. e.g. \text{hello world}
  * empty: special type when something is empty. e.g. the base of _{a} or ^{a}
  * whitespace: space, tab, newline
  */
 type TexNodeType = 'terminal' | 'text' | 'ordgroup' | 'supsub'
-             | 'unaryFunc' | 'binaryFunc' | 'leftright' | 'beginend' | 'unknownMacro';
+             | 'funcCall' | 'leftright' | 'beginend' | 'unknownMacro';
 
 
 function apply_escape_if_needed(c: string) {
@@ -153,7 +152,7 @@ export class TexNode {
 
                 return tokens;
             }
-            case 'unaryFunc': {
+            case 'funcCall': {
                 let tokens: TexToken[] = [];
                 tokens.push(this.head);
 
@@ -164,21 +163,12 @@ export class TexNode {
                     tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
                 }
 
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                tokens = tokens.concat(this.args![0].serialize());
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                for (const arg of this.args!) {
+                    tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                    tokens = tokens.concat(arg.serialize());
+                    tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+                }
 
-                return tokens;
-            }
-            case 'binaryFunc': {
-                let tokens: TexToken[] = [];
-                tokens.push(this.head);
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                tokens = tokens.concat(this.args![0].serialize());
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                tokens = tokens.concat(this.args![1].serialize());
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
                 return tokens;
             }
             case 'supsub': {
