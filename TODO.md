@@ -1,1 +1,2 @@
 - proper formatter in tex-writer.ts and typst-writer.ts
+- refactor: add `class TexGroup extends TexNode`, `class TexSupsub extends TexNode` etc.
