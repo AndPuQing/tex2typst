@@ -296,9 +296,6 @@ export class LatexParser {
         const paramNum = get_command_param_num(command.slice(1));
         switch (paramNum) {
             case 0:
-                if (!symbolMap.has(command.slice(1))) {
-                    return [new TexNode('unknownMacro', command_token), pos];
-                }
                 return [command_token.toNode(), pos];
             case 1: {
                 // TODO: JavaScript gives undefined instead of throwing an error when accessing an index out of bounds,

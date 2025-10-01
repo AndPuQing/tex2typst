@@ -85,7 +85,7 @@ export interface TypstLrData {
     leftDelim: string | null;
     rightDelim: string | null;
 }
-export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases' | 'unknown';
+export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases';
 
 export type TypstNamedParams = { [key: string]: TypstNode; };
 

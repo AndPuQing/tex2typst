@@ -22,6 +22,10 @@ const symbolMap = new Map<string, string>([
     ['Xi', 'Xi'],
     ['Upsilon', 'Upsilon'],
     ['lim', 'lim'],
+    ['binom', 'binom'],
+    ['tilde', 'tilde'],
+    ['hat', 'hat'],
+    ['sqrt', 'sqrt'],
 
     ['nonumber', ''],
     ['vec', 'arrow'],

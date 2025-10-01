@@ -5,8 +5,16 @@ import { tex2typst } from '../src/index';
 import { TypstWriterError } from '../src/typst-writer';
 import { Tex2TypstOptions, TexNode, TexToken } from '../src/tex-types';
 import { loadTestCases, TestCase } from './test-common';
+import { ConverterError } from '../src/convert';
 
 describe('options', () => {
+    it('nonStrict = false', function () {
+        const input = '\\nonExistentCommand';
+        // must throw error
+        expect(() => tex2typst(input, { nonStrict: false })).toThrowError(ConverterError);
+    });
+
+
     it('fracToSlash = true', function () {
         const input = '\\frac{a}{b}';
         const expected = 'a/b';

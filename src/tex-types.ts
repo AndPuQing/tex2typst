@@ -72,7 +72,7 @@ export type TexArrayData = TexNode[][];
  * whitespace: space, tab, newline
  */
 type TexNodeType = 'terminal' | 'text' | 'ordgroup' | 'supsub'
-             | 'funcCall' | 'leftright' | 'beginend' | 'unknownMacro';
+             | 'funcCall' | 'leftright' | 'beginend';
 
 
 function apply_escape_if_needed(c: string) {

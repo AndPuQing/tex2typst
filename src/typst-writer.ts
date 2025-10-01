@@ -283,14 +283,6 @@ export class TypstWriter {
                 this.insideFunctionDepth--;
                 break;
             }
-            case 'unknown': {
-                if (this.nonStrict) {
-                    this.queue.push(new TypstToken(TypstTokenType.SYMBOL, node.head.value));
-                } else {
-                    throw new TypstWriterError(`Unknown macro: ${node.head.value}`, node);
-                }
-                break;
-            }
             default:
                 throw new TypstWriterError(`Unimplemented node type to append: ${node.type}`, node);
         }

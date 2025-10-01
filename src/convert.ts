@@ -11,9 +11,9 @@ import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS } from "./tex-tokenizer";
 
 
 export class ConverterError extends Error {
-    node: TexNode | TypstNode;
+    node: TexNode | TypstNode | TexToken | TypstToken | null;
 
-    constructor(message: string, node: TexNode | TypstNode) {
+    constructor(message: string, node: TexNode | TypstNode | TexToken | TypstToken | null = null) {
         super(message);
         this.name = "ConverterError";
         this.node = node;
@@ -34,13 +34,13 @@ const TYPST_INTRINSIC_OP = [
     // 'sgn
 ];
 
-function _tex_token_str_to_typst(token: string): string{
+function _tex_token_str_to_typst(token: string): string | null {
     if (/^[a-zA-Z0-9]$/.test(token)) {
         return token;
     } else if (token === '/') {
         return '\\/';
-    } else if (token === '\\\\') {
-        return '\\';
+    } else if (['\\\\', '\\{', '\\}', '\\%'].includes(token)) {
+        return token.substring(1);
     } else if (['\\$', '\\#', '\\&', '\\_'].includes(token)) {
         return token;
     } else if (token.startsWith('\\')) {
@@ -51,13 +51,13 @@ function _tex_token_str_to_typst(token: string): string{
             // Fall back to the original macro.
             // This works for \alpha, \beta, \gamma, etc.
             // If this.nonStrict is true, this also works for all unknown macros.
-            return symbol;
+            return null;
         }
     }
     return token;
 }
 
-function tex_token_to_typst(token: TexToken): TypstToken {
+function tex_token_to_typst(token: TexToken, options: Tex2TypstOptions): TypstToken {
     let token_type: TypstTokenType;
     switch (token.type) {
         case TexTokenType.EMPTY:
@@ -99,7 +99,16 @@ function tex_token_to_typst(token: TexToken): TypstToken {
         default:
             throw Error(`Unknown token type: ${token.type}`);
     }
-    return new TypstToken(token_type, _tex_token_str_to_typst(token.value));
+
+    const typst_str = _tex_token_str_to_typst(token.value);
+    if (typst_str === null) {
+        if (options.nonStrict) {
+            return new TypstToken(token_type, token.value.substring(1));
+        } else {
+            throw new ConverterError(`Unknown token: ${token.value}`, token);
+        }
+    }
+    return new TypstToken(token_type, typst_str);
 }
 
 // \overset{X}{Y} -> limits(Y)^X
@@ -183,7 +192,7 @@ function convert_tex_array_align_literal(alignLiteral: string): TypstNamedParams
 export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptions = {}): TypstNode {
     switch (node.type) {
         case 'terminal':
-            return tex_token_to_typst(node.head).toNode();
+            return tex_token_to_typst(node.head, options).toNode();
         case 'text': {
             if ((/[^\x00-\x7F]+/).test(node.head.value) && options.nonAsciiWrapper !== "") {
                 return new TypstNode(
@@ -285,7 +294,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
         }
         case 'funcCall': {
             const arg0 = convert_tex_node_to_typst(node.args![0], options);
-            // \sqrt{3}{x} -> root(3, x)
+            // \sqrt[3]{x} -> root(3, x)
             if (node.head.value === '\\sqrt' && node.data) {
                 const data = convert_tex_node_to_typst(node.data as TexSqrtData, options); // the number of times to take the root
                 return new TypstNode(
@@ -371,7 +380,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             // generic case
             return new TypstNode(
                 'funcCall',
-                tex_token_to_typst(node.head),
+                tex_token_to_typst(node.head, options),
                 node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         }
@@ -443,9 +452,6 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
             throw new ConverterError(`Unimplemented beginend: ${node.head}`, node);
         }
-        case 'unknownMacro':
-            return new TypstNode('unknown', tex_token_to_typst(node.head));
-
         default:
             throw new ConverterError(`Unimplemented node type: ${node.type}`, node);
     }
