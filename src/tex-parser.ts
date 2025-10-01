@@ -1,5 +1,5 @@
 import { symbolMap } from "./map";
-import { TEX_EMPTY_TOKEN, TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
+import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
 import { assert } from "./util";
 import { array_find } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";
@@ -11,7 +11,7 @@ const IGNORED_COMMANDS = [
     'Biggl', 'Biggr',
 ];
 
-const EMPTY_NODE: TexNode = TEX_EMPTY_TOKEN.toNode();
+const EMPTY_NODE: TexNode = TexToken.EMPTY.toNode();
 
 function get_command_param_num(command: string): number {
     if (TEX_UNARY_COMMANDS.includes(command)) {

@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TYPST_NONE_TOKEN, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { tokenize_typst } from "./typst-tokenizer";
 import { assert, isalpha } from "./util";
 
@@ -166,10 +166,10 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                 const numerator = args.pop()!;
 
                 if(denominator.type === 'group' && denominator.head.eq(SPECIAL_PAREN_TOKEN)) {
-                    denominator.head = TYPST_NONE_TOKEN;
+                    denominator.head = TypstToken.NONE;
                 }
                 if(numerator.type === 'group' && numerator.head.eq(SPECIAL_PAREN_TOKEN)) {
-                    numerator.head = TYPST_NONE_TOKEN;
+                    numerator.head = TypstToken.NONE;
                 }
 
                 args.push(new TypstNode('fraction', null, [numerator, denominator]));

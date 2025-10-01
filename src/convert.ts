@@ -1,4 +1,4 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TypstLrData, TexArrayData, TypstNamedParams, TexToken, TexTokenType, TypstToken, TypstTokenType, TYPST_NONE_TOKEN, TEX_EMPTY_TOKEN } from "./types";
+import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TypstLrData, TexArrayData, TypstNamedParams, TexToken, TexTokenType, TypstToken, TypstTokenType } from "./types";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_includes, array_intersperse, array_split } from "./generic";
 import { assert } from "./util";
@@ -15,7 +15,7 @@ export class ConverterError extends Error {
     }
 }
 
-const TYPST_NONE = TYPST_NONE_TOKEN.toNode();
+const TYPST_NONE = TypstToken.NONE.toNode();
 
 // native textual operators in Typst
 const TYPST_INTRINSIC_OP = [
@@ -56,7 +56,7 @@ function tex_token_to_typst(token: TexToken): TypstToken {
     let token_type: TypstTokenType;
     switch (token.type) {
         case TexTokenType.EMPTY:
-            return TYPST_NONE_TOKEN;
+            return TypstToken.NONE;
         case TexTokenType.COMMAND:
             token_type = TypstTokenType.SYMBOL;
             break;
@@ -417,7 +417,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 let delim: TypstToken;
                 switch (node.head.value) {
                     case 'matrix':
-                        delim = TYPST_NONE_TOKEN;
+                        delim = TypstToken.NONE;
                         break;
                     case 'pmatrix':
                         // delim = new TypstToken(TypstTokenType.TEXT, '(');
@@ -498,7 +498,7 @@ function typst_token_to_tex(token: TypstToken): TexToken {
     switch (token.type) {
         case TypstTokenType.NONE:
             // e.g. Typst `#none^2` is converted to TeX `^2`
-            return TEX_EMPTY_TOKEN;
+            return TexToken.EMPTY;
         case TypstTokenType.SYMBOL: {
             const _typst_symbol_to_tex = function(symbol: string): string {
                 if (reverseSymbolMap.has(symbol)) {

@@ -50,6 +50,8 @@ export class TexToken {
                 throw new Error(`Unknown token type: ${this.type}`);
         }
     }
+
+    public static readonly EMPTY = new TexToken(TexTokenType.EMPTY, '');
 }
 
 
@@ -83,7 +85,6 @@ function apply_escape_if_needed(c: string) {
     return c;
 }
 
-export const TEX_EMPTY_TOKEN = new TexToken(TexTokenType.EMPTY, '');
 
 export class TexNode {
     type: TexNodeType;
@@ -97,7 +98,7 @@ export class TexNode {
     constructor(type: TexNodeType, head: TexToken | null, args?: TexNode[],
             data?: TexSqrtData | TexSupsubData | TexArrayData) {
         this.type = type;
-        this.head = head ? head : TEX_EMPTY_TOKEN;
+        this.head = head ? head : TexToken.EMPTY;
         this.args = args;
         this.data = data;
     }
@@ -377,6 +378,8 @@ export class TypstToken {
                 return this.value;
         }
     }
+
+    public static readonly NONE = new TypstToken(TypstTokenType.NONE, '#none');
 }
 
 export interface TypstSupsubData {
@@ -396,8 +399,6 @@ type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction' |
 export type TypstNamedParams = { [key: string]: TypstNode };
 
 
-export const TYPST_NONE_TOKEN = new TypstToken(TypstTokenType.NONE, '#none');
-
 export class TypstNode {
     type: TypstNodeType;
     head: TypstToken;
@@ -409,7 +410,7 @@ export class TypstNode {
     constructor(type: TypstNodeType, head: TypstToken | null, args?: TypstNode[],
             data?: TypstSupsubData | TypstArrayData| TypstLrData) {
         this.type = type;
-        this.head = head ? head : TYPST_NONE_TOKEN;
+        this.head = head ? head : TypstToken.NONE;
         this.args = args;
         this.data = data;
     }

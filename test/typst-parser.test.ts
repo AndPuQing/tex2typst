@@ -4,8 +4,6 @@ import { TypstParser } from '../src/typst-parser';
 import { TypstNode, TypstToken, TypstTokenType } from '../src/types';
 
 
-const TYPST_NONE_TOKEN = new TypstToken(TypstTokenType.NONE, '#none');
-
 describe('typst-tokenizer', () => {
     it('a + b', function () {
         const res = tokenize_typst('a + b');
@@ -54,7 +52,7 @@ describe('typst-parser', () => {
     it('a + b', function () {
         const tokens = tokenize_typst('a + b');
         const res = parser.parse(tokens);
-        expect(res).toEqual(new TypstNode('group', TYPST_NONE_TOKEN, [
+        expect(res).toEqual(new TypstNode('group', null, [
             new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'a')),
             new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
             new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, '+')),
@@ -66,7 +64,7 @@ describe('typst-parser', () => {
     it('a (x)', function () {
         const tokens = tokenize_typst('a (x)');
         const res = parser.parse(tokens);
-        expect(res).toEqual(new TypstNode('group', TYPST_NONE_TOKEN, [
+        expect(res).toEqual(new TypstNode('group', null, [
             new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'a')),
             new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
             new TypstNode('group', new TypstToken(TypstTokenType.LITERAL, 'parenthesis'), [
@@ -95,9 +93,9 @@ describe('typst-parser', () => {
     it('lim_(x arrow.r 0)', function () {
         const tokens = tokenize_typst('lim_(x arrow.r 0)');
         const res = parser.parse(tokens);
-        expect(res).toEqual(new TypstNode('supsub', TYPST_NONE_TOKEN, [], {
+        expect(res).toEqual(new TypstNode('supsub', null, [], {
             base: new TypstNode('terminal', new TypstToken(TypstTokenType.SYMBOL, 'lim')),
-            sub: new TypstNode('group', TYPST_NONE_TOKEN, [
+            sub: new TypstNode('group', null, [
                 new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'x')),
                 new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
                 new TypstNode('terminal', new TypstToken(TypstTokenType.SYMBOL, 'arrow.r')),
@@ -111,7 +109,7 @@ describe('typst-parser', () => {
     it('a -> b', function () {
         const tokens = tokenize_typst('a -> b');
         const res = parser.parse(tokens);
-        expect(res).toEqual(new TypstNode('group', TYPST_NONE_TOKEN, [
+        expect(res).toEqual(new TypstNode('group', null, [
             new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'a')),
             new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
             new TypstNode('terminal', new TypstToken(TypstTokenType.SYMBOL, 'arrow.r')),
