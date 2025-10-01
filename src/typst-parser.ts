@@ -1,10 +1,9 @@
 
 import { array_find } from "./generic";
-import { TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TYPST_NONE_TOKEN, TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
 import { tokenize_typst } from "./typst-tokenizer";
 import { assert, isalpha } from "./util";
 
-const NONE_TOKEN = new TypstToken(TypstTokenType.NONE, '#none');
 
 // TODO: In Typst, y' ' is not the same as y''.
 // The parser should be able to parse the former correctly.
@@ -167,13 +166,13 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                 const numerator = args.pop()!;
 
                 if(denominator.type === 'group' && denominator.head.eq(SPECIAL_PAREN_TOKEN)) {
-                    denominator.head = NONE_TOKEN;
+                    denominator.head = TYPST_NONE_TOKEN;
                 }
                 if(numerator.type === 'group' && numerator.head.eq(SPECIAL_PAREN_TOKEN)) {
-                    numerator.head = NONE_TOKEN;
+                    numerator.head = TYPST_NONE_TOKEN;
                 }
 
-                args.push(new TypstNode('fraction', NONE_TOKEN, [numerator, denominator]));
+                args.push(new TypstNode('fraction', null, [numerator, denominator]));
                 stack.pop(); // drop the '/' operator
             } else {
                 args.push(current_tree);
@@ -186,7 +185,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
         if(args.length === 1) {
             return args[0];
         } else {
-            return new TypstNode('group', NONE_TOKEN, args);
+            return new TypstNode('group', null, args);
         }
     }
 }
@@ -267,7 +266,7 @@ export class TypstParser {
 
         const num_base_prime = eat_primes(tokens, pos);
         if (num_base_prime > 0) {
-            base = new TypstNode('group', NONE_TOKEN, [base].concat(primes(num_base_prime)));
+            base = new TypstNode('group', null, [base].concat(primes(num_base_prime)));
             pos += num_base_prime;
         }
         if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
@@ -290,7 +289,7 @@ export class TypstParser {
             if (sup) {
                 res.sup = sup;
             }
-            return [new TypstNode('supsub', NONE_TOKEN, [], res), pos];
+            return [new TypstNode('supsub', null, [], res), pos];
         } else {
             return [base, pos];
         }
@@ -307,7 +306,7 @@ export class TypstParser {
         }
         const num_prime = eat_primes(tokens, end);
         if (num_prime > 0) {
-            node = new TypstNode('group', NONE_TOKEN, [node].concat(primes(num_prime)));
+            node = new TypstNode('group', null, [node].concat(primes(num_prime)));
             end += num_prime;
         }
         return [node, end];
@@ -327,13 +326,13 @@ export class TypstParser {
             if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
                 if(firstToken.value === 'mat') {
                     const [matrix, named_params, newPos] = this.parseMatrix(tokens, start + 1, SEMICOLON, COMMA);
-                    const mat = new TypstNode('matrix', NONE_TOKEN, [], matrix);
+                    const mat = new TypstNode('matrix', null, [], matrix);
                     mat.setOptions(named_params);
                     return [mat, newPos];
                 }
                 if(firstToken.value === 'cases') {
                     const [cases, named_params, newPos] = this.parseMatrix(tokens, start + 1, COMMA, CONTROL_AND);
-                    const casesNode = new TypstNode('cases', NONE_TOKEN, [], cases);
+                    const casesNode = new TypstNode('cases', null, [], cases);
                     casesNode.setOptions(named_params);
                     return [casesNode, newPos];
                 }

@@ -83,6 +83,8 @@ function apply_escape_if_needed(c: string) {
     return c;
 }
 
+export const TEX_EMPTY_TOKEN = new TexToken(TexTokenType.EMPTY, '');
+
 export class TexNode {
     type: TexNodeType;
     head: TexToken;
@@ -92,10 +94,10 @@ export class TexNode {
     // For type="beginend", it's the 2-dimensional matrix.
     data?: TexSqrtData | TexSupsubData | TexArrayData;
 
-    constructor(type: TexNodeType, head: TexToken, args?: TexNode[],
+    constructor(type: TexNodeType, head: TexToken | null, args?: TexNode[],
             data?: TexSqrtData | TexSupsubData | TexArrayData) {
         this.type = type;
-        this.head = head;
+        this.head = head ? head : TEX_EMPTY_TOKEN;
         this.args = args;
         this.data = data;
     }
@@ -394,6 +396,8 @@ type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction' |
 export type TypstNamedParams = { [key: string]: TypstNode };
 
 
+export const TYPST_NONE_TOKEN = new TypstToken(TypstTokenType.NONE, '#none');
+
 export class TypstNode {
     type: TypstNodeType;
     head: TypstToken;
@@ -402,10 +406,10 @@ export class TypstNode {
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
-    constructor(type: TypstNodeType, head: TypstToken, args?: TypstNode[],
+    constructor(type: TypstNodeType, head: TypstToken | null, args?: TypstNode[],
             data?: TypstSupsubData | TypstArrayData| TypstLrData) {
         this.type = type;
-        this.head = head;
+        this.head = head ? head : TYPST_NONE_TOKEN;
         this.args = args;
         this.data = data;
     }
@@ -452,8 +456,6 @@ export class TypstNode {
     }
 }
 
-// #none
-export const TYPST_NONE = new TypstNode('terminal', new TypstToken(TypstTokenType.NONE, '#none'));
 
 /**
  * ATTENTION:

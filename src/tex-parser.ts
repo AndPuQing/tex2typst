@@ -1,5 +1,5 @@
 import { symbolMap } from "./map";
-import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
+import { TEX_EMPTY_TOKEN, TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
 import { assert } from "./util";
 import { array_find } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";
@@ -11,8 +11,7 @@ const IGNORED_COMMANDS = [
     'Biggl', 'Biggr',
 ];
 
-const EMPTY_TOKEN: TexToken = new TexToken(TexTokenType.EMPTY, '');
-const EMPTY_NODE: TexNode = EMPTY_TOKEN.toNode();
+const EMPTY_NODE: TexNode = TEX_EMPTY_TOKEN.toNode();
 
 function get_command_param_num(command: string): number {
     if (TEX_UNARY_COMMANDS.includes(command)) {
@@ -136,7 +135,7 @@ export class LatexParser {
             const [tree1, _1] = this.parseGroup(tokens, 0, idx);
             const [tree2, _2] = this.parseGroup(tokens, idx + 1, tokens.length);
             const display = new TexNode('unaryFunc', token_displaystyle, [tree2]);
-            return new TexNode('ordgroup', EMPTY_TOKEN, [tree1, display]);
+            return new TexNode('ordgroup', null, [tree1, display]);
         }
     }
 
@@ -164,7 +163,7 @@ export class LatexParser {
         if (results.length === 1) {
             node = results[0];
         } else {
-            node = new TexNode('ordgroup', EMPTY_TOKEN, results);
+            node = new TexNode('ordgroup', null, results);
         }
         return [node, end + 1];
     }
@@ -206,7 +205,7 @@ export class LatexParser {
                 res.sub = sub;
             }
             if (num_prime > 0) {
-                res.sup = new TexNode('ordgroup', EMPTY_TOKEN, []);
+                res.sup = new TexNode('ordgroup', null, []);
                 for (let i = 0; i < num_prime; i++) {
                     res.sup.args!.push(new TexToken(TexTokenType.ELEMENT, "'").toNode());
                 }
@@ -219,7 +218,7 @@ export class LatexParser {
             } else if (sup) {
                 res.sup = sup;
             }
-            return [new TexNode('supsub', EMPTY_TOKEN, [], res), pos];
+            return [new TexNode('supsub', null, [], res), pos];
         } else {
             return [base, pos];
         }
@@ -403,7 +402,7 @@ export class LatexParser {
             body,
             rightDelimiter.toNode()
         ]
-        const res = new TexNode('leftright', EMPTY_TOKEN, args);
+        const res = new TexNode('leftright', null, args);
         return [res, pos];
     }
 
@@ -461,7 +460,7 @@ export class LatexParser {
         const allRows: TexNode[][] = [];
         let row: TexNode[] = [];
         allRows.push(row);
-        let group = new TexNode('ordgroup', EMPTY_TOKEN, []);
+        let group = new TexNode('ordgroup', null, []);
         row.push(group);
 
         while (pos < tokens.length) {
@@ -479,11 +478,11 @@ export class LatexParser {
 
             if (res.head.eq(new TexToken(TexTokenType.CONTROL, '\\\\'))) {
                 row = [];
-                group = new TexNode('ordgroup', EMPTY_TOKEN, []);
+                group = new TexNode('ordgroup', null, []);
                 row.push(group);
                 allRows.push(row);
             } else if (res.head.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
-                group = new TexNode('ordgroup', EMPTY_TOKEN, []);
+                group = new TexNode('ordgroup', null, []);
                 row.push(group);
             } else {
                 group.args!.push(res);
