@@ -1,4 +1,5 @@
-import { TypstToken, TypstTokenType } from "./types";
+import { TypstToken } from "./typst-types";
+import { TypstTokenType } from "./typst-types";
 import { reverseShorthandMap } from "./typst-shorthands";
 import { JSLex, Scanner } from "./jslex";
 

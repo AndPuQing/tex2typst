@@ -1,4 +1,4 @@
-import { TexNode, TexToken, writeTexTokenBuffer } from "./types";
+import { TexNode, TexToken, writeTexTokenBuffer } from "./tex-types";
 
 
 

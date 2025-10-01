@@ -1,4 +1,4 @@
-import { TexToken, TexTokenType } from "./types";
+import { TexToken, TexTokenType } from "./tex-types";
 import { JSLex, Scanner } from "./jslex";
 
 export const TEX_UNARY_COMMANDS = [

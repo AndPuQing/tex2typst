@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize_tex } from '../src/tex-tokenizer';
-import { TexToken, TexTokenType } from '../src/types';
+import { TexToken, TexTokenType } from '../src/tex-types';
 
 
 describe('typst-tokenizer', () => {

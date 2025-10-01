@@ -1,4 +1,8 @@
-import { TexNode, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TexNode } from "./tex-types";
+import { TypstNode } from "./typst-types";
+import { TypstSupsubData } from "./typst-types";
+import { TypstToken } from "./typst-types";
+import { TypstTokenType } from "./typst-types";
 import { shorthandMap } from "./typst-shorthands";
 
 function is_delimiter(c: TypstNode): boolean {

@@ -1,5 +1,5 @@
 import { symbolMap } from "./map";
-import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./types";
+import { TexNode, TexSupsubData, TexToken, TexTokenType } from "./tex-types";
 import { assert } from "./util";
 import { array_find } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";

@@ -1,4 +1,9 @@
-import { TexNode, TypstNode, TexSupsubData, TypstSupsubData, TexSqrtData, Tex2TypstOptions, TypstLrData, TexArrayData, TypstNamedParams, TexToken, TexTokenType, TypstToken, TypstTokenType } from "./types";
+import { TexNode, TexSupsubData, TexSqrtData, Tex2TypstOptions, TexArrayData, TexToken, TexTokenType } from "./tex-types";
+import { TypstNode } from "./typst-types";
+import { TypstLrData, TypstNamedParams } from "./typst-types";
+import { TypstSupsubData } from "./typst-types";
+import { TypstToken } from "./typst-types";
+import { TypstTokenType } from "./typst-types";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_includes, array_intersperse, array_split } from "./generic";
 import { assert } from "./util";

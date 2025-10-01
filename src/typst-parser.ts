@@ -1,6 +1,10 @@
 
 import { array_find } from "./generic";
-import { TypstLrData, TypstNamedParams, TypstNode, TypstSupsubData, TypstToken, TypstTokenType } from "./types";
+import { TypstNode } from "./typst-types";
+import { TypstLrData, TypstNamedParams } from "./typst-types";
+import { TypstSupsubData } from "./typst-types";
+import { TypstToken } from "./typst-types";
+import { TypstTokenType } from "./typst-types";
 import { tokenize_typst } from "./typst-tokenizer";
 import { assert, isalpha } from "./util";
 
