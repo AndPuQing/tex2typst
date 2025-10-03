@@ -1,3 +1,8 @@
+/**
+ * ELEMENT: 0-9, a-z, A-Z, punctuations such as +-/*,:; etc.
+ * COMMAND: LaTeX macro with no parameter. e.g. \sin \cos \int \sum
+ * EMPTY: special type when something is empty. e.g. the base of _{a} or ^{a}
+ */
 export enum TexTokenType {
     EMPTY,
     ELEMENT,
@@ -64,12 +69,8 @@ export type TexSqrtData = TexNode;
 export type TexArrayData = TexNode[][];
 
 /**
- * element: 0-9, a-z, A-Z, punctuations such as +-/*,:; etc.
- * symbol: LaTeX macro with no parameter. e.g. \sin \cos \int \sum
  * funcCall: LaTeX macro with 1 or more parameters. e.g. \sqrt{3} \log{x} \exp{x} \frac{1}{2}
  * text: text enclosed by braces. e.g. \text{hello world}
- * empty: special type when something is empty. e.g. the base of _{a} or ^{a}
- * whitespace: space, tab, newline
  */
 type TexNodeType = 'terminal' | 'text' | 'ordgroup' | 'supsub'
              | 'funcCall' | 'leftright' | 'beginend';
