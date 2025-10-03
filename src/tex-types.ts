@@ -1,3 +1,5 @@
+import { assert } from "./util";
+
 /**
  * ELEMENT: 0-9, a-z, A-Z, punctuations such as +-/*,:; etc.
  * COMMAND: LaTeX macro with no parameter. e.g. \sin \cos \int \sum
@@ -47,7 +49,7 @@ export class TexToken {
             case TexTokenType.NEWLINE:
             case TexTokenType.COMMAND:
             case TexTokenType.CONTROL:
-                return new TexNode('terminal', this);
+                return new TexTerminal(this);
             case TexTokenType.UNKNOWN:
             default:
                 throw new Error(`Unknown token type: ${this.type}`);
@@ -84,7 +86,7 @@ function apply_escape_if_needed(c: string) {
 }
 
 
-export class TexNode {
+export abstract class TexNode {
     type: TexNodeType;
     head: TexToken;
     args?: TexNode[];
@@ -257,6 +259,51 @@ export class TexNode {
         return buffer;
         */
        return this.serialize().reduce(writeTexTokenBuffer, '');
+    }
+}
+
+export class TexTerminal extends TexNode {
+    constructor(head: TexToken) {
+        super('terminal', head);
+    }
+}
+
+export class TexText extends TexNode {
+    constructor(head: TexToken) {
+        assert(head.type === TexTokenType.LITERAL);
+
+        super('text', head);
+    }
+}
+
+export class TexGroup extends TexNode {
+    constructor(args: TexNode[]) {
+        super('ordgroup', TexToken.EMPTY, args);
+    }
+}
+
+export class TexSupSub extends TexNode {
+    constructor(data: TexSupsubData) {
+        super('supsub', TexToken.EMPTY, [], data);
+    }
+}
+
+export class TexFuncCall extends TexNode {
+    constructor(head: TexToken, args: TexNode[], data?: TexSqrtData) {
+        super('funcCall', head, args, data);
+    }
+}
+
+export class TexLeftRight extends TexNode {
+    constructor(args: TexNode[]) {
+        super('leftright', TexToken.EMPTY, args);
+    }
+}
+
+export class TexBeginEnd extends TexNode {
+    constructor(head: TexToken, args: TexNode[], data: TexArrayData) {
+        assert(head.type === TexTokenType.LITERAL);
+        super('beginend', head, args, data);
     }
 }
 
