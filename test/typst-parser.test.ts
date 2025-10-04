@@ -67,9 +67,9 @@ describe('typst-parser', () => {
         expect(res).toEqual(new TypstNode('group', null, [
             new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'a')),
             new TypstNode('terminal', new TypstToken(TypstTokenType.SPACE, ' ')),
-            new TypstNode('group', new TypstToken(TypstTokenType.LITERAL, 'parenthesis'), [
+            new TypstNode('leftright', null, [
                 new TypstNode('terminal', new TypstToken(TypstTokenType.ELEMENT, 'x')),
-            ])
+            ], { left: '(', right: ')' })
         ]));
     });
 

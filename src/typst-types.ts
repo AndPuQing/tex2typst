@@ -85,7 +85,18 @@ export interface TypstLrData {
     leftDelim: string | null;
     rightDelim: string | null;
 }
-export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction' | 'align' | 'matrix' | 'cases';
+
+export interface TypstLeftRightData {
+    left: string;
+    right: string;
+}
+
+/**
+ * fraction: `1/2`, `(x + y)/2`, `(1+x)/(1-x)`
+ * group: `a + 1/3`
+ * leftright: `(a + 1/3)`, `[a + 1/3)`
+ */
+export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction'| 'leftright' | 'align' | 'matrix' | 'cases';
 
 export type TypstNamedParams = { [key: string]: TypstNode; };
 
@@ -93,12 +104,12 @@ export class TypstNode {
     type: TypstNodeType;
     head: TypstToken;
     args?: TypstNode[];
-    data?: TypstSupsubData | TypstArrayData | TypstLrData;
+    data?: TypstSupsubData | TypstArrayData | TypstLrData | TypstLeftRightData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
     constructor(type: TypstNodeType, head: TypstToken | null, args?: TypstNode[],
-        data?: TypstSupsubData | TypstArrayData | TypstLrData) {
+        data?: TypstSupsubData | TypstArrayData | TypstLrData | TypstLeftRightData) {
         this.type = type;
         this.head = head ? head : TypstToken.NONE;
         this.args = args;
@@ -126,6 +137,7 @@ export class TypstNode {
                 }
                 return this.args!.some((n) => n.isOverHigh());
             }
+            case 'leftright':
             case 'group':
                 return this.args!.some((n) => n.isOverHigh());
             case 'supsub':

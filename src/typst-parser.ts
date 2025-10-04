@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TypstNode } from "./typst-types";
+import { TypstLeftRightData, TypstNode } from "./typst-types";
 import { TypstLrData, TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -131,8 +131,6 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
 }
 
 function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
-    const SPECIAL_PAREN_TOKEN = new TypstToken(TypstTokenType.LITERAL, 'parenthesis');
-
     nodes = trim_whitespace_around_operators(nodes);
 
     const opening_bracket = new TypstToken(TypstTokenType.ELEMENT, '(').toNode();
@@ -169,11 +167,11 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                 }
                 const numerator = args.pop()!;
 
-                if(denominator.type === 'group' && denominator.head.eq(SPECIAL_PAREN_TOKEN)) {
-                    denominator.head = TypstToken.NONE;
+                if(denominator.type === 'leftright') {
+                    denominator.type = 'group';
                 }
-                if(numerator.type === 'group' && numerator.head.eq(SPECIAL_PAREN_TOKEN)) {
-                    numerator.head = TypstToken.NONE;
+                if(numerator.type === 'leftright') {
+                    numerator.type = 'group';
                 }
 
                 args.push(new TypstNode('fraction', null, [numerator, denominator]));
@@ -184,7 +182,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
         }
     }
     if(parenthesis) {
-        return new TypstNode('group', SPECIAL_PAREN_TOKEN, args);
+        return new TypstNode('leftright', null, args, { left: '(', right: ')' } as TypstLeftRightData);
     } else {
         if(args.length === 1) {
             return args[0];

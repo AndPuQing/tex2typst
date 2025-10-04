@@ -1,5 +1,5 @@
 import { TexNode } from "./tex-types";
-import { TypstNode } from "./typst-types";
+import { TypstLeftRightData, TypstNode } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
@@ -139,6 +139,14 @@ export class TypstWriter {
                 for (const item of node.args!) {
                     this.serialize(item);
                 }
+                break;
+            case 'leftright':
+                const {left, right} = node.data as TypstLeftRightData;
+                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, left));
+                for (const item of node.args!) {
+                    this.serialize(item);
+                }
+                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, right));
                 break;
             case 'supsub': {
                 let { base, sup, sub } = node.data as TypstSupsubData;

@@ -1,7 +1,7 @@
 import { TexNode, TexSupsubData, TexSqrtData, Tex2TypstOptions, TexArrayData,
     TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
     TexText, TexBeginEnd, TexLeftRight } from "./tex-types";
-import { TypstNode } from "./typst-types";
+import { TypstLeftRightData, TypstNode } from "./typst-types";
 import { TypstLrData, TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -600,13 +600,20 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
                 }
                 return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, 'aligned'), [], data);
             }
-            if (node.head.value === 'parenthesis') {
-                const is_over_high = node.isOverHigh();
-                const left_delim = is_over_high ? '\\left(' : '(';
-                const right_delim = is_over_high ? '\\right)' : ')';
-                args.unshift(new TexToken(TexTokenType.ELEMENT, left_delim).toNode());
-                args.push(new TexToken(TexTokenType.ELEMENT, right_delim).toNode());
+            return new TexGroup(args);
+        }
+        case 'leftright': {
+            const args = node.args!.map(convert_typst_node_to_tex);
+            let { left, right } = node.data as TypstLeftRightData;
+            // const is_over_high = node.isOverHigh();
+            // const left_delim = is_over_high ? '\\left(' : '(';
+            // const right_delim = is_over_high ? '\\right)' : ')';
+            if (node.isOverHigh()) {
+                left = '\\left' + left;
+                right = '\\right' + right;
             }
+            args.unshift(new TexToken(TexTokenType.ELEMENT, left).toNode());
+            args.push(new TexToken(TexTokenType.ELEMENT, right).toNode());
             return new TexGroup(args);
         }
         case 'funcCall': {
