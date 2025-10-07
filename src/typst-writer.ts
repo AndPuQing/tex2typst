@@ -140,14 +140,27 @@ export class TypstWriter {
                     this.serialize(item);
                 }
                 break;
-            case 'leftright':
+            case 'leftright': {
+                const LR = new TypstToken(TypstTokenType.SYMBOL, 'lr');
                 const {left, right} = node.data as TypstLeftRightData;
-                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, left));
+                if (node.head.eq(LR)) {
+                    this.queue.push(LR);
+                    this.queue.push(TYPST_LEFT_PARENTHESIS);
+                }
+                if (left) {
+                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, left));
+                }
                 for (const item of node.args!) {
                     this.serialize(item);
                 }
-                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, right));
+                if (right) {
+                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, right));
+                }
+                if (node.head.eq(LR)) {
+                    this.queue.push(TYPST_RIGHT_PARENTHESIS);
+                }
                 break;
+            }
             case 'supsub': {
                 let { base, sup, sub } = node.data as TypstSupsubData;
                 this.appendWithBracketsIfNeeded(base);
@@ -178,9 +191,7 @@ export class TypstWriter {
             case 'funcCall': {
                 const func_symbol: TypstToken = node.head;
                 this.queue.push(func_symbol);
-                if (node.head.value !== 'lr') {
-                    this.insideFunctionDepth++;
-                }
+                this.insideFunctionDepth++;
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
                 for (let i = 0; i < node.args!.length; i++) {
                     this.serialize(node.args![i]);
@@ -194,9 +205,7 @@ export class TypstWriter {
                     }
                 }
                 this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                if (node.head.value !== 'lr') {
-                    this.insideFunctionDepth--;
-                }
+                this.insideFunctionDepth--;
                 break;
             }
             case 'fraction': {

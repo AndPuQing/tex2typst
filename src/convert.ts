@@ -1,8 +1,8 @@
 import { TexNode, TexSupsubData, TexSqrtData, Tex2TypstOptions, TexArrayData,
     TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
     TexText, TexBeginEnd, TexLeftRight } from "./tex-types";
-import { TypstAlign, TypstCases, TypstFuncCall, TypstGroup, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
-import { TypstLrData, TypstNamedParams } from "./typst-types";
+import { TypstAlign, TypstCases, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
+import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
@@ -253,7 +253,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 // optimization off: "lr(bar.v.double a + 1/2 bar.v.double)"
                 // optimization on : "norm(a + 1/2)"
                 if (left.head.value === '\\|' && right.head.value === '\\|') {
-                    return new TypstFuncCall( new TypstToken(TypstTokenType.SYMBOL, 'norm'), [typ_body]);
+                    return new TypstFuncCall(new TypstToken(TypstTokenType.SYMBOL, 'norm'), [typ_body]);
                 }
 
                 // These pairs will be handled by Typst compiler by default. No need to add lr()
@@ -267,14 +267,8 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                 }
             }
 
-            const group = new TypstNode(
-                'group',
-                null,
-                [typ_left, typ_body, typ_right]
-            );
-
             // "\left\{ a + \frac{1}{3} \right." -> "lr(\{ a + 1/3)"
-            // "\left. a + \frac{1}{3} \right\}" -> "lr( a + \frac{1}{3} \})"
+            // "\left. a + \frac{1}{3} \right\}" -> "lr( a + 1/3 \})"
             // Note that: In lr(), if one side of delimiter doesn't present (i.e. derived from "\\left." or "\\right."),
             // "(", ")", "{", "[", should be escaped with "\" to be the other side of delimiter.
             // Simple "lr({ a+1/3)" doesn't compile in Typst.
@@ -285,14 +279,26 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                     return s;
                 }
             };
-            if (right.head.value === '.') {
-                typ_left.head.value = escape_curly_or_paren(typ_left.head.value);
-                group.args = [typ_left, typ_body];
-            } else if (left.head.value === '.') {
-                typ_right.head.value = escape_curly_or_paren(typ_right.head.value);
-                group.args = [typ_body, typ_right];
+
+            let left_delim: string | null;
+            let right_delim: string | null;
+            if (typ_left.head.value === '.') {
+                left_delim = null;
+                right_delim = escape_curly_or_paren(typ_right.head.value);
+            } else if (typ_right.head.value === '.') {
+                left_delim = escape_curly_or_paren(typ_left.head.value);
+                right_delim = null;
+            } else {
+                left_delim = typ_left.head.value;
+                right_delim = typ_right.head.value;
             }
-            return new TypstFuncCall( new TypstToken(TypstTokenType.SYMBOL, 'lr'), [group]);
+
+
+            return new TypstLeftright(
+                new TypstToken(TypstTokenType.SYMBOL, 'lr'),
+                [typ_body],
+                { left: left_delim, right: right_delim }
+            );
         }
         case 'funcCall': {
             const arg0 = convert_tex_node_to_typst(node.args![0], options);
@@ -342,7 +348,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
                         return new TypstToken(TypstTokenType.SYMBOL, arg0.head.value).toNode();
                     }
                 }
-                return new TypstFuncCall( new TypstToken(TypstTokenType.SYMBOL, 'op'), [new TypstToken(TypstTokenType.TEXT, arg0.head.value).toNode()]);
+                return new TypstFuncCall(new TypstToken(TypstTokenType.SYMBOL, 'op'), [new TypstToken(TypstTokenType.TEXT, arg0.head.value).toNode()]);
             }
 
             // \substack{a \\ b} -> `a \ b`
@@ -604,7 +610,9 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         }
         case 'leftright': {
             const args = node.args!.map(convert_typst_node_to_tex);
-            let { left, right } = node.data as TypstLeftRightData;
+            const data = node.data as TypstLeftRightData;
+            let left = data.left? apply_escape_if_needed(data.left) : '.';
+            let right = data.right? apply_escape_if_needed(data.right) : '.';
             // const is_over_high = node.isOverHigh();
             // const left_delim = is_over_high ? '\\left(' : '(';
             // const right_delim = is_over_high ? '\\right)' : ')';
@@ -614,27 +622,11 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             }
             args.unshift(new TexToken(TexTokenType.ELEMENT, left).toNode());
             args.push(new TexToken(TexTokenType.ELEMENT, right).toNode());
+            // TODO: should be TeXLeftRight(...)
+            // But currently writer will output `\left |` while people commonly prefer `\left|`.
             return new TexGroup(args);
         }
         case 'funcCall': {
-            // special hook for lr
-            if (node.head.value === 'lr') {
-                const data = node.data as TypstLrData;
-                if (data.leftDelim !== null) {
-                    let left_delim = apply_escape_if_needed(data.leftDelim);
-                    assert(data.rightDelim !== null, "leftDelim has value but rightDelim not");
-                    let right_delim = apply_escape_if_needed(data.rightDelim!);
-                    // TODO: should be TeXNode('leftright', ...)
-                    // But currently writer will output `\left |` while people commonly prefer `\left|`.
-                    return new TexGroup([
-                        new TexToken(TexTokenType.ELEMENT, '\\left' + left_delim).toNode(),
-                        ...node.args!.map(convert_typst_node_to_tex),
-                        new TexToken(TexTokenType.ELEMENT, '\\right' + right_delim).toNode()
-                    ]);
-                } else {
-                    return new TexGroup(node.args!.map(convert_typst_node_to_tex));
-                }
-            }
             // special hook for norm
             // `\| a  \|` <- `norm(a)`
             // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`

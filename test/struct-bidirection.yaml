@@ -165,3 +165,9 @@ cases:
   - title: hspace
     tex: \hspace{1cm}
     typst: "#h(1cm)"
+  - title: leftright ()
+    tex: \left(a + \frac{1}{3} \right)
+    typst: (a + 1/3)
+  # - title: leftright {}
+  #   tex: \left\{a + \frac{1}{3} \right\}
+  #   typst: "{a + 1/3}"

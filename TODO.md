@@ -1,2 +1,2 @@
 - proper formatter in tex-writer.ts and typst-writer.ts
-- refactor: add `class TexGroup extends TexNode`, `class TexSupsub extends TexNode` etc.
+- Typst math `{a + 1/3}` should convert to TeX math `\left\{a + \frac{1}{3} \right\}`

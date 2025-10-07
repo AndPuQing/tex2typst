@@ -81,20 +81,17 @@ export interface TypstSupsubData {
     sub: TypstNode | null;
 }
 export type TypstArrayData = TypstNode[][];
-export interface TypstLrData {
-    leftDelim: string | null;
-    rightDelim: string | null;
-}
+
 
 export interface TypstLeftRightData {
-    left: string;
-    right: string;
+    left: string | null;
+    right: string | null;
 }
 
 /**
  * fraction: `1/2`, `(x + y)/2`, `(1+x)/(1-x)`
  * group: `a + 1/3`
- * leftright: `(a + 1/3)`, `[a + 1/3)`
+ * leftright: `(a + 1/3)`, `[a + 1/3)`, `lr(]sum_(x=1)^n])`
  */
 export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction'| 'leftright' | 'align' | 'matrix' | 'cases';
 
@@ -104,12 +101,12 @@ export class TypstNode {
     type: TypstNodeType;
     head: TypstToken;
     args?: TypstNode[];
-    data?: TypstSupsubData | TypstArrayData | TypstLrData | TypstLeftRightData;
+    data?: TypstSupsubData | TypstArrayData | TypstLeftRightData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
     constructor(type: TypstNodeType, head: TypstToken | null, args?: TypstNode[],
-        data?: TypstSupsubData | TypstArrayData | TypstLrData | TypstLeftRightData) {
+        data?: TypstSupsubData | TypstArrayData | TypstLeftRightData) {
         this.type = type;
         this.head = head ? head : TypstToken.NONE;
         this.args = args;
@@ -178,8 +175,8 @@ export class TypstSupsub extends TypstNode {
 }
 
 export class TypstFuncCall extends TypstNode {
-    constructor(head: TypstToken, args: TypstNode[], data?: TypstLrData) {
-        super('funcCall', head, args, data);
+    constructor(head: TypstToken, args: TypstNode[]) {
+        super('funcCall', head, args);
     }
 }
 
@@ -191,8 +188,11 @@ export class TypstFraction extends TypstNode {
 
 
 export class TypstLeftright extends TypstNode {
-    constructor(args: TypstNode[], data: TypstLeftRightData) {
-        super('leftright', TypstToken.NONE, args, data);
+    constructor(head: TypstToken | null, args: TypstNode[], data: TypstLeftRightData) {
+        super('leftright', head, args);
+        if (data) {
+            this.data = data;
+        }
     }
 }
 

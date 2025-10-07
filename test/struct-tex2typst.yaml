@@ -14,7 +14,7 @@ cases:
   - title: Nested functions
     tex: '\boldsymbol{m}_\text{ref}'
     typst: 'bold(m)_"ref"'
-  - title: left and right brackets
+  - title: left and right brackets, not overHigh
     tex: '\left[\boldsymbol{A} \right) \left\{b \right)'
     typst: 'lr([bold(A))) lr({b))'
   - title: dot as right bracket

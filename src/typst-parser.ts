@@ -1,7 +1,7 @@
 
 import { array_find } from "./generic";
 import { TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
-import { TypstLrData, TypstNamedParams } from "./typst-types";
+import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
@@ -182,7 +182,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
         }
     }
     if(parenthesis) {
-        return new TypstLeftright(args, { left: '(', right: ')' } as TypstLeftRightData);
+        return new TypstLeftright(null, args, { left: '(', right: ')' } as TypstLeftRightData);
     } else {
         if(args.length === 1) {
             return args[0];
@@ -333,9 +333,7 @@ export class TypstParser {
                     return [casesNode, newPos];
                 }
                 if (firstToken.value === 'lr') {
-                    const [args, newPos, lrData] = this.parseLrArguments(tokens, start + 1);
-                    const func_call = new TypstFuncCall(firstToken, args, lrData);
-                    return [func_call, newPos];
+                    return this.parseLrArguments(tokens, start + 1);
                 }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
                 const func_call = new TypstFuncCall(firstToken, args);
@@ -353,23 +351,22 @@ export class TypstParser {
     }
 
     // start: the position of the left parentheses
-    parseLrArguments(tokens: TypstToken[], start: number): [TypstNode[], number, TypstLrData] {
+    parseLrArguments(tokens: TypstToken[], start: number): [TypstNode, number] {
+        const lr_token = tokens[start];
         if (tokens[start + 1].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET, VERTICAL_BAR])) {
             const end = find_closing_match(tokens, start);
             const inner_start = start + 1;
             const inner_end = find_closing_delim(tokens, inner_start);
             const inner_args= this.parseArgumentsWithSeparator(tokens, inner_start + 1, inner_end, COMMA);
             return [
-                inner_args,
+                new TypstLeftright(lr_token, inner_args, {left: tokens[inner_start].value, right: tokens[inner_end].value}),
                 end + 1,
-                {leftDelim: tokens[inner_start].value, rightDelim: tokens[inner_end].value} as TypstLrData
             ];
         } else {
             const [args, end] = this.parseArguments(tokens, start);
             return [
-                args,
+                new TypstLeftright(lr_token, args, { left: null, right: null }),
                 end,
-                {leftDelim: null, rightDelim: null} as TypstLrData,
             ];
         }
     }

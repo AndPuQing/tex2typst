@@ -35,13 +35,13 @@ describe('examples', () => {
         expect(res).toEqual('\\int_a^b f(x) \\mathrm{d} x');
     });
 
-    it('lr({a))', function () {
-        const typst_node = parseTypst('lr({a))');
+    it('lr({a + 1/3))', function () {
+        const typst_node = parseTypst('lr({a + 1/3))');
         const tex_node = convert_typst_node_to_tex(typst_node);
         const writer = new TexWriter();
         writer.append(tex_node);
         const res = writer.finalize();
-        expect(res).toEqual('\\left\\{a \\right)');
+        expect(res).toEqual('\\left\\{a + \\frac{1}{3} \\right)');
     });
 });
 

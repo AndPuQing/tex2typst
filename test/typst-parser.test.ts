@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize_typst } from '../src/typst-tokenizer';
 import { TypstParser } from '../src/typst-parser';
-import { TypstFuncCall, TypstGroup, TypstLeftright, TypstNode, TypstSupsub, TypstTerminal, TypstToken, TypstTokenType } from '../src/typst-types';
+import { TypstFuncCall, TypstGroup, TypstLeftright, TypstSupsub, TypstTerminal, TypstToken, TypstTokenType } from '../src/typst-types';
 
 
 describe('typst-tokenizer', () => {
@@ -67,7 +67,7 @@ describe('typst-parser', () => {
         expect(res).toEqual(new TypstGroup([
             new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, 'a')),
             new TypstTerminal(new TypstToken(TypstTokenType.SPACE, ' ')),
-            new TypstLeftright([
+            new TypstLeftright(null, [
                 new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, 'x')),
             ], { left: '(', right: ')' })
         ]));
