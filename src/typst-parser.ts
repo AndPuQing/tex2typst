@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TypstLeftRightData, TypstNode } from "./typst-types";
+import { TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
 import { TypstLrData, TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -174,7 +174,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                     numerator.type = 'group';
                 }
 
-                args.push(new TypstNode('fraction', null, [numerator, denominator]));
+                args.push(new TypstFraction([numerator, denominator]));
                 stack.pop(); // drop the '/' operator
             } else {
                 args.push(current_tree);
@@ -182,12 +182,12 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
         }
     }
     if(parenthesis) {
-        return new TypstNode('leftright', null, args, { left: '(', right: ')' } as TypstLeftRightData);
+        return new TypstLeftright(args, { left: '(', right: ')' } as TypstLeftRightData);
     } else {
         if(args.length === 1) {
             return args[0];
         } else {
-            return new TypstNode('group', null, args);
+            return new TypstGroup(args);
         }
     }
 }
@@ -268,7 +268,7 @@ export class TypstParser {
 
         const num_base_prime = eat_primes(tokens, pos);
         if (num_base_prime > 0) {
-            base = new TypstNode('group', null, [base].concat(primes(num_base_prime)));
+            base = new TypstGroup([base].concat(primes(num_base_prime)));
             pos += num_base_prime;
         }
         if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
@@ -285,7 +285,7 @@ export class TypstParser {
 
         if (sub !== null || sup !== null) {
             const res: TypstSupsubData = { base, sup, sub };
-            return [new TypstNode('supsub', null, [], res), pos];
+            return [new TypstSupsub(res), pos];
         } else {
             return [base, pos];
         }
@@ -302,7 +302,7 @@ export class TypstParser {
         }
         const num_prime = eat_primes(tokens, end);
         if (num_prime > 0) {
-            node = new TypstNode('group', null, [node].concat(primes(num_prime)));
+            node = new TypstGroup([node].concat(primes(num_prime)));
             end += num_prime;
         }
         return [node, end];
@@ -322,23 +322,23 @@ export class TypstParser {
             if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
                 if(firstToken.value === 'mat') {
                     const [matrix, named_params, newPos] = this.parseMatrix(tokens, start + 1, SEMICOLON, COMMA);
-                    const mat = new TypstNode('matrix', null, [], matrix);
+                    const mat = new TypstMatrix(matrix);
                     mat.setOptions(named_params);
                     return [mat, newPos];
                 }
                 if(firstToken.value === 'cases') {
                     const [cases, named_params, newPos] = this.parseMatrix(tokens, start + 1, COMMA, CONTROL_AND);
-                    const casesNode = new TypstNode('cases', null, [], cases);
+                    const casesNode = new TypstCases(cases);
                     casesNode.setOptions(named_params);
                     return [casesNode, newPos];
                 }
                 if (firstToken.value === 'lr') {
                     const [args, newPos, lrData] = this.parseLrArguments(tokens, start + 1);
-                    const func_call = new TypstNode('funcCall', firstToken, args, lrData);
+                    const func_call = new TypstFuncCall(firstToken, args, lrData);
                     return [func_call, newPos];
                 }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
-                const func_call = new TypstNode('funcCall', firstToken, args);
+                const func_call = new TypstFuncCall(firstToken, args);
                 return [func_call, newPos];
             }
         }

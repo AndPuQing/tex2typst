@@ -40,7 +40,7 @@ export class TypstToken {
             case TypstTokenType.NEWLINE:
             case TypstTokenType.ELEMENT:
             case TypstTokenType.SYMBOL:
-                return new TypstNode('terminal', this);
+                return new TypstTerminal(this);
             case TypstTokenType.CONTROL: {
                 const controlChar = this.value;
                 switch (controlChar) {
@@ -49,9 +49,9 @@ export class TypstToken {
                     case '^':
                         throw new Error(`Should not convert ${controlChar} to a node`);
                     case '&':
-                        return new TypstNode('terminal', this);
+                        return new TypstTerminal(this);
                     case '\\':
-                        return new TypstNode('terminal', this);
+                        return new TypstTerminal(this);
                     default:
                         throw new Error(`Unexpected control character ${controlChar}`);
                 }
@@ -159,4 +159,59 @@ export class TypstNode {
     }
 }
 
+export class TypstTerminal extends TypstNode {
+    constructor(head: TypstToken) {
+        super('terminal', head);
+    }
+}
+
+export class TypstGroup extends TypstNode {
+    constructor(args: TypstNode[]) {
+        super('group', TypstToken.NONE, args);
+    }
+}
+
+export class TypstSupsub extends TypstNode {
+    constructor(data: TypstSupsubData) {
+        super('supsub', TypstToken.NONE, [], data);
+    }
+}
+
+export class TypstFuncCall extends TypstNode {
+    constructor(head: TypstToken, args: TypstNode[], data?: TypstLrData) {
+        super('funcCall', head, args, data);
+    }
+}
+
+export class TypstFraction extends TypstNode {
+    constructor(args: TypstNode[]) {
+        super('fraction', TypstToken.NONE, args);
+    }
+}
+
+
+export class TypstLeftright extends TypstNode {
+    constructor(args: TypstNode[], data: TypstLeftRightData) {
+        super('leftright', TypstToken.NONE, args, data);
+    }
+}
+
+export class TypstAlign extends TypstNode {
+    constructor(data: TypstArrayData) {
+        super('align', TypstToken.NONE, [], data);
+    }
+}
+
+
+export class TypstMatrix extends TypstNode {
+    constructor(data: TypstArrayData) {
+        super('matrix', TypstToken.NONE, [], data);
+    }
+}
+
+export class TypstCases extends TypstNode {
+    constructor(data: TypstArrayData) {
+        super('cases', TypstToken.NONE, [], data);
+    }
+}
 
