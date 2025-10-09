@@ -97,7 +97,7 @@ export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'frac
 
 export type TypstNamedParams = { [key: string]: TypstNode; };
 
-export class TypstNode {
+export abstract class TypstNode {
     type: TypstNodeType;
     head: TypstToken;
     args?: TypstNode[];

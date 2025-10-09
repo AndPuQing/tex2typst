@@ -337,9 +337,9 @@ export class LatexParser {
     /*
     Extract a non-space argument from the token stream.
     So that `\frac{12} 3` is parsed as
-        TexNode{ type: 'funcCall', content: '\frac', args: [ELEMENT_12, ELEMENT_3] }
+        TypstFuncCall{ head: '\frac', args: [ELEMENT_12, ELEMENT_3] }
         rather than
-        TexNode{ type: 'funcCall', content: '\frac', args: [ELEMENT_12, SPACE] }, ELEMENT_3
+        TypstFuncCall{ head: '\frac', args: [ELEMENT_12, SPACE] }, ELEMENT_3
     */
     parseNextArg(tokens: TexToken[], start: number): ParseResult {
         let pos = start;

@@ -1,7 +1,7 @@
 import { TexNode, TexSupsubData, TexSqrtData, Tex2TypstOptions, TexArrayData,
     TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
     TexText, TexBeginEnd, TexLeftRight } from "./tex-types";
-import { TypstAlign, TypstCases, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
+import { TypstAlign, TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -124,8 +124,7 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
             return new TypstToken(TypstTokenType.SYMBOL, 'eq.def').toNode();
         }
     }
-    const limits_call = new TypstNode(
-        'funcCall',
+    const limits_call = new TypstFuncCall(
         new TypstToken(TypstTokenType.SYMBOL, 'limits'),
         [convert_tex_node_to_typst(base, options)]
     );
@@ -140,8 +139,7 @@ function convert_overset(node: TexNode, options: Tex2TypstOptions): TypstNode {
 function convert_underset(node: TexNode, options: Tex2TypstOptions): TypstNode {
     const [sub, base] = node.args!;
 
-    const limits_call = new TypstNode(
-        'funcCall',
+    const limits_call = new TypstFuncCall(
         new TypstToken(TypstTokenType.SYMBOL, 'limits'),
         [convert_tex_node_to_typst(base, options)]
     );
@@ -197,8 +195,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return tex_token_to_typst(node.head, options).toNode();
         case 'text': {
             if ((/[^\x00-\x7F]+/).test(node.head.value) && options.nonAsciiWrapper !== "") {
-                return new TypstNode(
-                    'funcCall',
+                return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, options.nonAsciiWrapper!),
                     [new TypstToken(TypstTokenType.TEXT, node.head.value).toNode()]
                 );
@@ -206,9 +203,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return new TypstToken(TypstTokenType.TEXT, node.head.value).toNode();
         }
         case 'ordgroup':
-            return new TypstNode(
-                'group',
-                null,
+            return new TypstGroup(
                 node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         case 'supsub': {
@@ -216,14 +211,12 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 
             // special hook for overbrace
             if (base && base.type === 'funcCall' && base.head.value === '\\overbrace' && sup) {
-                return new TypstNode(
-                    'funcCall',
+                return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'overbrace'),
                     [convert_tex_node_to_typst(base.args![0], options), convert_tex_node_to_typst(sup, options)]
                 );
             } else if (base && base.type === 'funcCall' && base.head.value === '\\underbrace' && sub) {
-                return new TypstNode(
-                    'funcCall',
+                return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'underbrace'),
                     [convert_tex_node_to_typst(base.args![0], options), convert_tex_node_to_typst(sub, options)]
                 );
@@ -305,37 +298,32 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             // \sqrt[3]{x} -> root(3, x)
             if (node.head.value === '\\sqrt' && node.data) {
                 const data = convert_tex_node_to_typst(node.data as TexSqrtData, options); // the number of times to take the root
-                return new TypstNode(
-                    'funcCall',
+                return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'root'),
                     [data, arg0]
                 );
             }
             // \mathbf{a} -> upright(bold(a))
             if (node.head.value === '\\mathbf') {
-                const inner: TypstNode = new TypstNode(
-                    'funcCall',
+                const inner: TypstNode = new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'bold'),
                     [arg0]
                 );
-                return new TypstNode(
-                    'funcCall',
+                return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'upright'),
                     [inner]
                 );
             }
             // \overrightarrow{AB} -> arrow(A B)
             if (node.head.value === '\\overrightarrow') {
-                return new TypstNode(
-                    'funcCall',
+                return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'arrow'),
                     [arg0]
                 );
             }
             // \overleftarrow{AB} -> accent(A B, arrow.l)
             if (node.head.value === '\\overleftarrow') {
-                return new TypstNode(
-                    'funcCall',
+                return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'accent'),
                     [arg0, new TypstToken(TypstTokenType.SYMBOL, 'arrow.l').toNode()]
                 );
@@ -367,11 +355,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             // \frac{a}{b} -> a / b
             if (node.head.value === '\\frac') {
                 if (options.fracToSlash) {
-                    return new TypstNode(
-                        'fraction',
-                        null,
-                        node.args!.map((n) => convert_tex_node_to_typst(n, options))
-                    );
+                    return new TypstFraction(node.args!.map((n) => convert_tex_node_to_typst(n, options)));
                 }
             }
             if(options.optimize) {
@@ -386,8 +370,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             }
 
             // generic case
-            return new TypstNode(
-                'funcCall',
+            return new TypstFuncCall(
                 tex_token_to_typst(node.head, options),
                 node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
