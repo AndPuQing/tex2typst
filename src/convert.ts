@@ -361,7 +361,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             if(options.optimize) {
                 // \mathbb{R} -> RR
                 if (node.head.value === '\\mathbb' && /^\\mathbb{[A-Z]}$/.test(node.toString())) {
-                    return new TypstToken(TypstTokenType.SYMBOL, arg0.head.value + arg0.head.value).toNode();
+                    return new TypstToken(TypstTokenType.SYMBOL, arg0.head.value.repeat(2)).toNode();
                 }
                 // \mathrm{d} -> dif
                 if (node.head.value === '\\mathrm' && node.toString() === '\\mathrm{d}') {
