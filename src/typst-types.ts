@@ -31,34 +31,7 @@ export class TypstToken {
     }
 
     public toNode(): TypstNode {
-        switch (this.type) {
-            case TypstTokenType.NONE:
-            case TypstTokenType.LITERAL:
-            case TypstTokenType.TEXT:
-            case TypstTokenType.COMMENT:
-            case TypstTokenType.SPACE:
-            case TypstTokenType.NEWLINE:
-            case TypstTokenType.ELEMENT:
-            case TypstTokenType.SYMBOL:
-                return new TypstTerminal(this);
-            case TypstTokenType.CONTROL: {
-                const controlChar = this.value;
-                switch (controlChar) {
-                    case '':
-                    case '_':
-                    case '^':
-                        throw new Error(`Should not convert ${controlChar} to a node`);
-                    case '&':
-                        return new TypstTerminal(this);
-                    case '\\':
-                        return new TypstTerminal(this);
-                    default:
-                        throw new Error(`Unexpected control character ${controlChar}`);
-                }
-            }
-            default:
-                throw new Error(`Unexpected token type ${this.type}`);
-        }
+        return new TypstTerminal(this);
     }
 
     public toString(): string {

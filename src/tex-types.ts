@@ -40,20 +40,7 @@ export class TexToken {
     }
 
     public toNode(): TexNode {
-        switch (this.type) {
-            case TexTokenType.EMPTY:
-            case TexTokenType.ELEMENT:
-            case TexTokenType.LITERAL:
-            case TexTokenType.COMMENT:
-            case TexTokenType.SPACE:
-            case TexTokenType.NEWLINE:
-            case TexTokenType.COMMAND:
-            case TexTokenType.CONTROL:
-                return new TexTerminal(this);
-            case TexTokenType.UNKNOWN:
-            default:
-                throw new Error(`Unknown token type: ${this.type}`);
-        }
+        return new TexTerminal(this);
     }
 
     public static readonly EMPTY = new TexToken(TexTokenType.EMPTY, '');
