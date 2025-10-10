@@ -95,145 +95,7 @@ export abstract class TexNode {
         return this.type === other.type && this.head.eq(other.head);
     }
 
-    public serialize(): TexToken[] {
-        switch (this.type) {
-            case 'terminal': {
-                switch(this.head.type) {
-                    case TexTokenType.EMPTY:
-                        return [];
-                    case TexTokenType.ELEMENT: {
-                        let c = this.head.value;
-                        c = apply_escape_if_needed(c);
-                        return [new TexToken(TexTokenType.ELEMENT, c)];
-                    }
-                    case TexTokenType.COMMAND:
-                    case TexTokenType.LITERAL:
-                    case TexTokenType.COMMENT:
-                    case TexTokenType.CONTROL: {
-                        return [this.head];
-                    }
-                    case TexTokenType.SPACE:
-                    case TexTokenType.NEWLINE: {
-                        const tokens: TexToken[] = [];
-                        for (const c of this.head.value) {
-                            const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
-                            tokens.push(new TexToken(token_type, c));
-                        }
-                        return tokens;
-                    }
-                    default:
-                        throw new Error(`Unknown terminal token type: ${this.head.type}`);
-                }
-            }
-            case 'text':
-                return [
-                    new TexToken(TexTokenType.COMMAND, '\\text'),
-                    new TexToken(TexTokenType.ELEMENT, '{'),
-                    this.head,
-                    new TexToken(TexTokenType.ELEMENT, '}'),
-                ];
-            case 'ordgroup': {
-                return this.args!.map((n) => n.serialize()).flat();
-            }
-            case 'leftright': {
-                let tokens = this.args!.map((n) => n.serialize()).flat();
-                tokens.splice(0, 0, new TexToken(TexTokenType.COMMAND, '\\left'));
-                tokens.splice(tokens.length - 1, 0, new TexToken(TexTokenType.COMMAND, '\\right'));
-
-                return tokens;
-            }
-            case 'funcCall': {
-                let tokens: TexToken[] = [];
-                tokens.push(this.head);
-
-                // special hook for \sqrt
-                if (this.head.value === '\\sqrt' && this.data) {
-                    tokens.push(new TexToken(TexTokenType.ELEMENT, '['));
-                    tokens = tokens.concat((this.data! as TexSqrtData).serialize());
-                    tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
-                }
-
-                for (const arg of this.args!) {
-                    tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                    tokens = tokens.concat(arg.serialize());
-                    tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                }
-
-                return tokens;
-            }
-            case 'supsub': {
-                let tokens: TexToken[] = [];
-                const { base, sup, sub } = this.data! as TexSupsubData;
-                tokens = tokens.concat(base.serialize());
-
-                // TODO: should return true for more cases e.g. a_{\theta} instead of a_\theta
-                function should_wrap_in_braces(node: TexNode): boolean {
-                    if(node.type === 'ordgroup' || node.type === 'supsub' || node.head.type === TexTokenType.EMPTY) {
-                        return true;
-                    } else if(node.head.type === TexTokenType.ELEMENT && /\d+(\.\d+)?/.test(node.head.value) && node.head.value.length > 1) {
-                        // a number with more than 1 digit as a subscript/superscript should be wrapped in braces
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-
-                if (sub) {
-                    tokens.push(new TexToken(TexTokenType.CONTROL, '_'));
-                    if (should_wrap_in_braces(sub)) {
-                        tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                        tokens = tokens.concat(sub.serialize());
-                        tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                    } else {
-                        tokens = tokens.concat(sub.serialize());
-                    }
-                }
-                if (sup) {
-                    tokens.push(new TexToken(TexTokenType.CONTROL, '^'));
-                    if (should_wrap_in_braces(sup)) {
-                        tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                        tokens = tokens.concat(sup.serialize());
-                        tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                    } else {
-                        tokens = tokens.concat(sup.serialize());
-                    }
-                }
-                return tokens;
-            }
-            case 'beginend': {
-                let tokens: TexToken[] = [];
-                const matrix = this.data as TexArrayData;
-                // tokens.push(new TexToken(TexTokenType.COMMAND, `\\begin{${this.content}}`));
-                tokens.push(new TexToken(TexTokenType.COMMAND, '\\begin'));
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                tokens = tokens.concat(this.head);
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
-                for (let i = 0; i < matrix.length; i++) {
-                    const row = matrix[i];
-                    for (let j = 0; j < row.length; j++) {
-                        const cell = row[j];
-                        tokens = tokens.concat(cell.serialize());
-                        if (j !== row.length - 1) {
-                            tokens.push(new TexToken(TexTokenType.CONTROL, '&'));
-                        }
-                    }
-                    if (i !== matrix.length - 1) {
-                        tokens.push(new TexToken(TexTokenType.CONTROL, '\\\\'));
-                    }
-                }
-                tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
-                // tokens.push(new TexToken(TexTokenType.COMMAND, `\\end{${this.content}}`));
-                tokens.push(new TexToken(TexTokenType.COMMAND, '\\end'));
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
-                tokens = tokens.concat(this.head);
-                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
-                return tokens;
-            }
-            default:
-                throw new Error('[TexNode.serialize] Unimplemented type: ' + this.type);
-        }
-    }
+    abstract serialize(): TexToken[];
 
     // Note: toString() is expensive. Do not use it on performance-critical code path.
     public toString(): string {
@@ -253,6 +115,35 @@ export class TexTerminal extends TexNode {
     constructor(head: TexToken) {
         super('terminal', head);
     }
+
+    public serialize(): TexToken[] {
+        switch(this.head.type) {
+            case TexTokenType.EMPTY:
+                return [];
+            case TexTokenType.ELEMENT: {
+                let c = this.head.value;
+                c = apply_escape_if_needed(c);
+                return [new TexToken(TexTokenType.ELEMENT, c)];
+            }
+            case TexTokenType.COMMAND:
+            case TexTokenType.LITERAL:
+            case TexTokenType.COMMENT:
+            case TexTokenType.CONTROL: {
+                return [this.head];
+            }
+            case TexTokenType.SPACE:
+            case TexTokenType.NEWLINE: {
+                const tokens: TexToken[] = [];
+                for (const c of this.head.value) {
+                    const token_type = c === ' ' ? TexTokenType.SPACE : TexTokenType.NEWLINE;
+                    tokens.push(new TexToken(token_type, c));
+                }
+                return tokens;
+            }
+            default:
+                throw new Error(`Unknown terminal token type: ${this.head.type}`);
+        }
+    }
 }
 
 export class TexText extends TexNode {
@@ -261,11 +152,24 @@ export class TexText extends TexNode {
 
         super('text', head);
     }
+
+    public serialize(): TexToken[] {
+        return [
+            new TexToken(TexTokenType.COMMAND, '\\text'),
+            new TexToken(TexTokenType.ELEMENT, '{'),
+            this.head,
+            new TexToken(TexTokenType.ELEMENT, '}'),
+        ];
+    }
 }
 
 export class TexGroup extends TexNode {
     constructor(args: TexNode[]) {
         super('ordgroup', TexToken.EMPTY, args);
+    }
+
+    public serialize(): TexToken[] {
+        return this.args!.map((n) => n.serialize()).flat();
     }
 }
 
@@ -273,11 +177,71 @@ export class TexSupSub extends TexNode {
     constructor(data: TexSupsubData) {
         super('supsub', TexToken.EMPTY, [], data);
     }
+
+    public serialize(): TexToken[] {
+        let tokens: TexToken[] = [];
+        const { base, sup, sub } = this.data! as TexSupsubData;
+        tokens = tokens.concat(base.serialize());
+
+        // TODO: should return true for more cases e.g. a_{\theta} instead of a_\theta
+        function should_wrap_in_braces(node: TexNode): boolean {
+            if(node.type === 'ordgroup' || node.type === 'supsub' || node.head.type === TexTokenType.EMPTY) {
+                return true;
+            } else if(node.head.type === TexTokenType.ELEMENT && /\d+(\.\d+)?/.test(node.head.value) && node.head.value.length > 1) {
+                // a number with more than 1 digit as a subscript/superscript should be wrapped in braces
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        if (sub) {
+            tokens.push(new TexToken(TexTokenType.CONTROL, '_'));
+            if (should_wrap_in_braces(sub)) {
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                tokens = tokens.concat(sub.serialize());
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+            } else {
+                tokens = tokens.concat(sub.serialize());
+            }
+        }
+        if (sup) {
+            tokens.push(new TexToken(TexTokenType.CONTROL, '^'));
+            if (should_wrap_in_braces(sup)) {
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+                tokens = tokens.concat(sup.serialize());
+                tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+            } else {
+                tokens = tokens.concat(sup.serialize());
+            }
+        }
+        return tokens;
+    }
 }
 
 export class TexFuncCall extends TexNode {
     constructor(head: TexToken, args: TexNode[], data?: TexSqrtData) {
         super('funcCall', head, args, data);
+    }
+
+    public serialize(): TexToken[] {
+        let tokens: TexToken[] = [];
+        tokens.push(this.head);
+
+        // special hook for \sqrt
+        if (this.head.value === '\\sqrt' && this.data) {
+            tokens.push(new TexToken(TexTokenType.ELEMENT, '['));
+            tokens = tokens.concat((this.data! as TexSqrtData).serialize());
+            tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
+        }
+
+        for (const arg of this.args!) {
+            tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+            tokens = tokens.concat(arg.serialize());
+            tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+        }
+
+        return tokens;
     }
 }
 
@@ -285,12 +249,51 @@ export class TexLeftRight extends TexNode {
     constructor(args: TexNode[]) {
         super('leftright', TexToken.EMPTY, args);
     }
+
+    public serialize(): TexToken[] {
+        let tokens = this.args!.map((n) => n.serialize()).flat();
+        tokens.splice(0, 0, new TexToken(TexTokenType.COMMAND, '\\left'));
+        tokens.splice(tokens.length - 1, 0, new TexToken(TexTokenType.COMMAND, '\\right'));
+
+        return tokens;
+    }
 }
 
 export class TexBeginEnd extends TexNode {
     constructor(head: TexToken, args: TexNode[], data: TexArrayData) {
         assert(head.type === TexTokenType.LITERAL);
         super('beginend', head, args, data);
+    }
+
+    public serialize(): TexToken[] {
+        let tokens: TexToken[] = [];
+        const matrix = this.data as TexArrayData;
+        // tokens.push(new TexToken(TexTokenType.COMMAND, `\\begin{${this.content}}`));
+        tokens.push(new TexToken(TexTokenType.COMMAND, '\\begin'));
+        tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+        tokens = tokens.concat(this.head);
+        tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+        tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
+        for (let i = 0; i < matrix.length; i++) {
+            const row = matrix[i];
+            for (let j = 0; j < row.length; j++) {
+                const cell = row[j];
+                tokens = tokens.concat(cell.serialize());
+                if (j !== row.length - 1) {
+                    tokens.push(new TexToken(TexTokenType.CONTROL, '&'));
+                }
+            }
+            if (i !== matrix.length - 1) {
+                tokens.push(new TexToken(TexTokenType.CONTROL, '\\\\'));
+            }
+        }
+        tokens.push(new TexToken(TexTokenType.NEWLINE, '\n'));
+        // tokens.push(new TexToken(TexTokenType.COMMAND, `\\end{${this.content}}`));
+        tokens.push(new TexToken(TexTokenType.COMMAND, '\\end'));
+        tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
+        tokens = tokens.concat(this.head);
+        tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));
+        return tokens;
     }
 }
 
