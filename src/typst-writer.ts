@@ -1,6 +1,5 @@
 import { TexNode } from "./tex-types";
-import { TypstLeftRightData, TypstNode } from "./typst-types";
-import { TypstSupsubData } from "./typst-types";
+import { TypstAlign, TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrix, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
 import { shorthandMap } from "./typst-shorthands";
@@ -95,9 +94,10 @@ export class TypstWriter {
     }
 
     // Serialize a tree of TypstNode into a list of TypstToken
-    public serialize(node: TypstNode) {
-        switch (node.type) {
+    public serialize(abstractNode: TypstNode) {
+        switch (abstractNode.type) {
             case 'terminal': {
+                const node = abstractNode as TypstTerminal;
                 if (node.head.type === TypstTokenType.ELEMENT) {
                     if (node.head.value === ',' && this.insideFunctionDepth > 0) {
                         this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'comma'));
@@ -135,14 +135,17 @@ export class TypstWriter {
                     break;
                 }
             }
-            case 'group':
+            case 'group': {
+                const node = abstractNode as TypstGroup;
                 for (const item of node.args!) {
                     this.serialize(item);
                 }
                 break;
+            }
             case 'leftright': {
+                const node = abstractNode as TypstLeftright;
                 const LR = new TypstToken(TypstTokenType.SYMBOL, 'lr');
-                const {left, right} = node.data as TypstLeftRightData;
+                const {left, right} = node;
                 if (node.head.eq(LR)) {
                     this.queue.push(LR);
                     this.queue.push(TYPST_LEFT_PARENTHESIS);
@@ -162,7 +165,8 @@ export class TypstWriter {
                 break;
             }
             case 'supsub': {
-                let { base, sup, sub } = node.data as TypstSupsubData;
+                const node = abstractNode as TypstSupsub;
+                let { base, sup, sub } = node;
                 this.appendWithBracketsIfNeeded(base);
 
                 let trailing_space_needed = false;
@@ -189,6 +193,7 @@ export class TypstWriter {
                 break;
             }
             case 'funcCall': {
+                const node = abstractNode as TypstFuncCall;
                 const func_symbol: TypstToken = node.head;
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
@@ -209,6 +214,7 @@ export class TypstWriter {
                 break;
             }
             case 'fraction': {
+                const node = abstractNode as TypstFraction;
                 const [numerator, denominator] = node.args!;
                 const pos = this.queue.length;
                 const no_wrap = this.appendWithBracketsIfNeeded(numerator);
@@ -225,7 +231,8 @@ export class TypstWriter {
                 break;
             }
             case 'align': {
-                const matrix = node.data as TypstNode[][];
+                const node = abstractNode as TypstAlign;
+                const matrix = node.matrix;
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         if (j > 0) {
@@ -240,7 +247,8 @@ export class TypstWriter {
                 break;
             }
             case 'matrix': {
-                const matrix = node.data as TypstNode[][];
+                const node = abstractNode as TypstMatrix;
+                const matrix = node.matrix;
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'mat'));
                 this.insideFunctionDepth++;
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
@@ -275,7 +283,8 @@ export class TypstWriter {
                 break;
             }
             case 'cases': {
-                const cases = node.data as TypstNode[][];
+                const node = abstractNode as TypstCases;
+                const cases = node.matrix;
                 this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'cases'));
                 this.insideFunctionDepth++;
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
@@ -301,7 +310,7 @@ export class TypstWriter {
                 break;
             }
             default:
-                throw new TypstWriterError(`Unimplemented node type to append: ${node.type}`, node);
+                throw new TypstWriterError(`Unimplemented node type to append: ${abstractNode.type}`, abstractNode);
         }
     }
 

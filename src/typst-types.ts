@@ -80,7 +80,6 @@ export interface TypstSupsubData {
     sup: TypstNode | null;
     sub: TypstNode | null;
 }
-export type TypstArrayData = TypstNode[][];
 
 
 export interface TypstLeftRightData {
@@ -98,20 +97,21 @@ export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'frac
 export type TypstNamedParams = { [key: string]: TypstNode; };
 
 export abstract class TypstNode {
-    type: TypstNodeType;
+    readonly type: TypstNodeType;
     head: TypstToken;
     args?: TypstNode[];
-    data?: TypstSupsubData | TypstArrayData | TypstLeftRightData;
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
-    constructor(type: TypstNodeType, head: TypstToken | null, args?: TypstNode[],
-        data?: TypstSupsubData | TypstArrayData | TypstLeftRightData) {
+    constructor(type: TypstNodeType, head: TypstToken | null, args?: TypstNode[]) {
         this.type = type;
         this.head = head ? head : TypstToken.NONE;
         this.args = args;
-        this.data = data;
     }
+
+    // whether the node is over high so that if it's wrapped in braces, \left and \right should be used in its TeX form
+    // e.g. 1/2 is over high, "2" is not.
+    abstract isOverHigh(): boolean;
 
     public setOptions(options: TypstNamedParams) {
         this.options = options;
@@ -122,37 +122,8 @@ export abstract class TypstNode {
         return this.type === other.type && this.head.eq(other.head);
     }
 
-    // whether the node is over high so that if it's wrapped in braces, \left and \right should be used in its TeX form
-    // e.g. 1/2 is over high, "2" is not.
-    public isOverHigh(): boolean {
-        switch (this.type) {
-            case 'fraction':
-                return true;
-            case 'funcCall': {
-                if (this.head.value === 'frac') {
-                    return true;
-                }
-                return this.args!.some((n) => n.isOverHigh());
-            }
-            case 'leftright':
-            case 'group':
-                return this.args!.some((n) => n.isOverHigh());
-            case 'supsub':
-                return (this.data as TypstSupsubData).base.isOverHigh();
-            case 'align':
-            case 'cases':
-            case 'matrix':
-                return true;
-            default:
-                return false;
-        }
-    }
-
     public toString(): string {
-        if (this.type !== 'terminal') {
-            throw new Error(`Unimplemented toString() for non-terminal`);
-        }
-        return this.head.toString();
+        throw new Error(`Unimplemented toString() in base class TypstNode`);
     }
 }
 
@@ -160,17 +131,40 @@ export class TypstTerminal extends TypstNode {
     constructor(head: TypstToken) {
         super('terminal', head);
     }
+
+    public isOverHigh(): boolean {
+        return false;
+    }
+
+    public toString(): string {
+        return this.head.toString();
+    }
 }
 
 export class TypstGroup extends TypstNode {
     constructor(args: TypstNode[]) {
         super('group', TypstToken.NONE, args);
     }
+
+    public isOverHigh(): boolean {
+        return this.args!.some((n) => n.isOverHigh());
+    }
 }
 
 export class TypstSupsub extends TypstNode {
+    public base: TypstNode;
+    public sup: TypstNode | null;
+    public sub: TypstNode | null;
+
     constructor(data: TypstSupsubData) {
-        super('supsub', TypstToken.NONE, [], data);
+        super('supsub', TypstToken.NONE, []);
+        this.base = data.base;
+        this.sup = data.sup;
+        this.sub = data.sub;
+    }
+
+    public isOverHigh(): boolean {
+        return this.base.isOverHigh();
     }
 }
 
@@ -178,40 +172,77 @@ export class TypstFuncCall extends TypstNode {
     constructor(head: TypstToken, args: TypstNode[]) {
         super('funcCall', head, args);
     }
+
+    public isOverHigh(): boolean {
+        if (this.head.value === 'frac') {
+            return true;
+        }
+        return this.args!.some((n) => n.isOverHigh());
+    }
 }
 
 export class TypstFraction extends TypstNode {
     constructor(args: TypstNode[]) {
         super('fraction', TypstToken.NONE, args);
     }
+
+    public isOverHigh(): boolean {
+        return true;
+    }
 }
 
 
 export class TypstLeftright extends TypstNode {
+    public left: string | null;
+    public right: string | null;
+
     constructor(head: TypstToken | null, args: TypstNode[], data: TypstLeftRightData) {
         super('leftright', head, args);
-        if (data) {
-            this.data = data;
-        }
+        this.left = data.left;
+        this.right = data.right;
+    }
+
+    public isOverHigh(): boolean {
+        return this.args!.some((n) => n.isOverHigh());
     }
 }
 
 export class TypstAlign extends TypstNode {
-    constructor(data: TypstArrayData) {
-        super('align', TypstToken.NONE, [], data);
+    public matrix: TypstNode[][];
+
+    constructor(data: TypstNode[][]) {
+        super('align', TypstToken.NONE, []);
+        this.matrix = data;
+    }
+
+    public isOverHigh(): boolean {
+        return true;
     }
 }
 
-
 export class TypstMatrix extends TypstNode {
-    constructor(data: TypstArrayData) {
-        super('matrix', TypstToken.NONE, [], data);
+    public matrix: TypstNode[][];
+
+    constructor(data: TypstNode[][]) {
+        super('matrix', TypstToken.NONE, []);
+        this.matrix = data;
+    }
+
+    public isOverHigh(): boolean {
+        return true;
     }
 }
 
 export class TypstCases extends TypstNode {
-    constructor(data: TypstArrayData) {
-        super('cases', TypstToken.NONE, [], data);
+    public matrix: TypstNode[][];
+
+    constructor(data: TypstNode[][]) {
+        super('cases', TypstToken.NONE, []);
+        this.matrix = data;
+    }
+
+    public isOverHigh(): boolean {
+        return true;
     }
 }
 

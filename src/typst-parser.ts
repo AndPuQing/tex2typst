@@ -161,17 +161,17 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
             }
 
             if(stack.length > 0 && stack[stack.length-1].eq(DIV)) {
-                const denominator = current_tree;
+                let denominator = current_tree;
                 if(args.length === 0) {
                     throw new TypstParserError("Unexpected '/' operator, no numerator before it");
                 }
-                const numerator = args.pop()!;
+                let numerator = args.pop()!;
 
                 if(denominator.type === 'leftright') {
-                    denominator.type = 'group';
+                    denominator = new TypstGroup(denominator.args!);
                 }
                 if(numerator.type === 'leftright') {
-                    numerator.type = 'group';
+                    numerator = new TypstGroup(numerator.args!);
                 }
 
                 args.push(new TypstFraction([numerator, denominator]));

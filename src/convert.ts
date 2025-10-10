@@ -1,7 +1,7 @@
 import { TexNode, TexSupsubData, TexSqrtData, Tex2TypstOptions, TexArrayData,
     TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
     TexText, TexBeginEnd, TexLeftRight } from "./tex-types";
-import { TypstAlign, TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
+import { TypstAlign, TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrix, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -539,9 +539,10 @@ function typst_token_to_tex(token: TypstToken): TexToken {
 
 const TEX_NODE_COMMA = new TexToken(TexTokenType.ELEMENT, ',').toNode();
 
-export function convert_typst_node_to_tex(node: TypstNode): TexNode {
-    switch (node.type) {
+export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
+    switch (abstractNode.type) {
         case 'terminal': {
+            const node = abstractNode as TypstTerminal;
             if (node.head.type === TypstTokenType.SYMBOL) {
                 // special hook for eq.def
                 if (node.head.value === 'eq.def') {
@@ -576,6 +577,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
         }
 
         case 'group': {
+            const node = abstractNode as TypstGroup;
             const args = node.args!.map(convert_typst_node_to_tex);
             const alignment_char = new TexToken(TexTokenType.CONTROL, '&').toNode();
             const newline_char = new TexToken(TexTokenType.CONTROL, '\\\\').toNode();
@@ -592,10 +594,10 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return new TexGroup(args);
         }
         case 'leftright': {
+            const node = abstractNode as TypstLeftright;
             const args = node.args!.map(convert_typst_node_to_tex);
-            const data = node.data as TypstLeftRightData;
-            let left = data.left? apply_escape_if_needed(data.left) : '.';
-            let right = data.right? apply_escape_if_needed(data.right) : '.';
+            let left = node.left? apply_escape_if_needed(node.left) : '.';
+            let right = node.right? apply_escape_if_needed(node.right) : '.';
             // const is_over_high = node.isOverHigh();
             // const left_delim = is_over_high ? '\\left(' : '(';
             // const right_delim = is_over_high ? '\\right)' : ')';
@@ -610,6 +612,7 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return new TexGroup(args);
         }
         case 'funcCall': {
+            const node = abstractNode as TypstFuncCall;
             // special hook for norm
             // `\| a  \|` <- `norm(a)`
             // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
@@ -691,7 +694,8 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             }
         }
         case 'supsub': {
-            const { base, sup, sub } = node.data as TypstSupsubData;
+            const node = abstractNode as TypstSupsub;
+            const { base, sup, sub } = node;
             let sup_tex: TexNode | null = null;
             let sub_tex: TexNode | null = null;
 
@@ -728,7 +732,8 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return res;
         }
         case 'matrix': {
-            const typst_data = node.data as TypstNode[][];
+            const node = abstractNode as TypstMatrix;
+            const typst_data = node.matrix;
             const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
             let env_type = 'pmatrix'; // typst mat use delim:"(" by default
             if (node.options) {
@@ -768,18 +773,20 @@ export function convert_typst_node_to_tex(node: TypstNode): TexNode {
             return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, env_type), [], tex_data);
         }
         case 'cases': {
-            const typst_data = node.data as TypstNode[][];
+            const node = abstractNode as TypstCases;
+            const typst_data = node.matrix;
             const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
             return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, 'cases'), [], tex_data);
         }
         case 'fraction': {
+            const node = abstractNode as TypstFraction;
             const [numerator, denominator] = node.args!;
             const num_tex = convert_typst_node_to_tex(numerator);
             const den_tex = convert_typst_node_to_tex(denominator);
             return new TexFuncCall(new TexToken(TexTokenType.COMMAND, '\\frac'), [num_tex, den_tex]);
         }
         default:
-            throw new Error('[convert_typst_node_to_tex] Unimplemented type: ' + node.type);
+            throw new Error('[convert_typst_node_to_tex] Unimplemented type: ' + abstractNode.type);
     }
 }
 
