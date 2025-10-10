@@ -696,15 +696,8 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
         case 'supsub': {
             const node = abstractNode as TypstSupsub;
             const { base, sup, sub } = node;
-            let sup_tex: TexNode | null = null;
-            let sub_tex: TexNode | null = null;
-
-            if (sup) {
-                sup_tex = convert_typst_node_to_tex(sup);
-            }
-            if (sub) {
-                sub_tex = convert_typst_node_to_tex(sub);
-            }
+            const sup_tex = sup? convert_typst_node_to_tex(sup) : null;
+            const sub_tex = sub? convert_typst_node_to_tex(sub) : null;
 
             // special hook for limits
             // `limits(+)^a` -> `\overset{a}{+}`
@@ -774,8 +767,7 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
         }
         case 'cases': {
             const node = abstractNode as TypstCases;
-            const typst_data = node.matrix;
-            const tex_data = typst_data.map(row => row.map(convert_typst_node_to_tex));
+            const tex_data = node.matrix.map(row => row.map(convert_typst_node_to_tex));
             return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, 'cases'), [], tex_data);
         }
         case 'fraction': {
