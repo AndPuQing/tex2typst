@@ -540,16 +540,16 @@ function typst_token_to_tex(token: TypstToken): TexToken {
 const TEX_NODE_COMMA = new TexToken(TexTokenType.ELEMENT, ',').toNode();
 
 export function convert_typst_node_to_tex(node: TypstNode): TexNode {
-    // special hook for eq.def
-    if (node.head.eq(new TypstToken(TypstTokenType.SYMBOL, 'eq.def'))) {
-        return new TexFuncCall(new TexToken(TexTokenType.COMMAND, '\\overset'), [
-            new TexText(new TexToken(TexTokenType.LITERAL, 'def')),
-            new TexToken(TexTokenType.ELEMENT, '=').toNode()
-        ]);
-    }
     switch (node.type) {
         case 'terminal': {
             if (node.head.type === TypstTokenType.SYMBOL) {
+                // special hook for eq.def
+                if (node.head.value === 'eq.def') {
+                    return new TexFuncCall(new TexToken(TexTokenType.COMMAND, '\\overset'), [
+                        new TexText(new TexToken(TexTokenType.LITERAL, 'def')),
+                        new TexToken(TexTokenType.ELEMENT, '=').toNode()
+                    ]);
+                }
                 // special hook for comma
                 if(node.head.value === 'comma') {
                     return new TexToken(TexTokenType.ELEMENT, ',').toNode();
