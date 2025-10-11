@@ -257,7 +257,8 @@ const symbolMap = new Map<string, string>([
     ['xi', 'xi'], 
     ['yen', 'yen'], 
     ['zeta', 'zeta'], 
-
+    ['intop', 'limits(integral)'],
+    
     // extended
     ['mathscr', 'scr'],
     ['LaTeX', '#LaTeX'],
@@ -510,7 +511,6 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['increment', 'laplace'],
     ['infty', 'infinity'],
     ['int', 'integral'],
-    ['intop', 'limits(integral)'],
     ['intbar', 'integral.dash'],
     ['intBar', 'integral.dash.double'],
     ['intcap', 'integral.inter'],

@@ -32,6 +32,12 @@ cases:
   - title: biglr
     tex: \bigl|a + \frac{1}{3} \bigr|^2
     typst: "|a + 1/3|^2"
+  - title: bigm
+    tex: \dfrac{d}{dx}x^2\bigm{|}_{x=2}
+    typst: frac(d, d x) x^2 |_(x = 2)
+  - title: intop
+    tex: \intop_0^\infty x \text{d} x
+    typst: limits(integral)_0^infinity x "d" x
   - title: bigglr
     tex: \biggl|a + \frac{1}{3} \biggr|^2
     typst: "|a + 1/3|^2"
