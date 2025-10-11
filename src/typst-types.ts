@@ -153,7 +153,7 @@ export class TypstFuncCall extends TypstNode {
         if (this.head.value === 'frac') {
             return true;
         }
-        return this.args!.some((n) => n.isOverHigh());
+        return this.args.some((n) => n.isOverHigh());
     }
 }
 

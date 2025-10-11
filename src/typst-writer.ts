@@ -196,9 +196,9 @@ export class TypstWriter {
                 this.queue.push(func_symbol);
                 this.insideFunctionDepth++;
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
-                for (let i = 0; i < node.args!.length; i++) {
-                    this.serialize(node.args![i]);
-                    if (i < node.args!.length - 1) {
+                for (let i = 0; i < node.args.length; i++) {
+                    this.serialize(node.args[i]);
+                    if (i < node.args.length - 1) {
                         this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
                     }
                 }
@@ -213,7 +213,7 @@ export class TypstWriter {
             }
             case 'fraction': {
                 const node = abstractNode as TypstFraction;
-                const [numerator, denominator] = node.args!;
+                const [numerator, denominator] = node.args;
                 const pos = this.queue.length;
                 const no_wrap = this.appendWithBracketsIfNeeded(numerator);
 
@@ -258,7 +258,7 @@ export class TypstWriter {
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         // There is a leading & in row
-                        // if (cell.type === 'ordgroup' && cell.args!.length === 0) {
+                        // if (cell.type === 'ordgroup' && cell.args.length === 0) {
                         // this.queue.push(new TypstNode('atom', ','));
                         // return;
                         // }
@@ -266,7 +266,7 @@ export class TypstWriter {
                         // return;
                         // }
                         this.serialize(cell);
-                        // cell.args!.forEach((n) => this.append(n));
+                        // cell.args.forEach((n) => this.append(n));
                         if (j < row.length - 1) {
                             this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
                         } else {

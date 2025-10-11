@@ -234,7 +234,7 @@ export class TexFuncCall extends TexNode {
             tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
         }
 
-        for (const arg of this.args!) {
+        for (const arg of this.args) {
             tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));
             tokens = tokens.concat(arg.serialize());
             tokens.push(new TexToken(TexTokenType.ELEMENT, '}'));

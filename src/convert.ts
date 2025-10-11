@@ -294,7 +294,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
         }
         case 'funcCall': {
             const node = abstractNode as TexFuncCall;
-            const arg0 = convert_tex_node_to_typst(node.args![0], options);
+            const arg0 = convert_tex_node_to_typst(node.args[0], options);
             // \sqrt[3]{x} -> root(3, x)
             if (node.head.value === '\\sqrt' && node.data) {
                 const data = convert_tex_node_to_typst(node.data, options); // the number of times to take the root
@@ -355,7 +355,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
             // \frac{a}{b} -> a / b
             if (node.head.value === '\\frac') {
                 if (options.fracToSlash) {
-                    return new TypstFraction(node.args!.map((n) => convert_tex_node_to_typst(n, options)));
+                    return new TypstFraction(node.args.map((n) => convert_tex_node_to_typst(n, options)));
                 }
             }
             if(options.optimize) {
@@ -372,7 +372,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
             // generic case
             return new TypstFuncCall(
                 tex_token_to_typst(node.head, options),
-                node.args!.map((n) => convert_tex_node_to_typst(n, options))
+                node.args.map((n) => convert_tex_node_to_typst(n, options))
             );
         }
         case 'beginend': {
@@ -625,7 +625,7 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 // `\| a  \|` <- `norm(a)`
                 // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
                 case 'norm': {
-                    const arg0 = node.args![0];
+                    const arg0 = node.args[0];
                     const body = convert_typst_node_to_tex(arg0);
                     if (node.isOverHigh()) {
                         return new TexLeftRight({
@@ -646,7 +646,7 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 case 'ceil': {
                     const left = "\\l" + node.head.value;
                     const right = "\\r" + node.head.value;
-                    const arg0 = node.args![0];
+                    const arg0 = node.args[0];
                     const body = convert_typst_node_to_tex(arg0);
                     const left_node = new TexToken(TexTokenType.COMMAND, left);
                     const right_node = new TexToken(TexTokenType.COMMAND, right);
@@ -662,14 +662,14 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 }
                 // special hook for root
                 case 'root': {
-                    const [degree, radicand] = node.args!;
+                    const [degree, radicand] = node.args;
                     const data = convert_typst_node_to_tex(degree);
                     return new TexFuncCall(new TexToken(TexTokenType.COMMAND, '\\sqrt'), [convert_typst_node_to_tex(radicand)], data);
                 }
                 // special hook for overbrace and underbrace
                 case 'overbrace':
                 case 'underbrace': {
-                    const [body, label] = node.args!;
+                    const [body, label] = node.args;
                     const base = new TexFuncCall(typst_token_to_tex(node.head), [convert_typst_node_to_tex(body)]);
                     const script = convert_typst_node_to_tex(label);
                     const data = node.head.value === 'overbrace' ? { base, sup: script, sub: null } : { base, sub: script, sup: null };
@@ -678,12 +678,12 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 // special hook for vec
                 // "vec(a, b, c)" -> "\begin{pmatrix}a\\ b\\ c\end{pmatrix}"
                 case 'vec': {
-                    const tex_matrix = node.args!.map(convert_typst_node_to_tex).map((n) => [n]);
+                    const tex_matrix = node.args.map(convert_typst_node_to_tex).map((n) => [n]);
                     return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, 'pmatrix'), tex_matrix);
                 }
                 // special hook for op
                 case 'op': {
-                    const arg0 = node.args![0];
+                    const arg0 = node.args[0];
                     assert(arg0.head.type === TypstTokenType.TEXT);
                     return new TexFuncCall(typst_token_to_tex(node.head), [new TexToken(TexTokenType.LITERAL, arg0.head.value).toNode()]);
                 }
@@ -693,12 +693,12 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                     const is_known_func = TEX_UNARY_COMMANDS.includes(func_name_tex.value.substring(1))
                                             || TEX_BINARY_COMMANDS.includes(func_name_tex.value.substring(1));
                     if (func_name_tex.value.length > 0 && is_known_func) {
-                        return new TexFuncCall(func_name_tex, node.args!.map(convert_typst_node_to_tex));
+                        return new TexFuncCall(func_name_tex, node.args.map(convert_typst_node_to_tex));
                     } else {
                         return new TexGroup([
                             typst_token_to_tex(node.head).toNode(),
                             new TexToken(TexTokenType.ELEMENT, '(').toNode(),
-                            ...array_intersperse(node.args!.map(convert_typst_node_to_tex), TEX_NODE_COMMA),
+                            ...array_intersperse(node.args.map(convert_typst_node_to_tex), TEX_NODE_COMMA),
                             new TexToken(TexTokenType.ELEMENT, ')').toNode()
                         ]);
                     }
@@ -784,7 +784,7 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
         }
         case 'fraction': {
             const node = abstractNode as TypstFraction;
-            const [numerator, denominator] = node.args!;
+            const [numerator, denominator] = node.args;
             const num_tex = convert_typst_node_to_tex(numerator);
             const den_tex = convert_typst_node_to_tex(denominator);
             return new TexFuncCall(new TexToken(TexTokenType.COMMAND, '\\frac'), [num_tex, den_tex]);
