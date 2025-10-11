@@ -18,7 +18,7 @@ export enum TexTokenType {
 }
 
 export class TexToken {
-    type: TexTokenType;
+    readonly type: TexTokenType;
     value: string;
 
     constructor(type: TexTokenType, value: string) {
@@ -69,7 +69,7 @@ type TexNodeType = 'terminal' | 'text' | 'ordgroup' | 'supsub'
 
 
 export abstract class TexNode {
-    type: TexNodeType;
+    readonly type: TexNodeType;
     head: TexToken;
 
     constructor(type: TexNodeType, head: TexToken | null) {

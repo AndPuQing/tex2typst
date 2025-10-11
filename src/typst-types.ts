@@ -14,7 +14,7 @@ export enum TypstTokenType {
 
 
 export class TypstToken {
-    type: TypstTokenType;
+    readonly type: TypstTokenType;
     value: string;
 
     constructor(type: TypstTokenType, content: string) {
