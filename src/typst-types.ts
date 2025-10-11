@@ -176,6 +176,7 @@ export class TypstLeftright extends TypstNode {
     public left: TypstToken | null;
     public right: TypstToken | null;
 
+    // head is either null or 'lr'
     constructor(head: TypstToken | null, data: TypstLeftRightData) {
         super('leftright', head);
         this.body = data.body;
