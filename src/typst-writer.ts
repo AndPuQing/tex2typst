@@ -1,5 +1,5 @@
 import { TexNode } from "./tex-types";
-import { TypstAlign, TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrix, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
+import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
 import { shorthandMap } from "./typst-shorthands";
@@ -228,26 +228,34 @@ export class TypstWriter {
                 this.appendWithBracketsIfNeeded(denominator);
                 break;
             }
-            case 'align': {
-                const node = abstractNode as TypstAlign;
+            case 'matrixLike': {
+                const node = abstractNode as TypstMatrixLike;
                 const matrix = node.matrix;
-                matrix.forEach((row, i) => {
-                    row.forEach((cell, j) => {
-                        if (j > 0) {
-                            this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '&'));
+
+                let cell_sep: TypstToken;
+                let row_sep: TypstToken;
+                if (node.head.eq(TypstMatrixLike.MAT)) {
+                    cell_sep = new TypstToken(TypstTokenType.ELEMENT, ',');
+                    row_sep = new TypstToken(TypstTokenType.ELEMENT, ';');
+                } else if (node.head.eq(TypstMatrixLike.CASES)) {
+                    cell_sep = new TypstToken(TypstTokenType.ELEMENT, '&');
+                    row_sep = new TypstToken(TypstTokenType.ELEMENT, ',');
+                } else { // head is null
+                    matrix.forEach((row, i) => {
+                        row.forEach((cell, j) => {
+                            if (j > 0) {
+                                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '&'));
+                            }
+                            this.serialize(cell);
+                        });
+                        if (i < matrix.length - 1) {
+                            this.queue.push(new TypstToken(TypstTokenType.SYMBOL, '\\'));
                         }
-                        this.serialize(cell);
                     });
-                    if (i < matrix.length - 1) {
-                        this.queue.push(new TypstToken(TypstTokenType.SYMBOL, '\\'));
-                    }
-                });
-                break;
-            }
-            case 'matrix': {
-                const node = abstractNode as TypstMatrix;
-                const matrix = node.matrix;
-                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'mat'));
+                    break;
+                }
+
+                this.queue.push(node.head);
                 this.insideFunctionDepth++;
                 this.queue.push(TYPST_LEFT_PARENTHESIS);
                 if (node.options) {
@@ -257,48 +265,12 @@ export class TypstWriter {
                 }
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
-                        // There is a leading & in row
-                        // if (cell.type === 'ordgroup' && cell.args.length === 0) {
-                        // this.queue.push(new TypstNode('atom', ','));
-                        // return;
-                        // }
-                        // if (j == 0 && cell.type === 'newline' && cell.content === '\n') {
-                        // return;
-                        // }
                         this.serialize(cell);
-                        // cell.args.forEach((n) => this.append(n));
                         if (j < row.length - 1) {
-                            this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+                            this.queue.push(cell_sep);
                         } else {
                             if (i < matrix.length - 1) {
-                                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ';'));
-                            }
-                        }
-                    });
-                });
-                this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                this.insideFunctionDepth--;
-                break;
-            }
-            case 'cases': {
-                const node = abstractNode as TypstCases;
-                const cases = node.matrix;
-                this.queue.push(new TypstToken(TypstTokenType.SYMBOL, 'cases'));
-                this.insideFunctionDepth++;
-                this.queue.push(TYPST_LEFT_PARENTHESIS);
-                if (node.options) {
-                    for (const [key, value] of Object.entries(node.options)) {
-                        this.queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}, `));
-                    }
-                }
-                cases.forEach((row, i) => {
-                    row.forEach((cell, j) => {
-                        this.serialize(cell);
-                        if (j < row.length - 1) {
-                            this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '&'));
-                        } else {
-                            if (i < cases.length - 1) {
-                                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+                                this.queue.push(row_sep);
                             }
                         }
                     });
@@ -313,7 +285,7 @@ export class TypstWriter {
     }
 
     private appendWithBracketsIfNeeded(node: TypstNode): boolean {
-        let need_to_wrap = ['group', 'supsub', 'align', 'fraction','empty'].includes(node.type);
+        let need_to_wrap = ['group', 'supsub', 'matrixLike', 'fraction','empty'].includes(node.type);
 
         if (node.type === 'group') {
             const group = node as TypstGroup;

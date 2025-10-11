@@ -2,7 +2,7 @@ import { TexNode, Tex2TypstOptions,
     TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
     TexText, TexBeginEnd, TexLeftRight,
     TexTerminal} from "./tex-types";
-import { TypstAlign, TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrix, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
+import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -381,10 +381,10 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
 
             if (node.head.value.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.
-                return new TypstAlign(data);
+                return new TypstMatrixLike(null, data);
             }
             if (node.head.value === 'cases') {
-                return new TypstCases(data);
+                return new TypstMatrixLike(TypstMatrixLike.CASES, data);
             }
             if (node.head.value === 'subarray') {
                 if (node.data) {
@@ -400,7 +400,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                             break;
                     }
                 }
-                return new TypstAlign(data);
+                return new TypstMatrixLike(null, data);
             }
             if (node.head.value === 'array') {
                 const np: TypstNamedParams = { 'delim': TYPST_NONE };
@@ -409,12 +409,12 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 const np_new = convert_tex_array_align_literal(node.data!.head.value);
                 Object.assign(np, np_new);
 
-                const res = new TypstMatrix(data);
+                const res = new TypstMatrixLike(TypstMatrixLike.MAT, data);
                 res.setOptions(np);
                 return res;
             }
             if (node.head.value.endsWith('matrix')) {
-                const res = new TypstMatrix(data);
+                const res = new TypstMatrixLike(TypstMatrixLike.MAT, data);
                 let delim: TypstToken;
                 switch (node.head.value) {
                     case 'matrix':
@@ -737,50 +737,51 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
             });
             return res;
         }
-        case 'matrix': {
-            const node = abstractNode as TypstMatrix;
+        case 'matrixLike': {
+            const node = abstractNode as TypstMatrixLike;
             const tex_matrix = node.matrix.map(row => row.map(convert_typst_node_to_tex));
-            let env_type = 'pmatrix'; // typst mat use delim:"(" by default
-            if (node.options) {
-                if ('delim' in node.options) {
-                    const delim = node.options.delim;
-                    switch (delim.head.value) {
-                        case '#none':
-                            env_type = 'matrix';
-                            break;
-                        case '[':
-                        case ']':
-                            env_type = 'bmatrix';
-                            break;
-                        case '(':
-                        case ')':
-                            env_type = 'pmatrix';
-                            break;
-                        case '{':
-                        case '}':
-                            env_type = 'Bmatrix';
-                            break;
-                        case '|':
-                            env_type = 'vmatrix';
-                            break;
-                        case 'bar':
-                        case 'bar.v':
-                            env_type = 'vmatrix';
-                            break;
-                        case 'bar.v.double':
-                            env_type = 'Vmatrix';
-                            break;
-                        default:
-                            throw new Error(`Unexpected delimiter ${delim.head}`);
+            if (node.head.eq(TypstMatrixLike.MAT)) {
+                let env_type = 'pmatrix'; // typst mat use delim:"(" by default
+                if (node.options) {
+                    if ('delim' in node.options) {
+                        const delim = node.options.delim;
+                        switch (delim.head.value) {
+                            case '#none':
+                                env_type = 'matrix';
+                                break;
+                            case '[':
+                            case ']':
+                                env_type = 'bmatrix';
+                                break;
+                            case '(':
+                            case ')':
+                                env_type = 'pmatrix';
+                                break;
+                            case '{':
+                            case '}':
+                                env_type = 'Bmatrix';
+                                break;
+                            case '|':
+                                env_type = 'vmatrix';
+                                break;
+                            case 'bar':
+                            case 'bar.v':
+                                env_type = 'vmatrix';
+                                break;
+                            case 'bar.v.double':
+                                env_type = 'Vmatrix';
+                                break;
+                            default:
+                                throw new Error(`Unexpected delimiter ${delim.head}`);
+                        }
                     }
                 }
+                return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, env_type), tex_matrix);
+            } else if (node.head.eq(TypstMatrixLike.CASES)) {
+                return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, 'cases'), tex_matrix);
+            } else {
+                throw new Error(`Unexpected matrix type ${node.head}`);
             }
-            return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, env_type), tex_matrix);
-        }
-        case 'cases': {
-            const node = abstractNode as TypstCases;
-            const tex_matrix = node.matrix.map(row => row.map(convert_typst_node_to_tex));
-            return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, 'cases'), tex_matrix);
         }
         case 'fraction': {
             const node = abstractNode as TypstFraction;

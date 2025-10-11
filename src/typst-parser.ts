@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrix, TypstNode, TypstSupsub } from "./typst-types";
+import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrixLike, TypstNode, TypstSupsub } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -319,13 +319,13 @@ export class TypstParser {
             if (start + 1 < tokens.length && tokens[start + 1].eq(LEFT_PARENTHESES)) {
                 if(firstToken.value === 'mat') {
                     const [matrix, named_params, newPos] = this.parseMatrix(tokens, start + 1, SEMICOLON, COMMA);
-                    const mat = new TypstMatrix(matrix);
+                    const mat = new TypstMatrixLike(firstToken, matrix);
                     mat.setOptions(named_params);
                     return [mat, newPos];
                 }
                 if(firstToken.value === 'cases') {
                     const [cases, named_params, newPos] = this.parseMatrix(tokens, start + 1, COMMA, CONTROL_AND);
-                    const casesNode = new TypstCases(cases);
+                    const casesNode = new TypstMatrixLike(firstToken, cases);
                     casesNode.setOptions(named_params);
                     return [casesNode, newPos];
                 }

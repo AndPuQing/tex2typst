@@ -66,7 +66,7 @@ export interface TypstLeftRightData {
  * group: `a + 1/3`
  * leftright: `(a + 1/3)`, `[a + 1/3)`, `lr(]sum_(x=1)^n])`
  */
-export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction'| 'leftright' | 'align' | 'matrix' | 'cases';
+export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction'| 'leftright' | 'matrixLike';
 
 export type TypstNamedParams = { [key: string]: TypstNode; };
 
@@ -189,41 +189,22 @@ export class TypstLeftright extends TypstNode {
     }
 }
 
-export class TypstAlign extends TypstNode {
+
+export class TypstMatrixLike extends TypstNode {
     public matrix: TypstNode[][];
 
-    constructor(data: TypstNode[][]) {
-        super('align', TypstToken.NONE);
+    // head is 'mat', 'cases' or null
+    constructor(head: TypstToken | null, data: TypstNode[][]) {
+        super('matrixLike', head);
         this.matrix = data;
     }
 
     public isOverHigh(): boolean {
         return true;
     }
+
+    static readonly MAT = new TypstToken(TypstTokenType.SYMBOL, 'mat');
+    static readonly CASES = new TypstToken(TypstTokenType.SYMBOL, 'cases');
 }
 
-export class TypstMatrix extends TypstNode {
-    public matrix: TypstNode[][];
-    constructor(data: TypstNode[][]) {
-        super('matrix', TypstToken.NONE);
-        this.matrix = data;
-    }
-
-    public isOverHigh(): boolean {
-        return true;
-    }
-}
-
-export class TypstCases extends TypstNode {
-    public matrix: TypstNode[][];
-
-    constructor(data: TypstNode[][]) {
-        super('cases', TypstToken.NONE);
-        this.matrix = data;
-    }
-
-    public isOverHigh(): boolean {
-        return true;
-    }
-}
 
