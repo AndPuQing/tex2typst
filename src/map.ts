@@ -257,7 +257,8 @@ const symbolMap = new Map<string, string>([
     ['xi', 'xi'], 
     ['yen', 'yen'], 
     ['zeta', 'zeta'], 
-
+    ['intop', 'limits(integral)'],
+    
     // extended
     ['mathscr', 'scr'],
     ['LaTeX', '#LaTeX'],
@@ -1094,4 +1095,5 @@ for(const [key, value] of texAliasMap) {
     }
 }
 
-export {symbolMap, reverseSymbolMap, texAliasMap, typstAliasMap};
+export { reverseSymbolMap, symbolMap, texAliasMap, typstAliasMap };
+
