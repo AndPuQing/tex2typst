@@ -75,6 +75,25 @@ describe('options', () => {
             expect(res).toEqual(expected);
         }
     });
+
+    it ('customTexMacros', function () {
+        const input = '\\myop y=\\sgn(x)';
+        const expected = 'op("myop") y = op("sgn")(x)';
+        const res = tex2typst(input, { customTexMacros: {
+            '\\myop': '\\operatorname{myop}',
+            '\\sgn': '\\operatorname{sgn}',
+        } });
+        expect(res).toEqual(expected);
+    });
+
+    it ('customTexMacros 2', function () {
+        const input = '123 \\foo 456';
+        const expected = '123 root(3, x) 456';
+        const res = tex2typst(input, { customTexMacros: {
+            '\\foo': '\\sqrt[3]{x}',
+        } });
+        expect(res).toEqual(expected);
+    });
 });
 
 

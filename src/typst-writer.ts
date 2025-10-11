@@ -240,29 +240,22 @@ export class TypstWriter {
                 } else if (node.head.eq(TypstMatrixLike.CASES)) {
                     cell_sep = new TypstToken(TypstTokenType.ELEMENT, '&');
                     row_sep = new TypstToken(TypstTokenType.ELEMENT, ',');
-                } else { // head is null
-                    matrix.forEach((row, i) => {
-                        row.forEach((cell, j) => {
-                            if (j > 0) {
-                                this.queue.push(new TypstToken(TypstTokenType.ELEMENT, '&'));
-                            }
-                            this.serialize(cell);
-                        });
-                        if (i < matrix.length - 1) {
-                            this.queue.push(new TypstToken(TypstTokenType.SYMBOL, '\\'));
-                        }
-                    });
-                    break;
+                } else if (node.head.eq(TypstToken.NONE)){ // head is null
+                    cell_sep = new TypstToken(TypstTokenType.ELEMENT, '&');
+                    row_sep = new TypstToken(TypstTokenType.SYMBOL, '\\');
                 }
 
-                this.queue.push(node.head);
-                this.insideFunctionDepth++;
-                this.queue.push(TYPST_LEFT_PARENTHESIS);
-                if (node.options) {
-                    for (const [key, value] of Object.entries(node.options)) {
-                        this.queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}, `));
+                if (!node.head.eq(TypstToken.NONE)) {
+                    this.queue.push(node.head);
+                    this.insideFunctionDepth++;
+                    this.queue.push(TYPST_LEFT_PARENTHESIS);
+                    if (node.options) {
+                        for (const [key, value] of Object.entries(node.options)) {
+                            this.queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}, `));
+                        }
                     }
                 }
+
                 matrix.forEach((row, i) => {
                     row.forEach((cell, j) => {
                         this.serialize(cell);
@@ -275,8 +268,11 @@ export class TypstWriter {
                         }
                     });
                 });
-                this.queue.push(TYPST_RIGHT_PARENTHESIS);
-                this.insideFunctionDepth--;
+
+                if (!node.head.eq(TypstToken.NONE)) {
+                    this.queue.push(TYPST_RIGHT_PARENTHESIS);
+                    this.insideFunctionDepth--;
+                }
                 break;
             }
             default:

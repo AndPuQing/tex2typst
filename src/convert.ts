@@ -377,30 +377,30 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
         }
         case 'beginend': {
             const node = abstractNode as TexBeginEnd;
-            const data = node.matrix.map((row) => row.map((n) => convert_tex_node_to_typst(n, options)));
+            const matrix = node.matrix.map((row) => row.map((n) => convert_tex_node_to_typst(n, options)));
 
             if (node.head.value.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.
-                return new TypstMatrixLike(null, data);
+                return new TypstMatrixLike(null, matrix);
             }
             if (node.head.value === 'cases') {
-                return new TypstMatrixLike(TypstMatrixLike.CASES, data);
+                return new TypstMatrixLike(TypstMatrixLike.CASES, matrix);
             }
             if (node.head.value === 'subarray') {
                 if (node.data) {
                     const align_node = node.data;
                     switch (align_node.head.value) {
                         case 'r':
-                            data.forEach(row => (row[0] as TypstGroup).items.push(new TypstToken(TypstTokenType.CONTROL, '&').toNode()));
+                            matrix.forEach(row => (row[0] as TypstGroup).items.push(new TypstToken(TypstTokenType.CONTROL, '&').toNode()));
                             break;
                         case 'l':
-                            data.forEach(row => (row[0] as TypstGroup).items.unshift(new TypstToken(TypstTokenType.CONTROL, '&').toNode()));
+                            matrix.forEach(row => (row[0] as TypstGroup).items.unshift(new TypstToken(TypstTokenType.CONTROL, '&').toNode()));
                             break;
                         default:
                             break;
                     }
                 }
-                return new TypstMatrixLike(null, data);
+                return new TypstMatrixLike(null, matrix);
             }
             if (node.head.value === 'array') {
                 const np: TypstNamedParams = { 'delim': TYPST_NONE };
@@ -409,12 +409,12 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 const np_new = convert_tex_array_align_literal(node.data!.head.value);
                 Object.assign(np, np_new);
 
-                const res = new TypstMatrixLike(TypstMatrixLike.MAT, data);
+                const res = new TypstMatrixLike(TypstMatrixLike.MAT, matrix);
                 res.setOptions(np);
                 return res;
             }
             if (node.head.value.endsWith('matrix')) {
-                const res = new TypstMatrixLike(TypstMatrixLike.MAT, data);
+                const res = new TypstMatrixLike(TypstMatrixLike.MAT, matrix);
                 let delim: TypstToken;
                 switch (node.head.value) {
                     case 'matrix':
