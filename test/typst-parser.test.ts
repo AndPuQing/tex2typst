@@ -69,7 +69,10 @@ describe('typst-parser', () => {
             new TypstTerminal(new TypstToken(TypstTokenType.SPACE, ' ')),
             new TypstLeftright(null, [
                 new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, 'x')),
-            ], { left: '(', right: ')' })
+            ], {
+                left: new TypstToken(TypstTokenType.ELEMENT, '('),
+                right: new TypstToken(TypstTokenType.ELEMENT, ')')
+            })
         ]));
     });
 

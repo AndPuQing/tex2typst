@@ -56,8 +56,8 @@ export interface TypstSupsubData {
 
 
 export interface TypstLeftRightData {
-    left: string | null;
-    right: string | null;
+    left: TypstToken | null;
+    right: TypstToken | null;
 }
 
 /**
@@ -166,8 +166,8 @@ export class TypstFraction extends TypstNode {
 
 
 export class TypstLeftright extends TypstNode {
-    public left: string | null;
-    public right: string | null;
+    public left: TypstToken | null;
+    public right: TypstToken | null;
 
     constructor(head: TypstToken | null, args: TypstNode[], data: TypstLeftRightData) {
         super('leftright', head, args);

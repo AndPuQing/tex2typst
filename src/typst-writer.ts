@@ -151,13 +151,13 @@ export class TypstWriter {
                     this.queue.push(TYPST_LEFT_PARENTHESIS);
                 }
                 if (left) {
-                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, left));
+                    this.queue.push(left);
                 }
                 for (const item of node.args!) {
                     this.serialize(item);
                 }
                 if (right) {
-                    this.queue.push(new TypstToken(TypstTokenType.ELEMENT, right));
+                    this.queue.push(right);
                 }
                 if (node.head.eq(LR)) {
                     this.queue.push(TYPST_RIGHT_PARENTHESIS);

@@ -272,25 +272,25 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
             // Note that: In lr(), if one side of delimiter doesn't present (i.e. derived from "\\left." or "\\right."),
             // "(", ")", "{", "[", should be escaped with "\" to be the other side of delimiter.
             // Simple "lr({ a+1/3)" doesn't compile in Typst.
-            const escape_curly_or_paren = function(s: string): string {
-                if (["(", ")", "{", "["].includes(s)) {
-                    return "\\" + s;
+            const escape_curly_or_paren = function(s: TypstToken): TypstToken {
+                if (["(", ")", "{", "["].includes(s.value)) {
+                    return new TypstToken(TypstTokenType.ELEMENT, "\\" + s.value);
                 } else {
                     return s;
                 }
             };
 
-            let left_delim: string | null;
-            let right_delim: string | null;
+            let left_delim: TypstToken | null;
+            let right_delim: TypstToken | null;
             if (typ_left.head.value === '.') {
                 left_delim = null;
-                right_delim = escape_curly_or_paren(typ_right.head.value);
+                right_delim = escape_curly_or_paren(typ_right.head);
             } else if (typ_right.head.value === '.') {
-                left_delim = escape_curly_or_paren(typ_left.head.value);
+                left_delim = escape_curly_or_paren(typ_left.head);
                 right_delim = null;
             } else {
-                left_delim = typ_left.head.value;
-                right_delim = typ_right.head.value;
+                left_delim = typ_left.head;
+                right_delim = typ_right.head;
             }
 
 
@@ -490,9 +490,9 @@ const TYPST_BINARY_FUNCTIONS: string[] = [
 ];
 */
 
-function apply_escape_if_needed(c: string) {
-    if (['{', '}', '%'].includes(c)) {
-        return '\\' + c;
+function apply_escape_if_needed(c: TexToken): TexToken {
+    if (['{', '}', '%'].includes(c.value)) {
+        return new TexToken(TexTokenType.ELEMENT, '\\' + c.value);
     }
     return c;
 }
@@ -513,8 +513,15 @@ function typst_token_to_tex(token: TypstToken): TexToken {
             }
             return new TexToken(TexTokenType.COMMAND, _typst_symbol_to_tex(token.value));
         }
-        case TypstTokenType.ELEMENT:
-            return new TexToken(TexTokenType.ELEMENT, token.value);
+        case TypstTokenType.ELEMENT: {
+            let value: string;
+            if (['{', '}', '%'].includes(token.value)) {
+                value = '\\' + token.value;
+            } else {
+                value = token.value;
+            }
+            return new TexToken(TexTokenType.ELEMENT, value);
+        }
         case TypstTokenType.LITERAL:
             return new TexToken(TexTokenType.LITERAL, token.value);
         case TypstTokenType.TEXT:
@@ -604,17 +611,17 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
         case 'leftright': {
             const node = abstractNode as TypstLeftright;
             const args = node.args!.map(convert_typst_node_to_tex);
-            let left = node.left? apply_escape_if_needed(node.left) : '.';
-            let right = node.right? apply_escape_if_needed(node.right) : '.';
+            let left = node.left? typst_token_to_tex(node.left) : new TexToken(TexTokenType.ELEMENT, '.');
+            let right = node.right? typst_token_to_tex(node.right) : new TexToken(TexTokenType.ELEMENT, '.');
             // const is_over_high = node.isOverHigh();
             // const left_delim = is_over_high ? '\\left(' : '(';
             // const right_delim = is_over_high ? '\\right)' : ')';
             if (node.isOverHigh()) {
-                left = '\\left' + left;
-                right = '\\right' + right;
+                left.value = '\\left' + left.value;
+                right.value = '\\right' + right.value;
             }
-            args.unshift(new TexToken(TexTokenType.ELEMENT, left).toNode());
-            args.push(new TexToken(TexTokenType.ELEMENT, right).toNode());
+            args.unshift(left.toNode());
+            args.push(right.toNode());
             // TODO: should be TeXLeftRight(...)
             // But currently writer will output `\left |` while people commonly prefer `\left|`.
             return new TexGroup(args);

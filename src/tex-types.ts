@@ -66,13 +66,6 @@ type TexNodeType = 'terminal' | 'text' | 'ordgroup' | 'supsub'
              | 'funcCall' | 'leftright' | 'beginend';
 
 
-function apply_escape_if_needed(c: string) {
-    if (['{', '}', '%'].includes(c)) {
-        return '\\' + c;
-    }
-    return c;
-}
-
 
 export abstract class TexNode {
     type: TexNodeType;
@@ -115,11 +108,7 @@ export class TexTerminal extends TexNode {
         switch(this.head.type) {
             case TexTokenType.EMPTY:
                 return [];
-            case TexTokenType.ELEMENT: {
-                let c = this.head.value;
-                c = apply_escape_if_needed(c);
-                return [new TexToken(TexTokenType.ELEMENT, c)];
-            }
+            case TexTokenType.ELEMENT:
             case TexTokenType.COMMAND:
             case TexTokenType.LITERAL:
             case TexTokenType.COMMENT:

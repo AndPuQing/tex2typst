@@ -133,8 +133,8 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
 function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
     nodes = trim_whitespace_around_operators(nodes);
 
-    const opening_bracket = new TypstToken(TypstTokenType.ELEMENT, '(').toNode();
-    const closing_bracket = new TypstToken(TypstTokenType.ELEMENT, ')').toNode();
+    const opening_bracket = LEFT_PARENTHESES.toNode();
+    const closing_bracket = RIGHT_PARENTHESES.toNode();
 
     const stack: TypstNode[] = [];
 
@@ -182,7 +182,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
         }
     }
     if(parenthesis) {
-        return new TypstLeftright(null, args, { left: '(', right: ')' } as TypstLeftRightData);
+        return new TypstLeftright(null, args, { left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
     } else {
         if(args.length === 1) {
             return args[0];
@@ -359,7 +359,7 @@ export class TypstParser {
             const inner_end = find_closing_delim(tokens, inner_start);
             const inner_args= this.parseArgumentsWithSeparator(tokens, inner_start + 1, inner_end, COMMA);
             return [
-                new TypstLeftright(lr_token, inner_args, {left: tokens[inner_start].value, right: tokens[inner_end].value}),
+                new TypstLeftright(lr_token, inner_args, {left: tokens[inner_start], right: tokens[inner_end]}),
                 end + 1,
             ];
         } else {
