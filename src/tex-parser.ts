@@ -4,10 +4,10 @@ import { array_find } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";
 
 const IGNORED_COMMANDS = [
-    'bigl', 'bigr',
-    'biggl', 'biggr',
-    'Bigl', 'Bigr',
-    'Biggl', 'Biggr',
+    'bigl', 'bigr', 'bigm',
+    'biggl', 'biggr', 'biggm',
+    'Bigl', 'Bigr', 'Bigm',
+    'Biggl', 'Biggr', 'Biggm'
 ];
 
 const EMPTY_NODE: TexNode = TexToken.EMPTY.toNode();

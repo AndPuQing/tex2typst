@@ -510,6 +510,7 @@ const map_from_official_docs: Map<string, string> = new Map([
     ['increment', 'laplace'],
     ['infty', 'infinity'],
     ['int', 'integral'],
+    ['intop', 'limits(integral)'],
     ['intbar', 'integral.dash'],
     ['intBar', 'integral.dash.double'],
     ['intcap', 'integral.inter'],
@@ -1094,4 +1095,5 @@ for(const [key, value] of texAliasMap) {
     }
 }
 
-export {symbolMap, reverseSymbolMap, texAliasMap, typstAliasMap};
+export { reverseSymbolMap, symbolMap, texAliasMap, typstAliasMap };
+
