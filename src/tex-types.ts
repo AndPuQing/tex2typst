@@ -55,6 +55,7 @@ export interface TexSupsubData {
 
 // \left. or \right. will be represented as null.
 export interface TexLeftRightData {
+    body: TexNode;
     left: TexToken | null;
     right: TexToken | null;
 }
@@ -241,11 +242,13 @@ export class TexFuncCall extends TexNode {
 }
 
 export class TexLeftRight extends TexNode {
+    public body: TexNode;
     public left: TexToken | null;
     public right: TexToken | null;
 
-    constructor(args: TexNode[], data: TexLeftRightData) {
-        super('leftright', TexToken.EMPTY, args);
+    constructor(data: TexLeftRightData) {
+        super('leftright', TexToken.EMPTY);
+        this.body = data.body;
         this.left = data.left;
         this.right = data.right;
     }
@@ -254,7 +257,7 @@ export class TexLeftRight extends TexNode {
         let tokens: TexToken[] = [];
         tokens.push(new TexToken(TexTokenType.COMMAND, '\\left'));
         tokens.push(new TexToken(TexTokenType.ELEMENT, this.left? this.left.value: '.'));
-        tokens = tokens.concat(this.args!.map((n) => n.serialize()).flat());
+        tokens = tokens.concat(this.body.serialize());
         tokens.push(new TexToken(TexTokenType.COMMAND, '\\right'));
         tokens.push(new TexToken(TexTokenType.ELEMENT, this.right? this.right.value: '.'));
         return tokens;

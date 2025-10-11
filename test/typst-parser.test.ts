@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize_typst } from '../src/typst-tokenizer';
 import { TypstParser } from '../src/typst-parser';
-import { TypstFuncCall, TypstGroup, TypstLeftright, TypstSupsub, TypstTerminal, TypstToken, TypstTokenType } from '../src/typst-types';
+import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstSupsub, TypstTerminal, TypstToken, TypstTokenType } from '../src/typst-types';
 
 
 describe('typst-tokenizer', () => {
@@ -67,9 +67,8 @@ describe('typst-parser', () => {
         expect(res).toEqual(new TypstGroup([
             new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, 'a')),
             new TypstTerminal(new TypstToken(TypstTokenType.SPACE, ' ')),
-            new TypstLeftright(null, [
-                new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, 'x')),
-            ], {
+            new TypstLeftright(null, {
+                body: new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, 'x')),
                 left: new TypstToken(TypstTokenType.ELEMENT, '('),
                 right: new TypstToken(TypstTokenType.ELEMENT, ')')
             })
@@ -118,6 +117,18 @@ describe('typst-parser', () => {
             new TypstTerminal(new TypstToken(TypstTokenType.SYMBOL, 'arrow.r')),
             new TypstTerminal(new TypstToken(TypstTokenType.SPACE, ' ')),
             new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, 'b')),
+        ]));
+    });
+
+    it('1/(2/3)', function () {
+        const tokens = tokenize_typst('1/(2/3)');
+        const res = parser.parse(tokens);
+        expect(res).toEqual(new TypstFraction([
+            new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, '1')),
+            new TypstFraction([
+                new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, '2')),
+                new TypstTerminal(new TypstToken(TypstTokenType.ELEMENT, '3')),
+            ]),
         ]));
     });
 });

@@ -168,10 +168,10 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
                 let numerator = args.pop()!;
 
                 if(denominator.type === 'leftright') {
-                    denominator = new TypstGroup(denominator.args!);
+                    denominator = (denominator as TypstLeftright).body;
                 }
                 if(numerator.type === 'leftright') {
-                    numerator = new TypstGroup(numerator.args!);
+                    numerator = (numerator as TypstLeftright).body;
                 }
 
                 args.push(new TypstFraction([numerator, denominator]));
@@ -181,14 +181,11 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
             }
         }
     }
+    const body = args.length === 1? args[0]: new TypstGroup(args);
     if(parenthesis) {
-        return new TypstLeftright(null, args, { left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
+        return new TypstLeftright(null, { body: body, left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
     } else {
-        if(args.length === 1) {
-            return args[0];
-        } else {
-            return new TypstGroup(args);
-        }
+        return body;
     }
 }
 
@@ -359,13 +356,13 @@ export class TypstParser {
             const inner_end = find_closing_delim(tokens, inner_start);
             const inner_args= this.parseArgumentsWithSeparator(tokens, inner_start + 1, inner_end, COMMA);
             return [
-                new TypstLeftright(lr_token, inner_args, {left: tokens[inner_start], right: tokens[inner_end]}),
+                new TypstLeftright(lr_token, { body: new TypstGroup(inner_args), left: tokens[inner_start], right: tokens[inner_end]}),
                 end + 1,
             ];
         } else {
             const [args, end] = this.parseArguments(tokens, start);
             return [
-                new TypstLeftright(lr_token, args, { left: null, right: null }),
+                new TypstLeftright(lr_token, { body: new TypstGroup(args), left: null, right: null }),
                 end,
             ];
         }

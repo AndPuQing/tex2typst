@@ -153,9 +153,7 @@ export class TypstWriter {
                 if (left) {
                     this.queue.push(left);
                 }
-                for (const item of node.args!) {
-                    this.serialize(item);
-                }
+                this.serialize(node.body);
                 if (right) {
                     this.queue.push(right);
                 }

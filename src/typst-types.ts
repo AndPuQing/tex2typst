@@ -56,6 +56,7 @@ export interface TypstSupsubData {
 
 
 export interface TypstLeftRightData {
+    body: TypstNode;
     left: TypstToken | null;
     right: TypstToken | null;
 }
@@ -166,17 +167,19 @@ export class TypstFraction extends TypstNode {
 
 
 export class TypstLeftright extends TypstNode {
+    public body: TypstNode;
     public left: TypstToken | null;
     public right: TypstToken | null;
 
-    constructor(head: TypstToken | null, args: TypstNode[], data: TypstLeftRightData) {
-        super('leftright', head, args);
+    constructor(head: TypstToken | null, data: TypstLeftRightData) {
+        super('leftright', head);
+        this.body = data.body;
         this.left = data.left;
         this.right = data.right;
     }
 
     public isOverHigh(): boolean {
-        return this.args!.some((n) => n.isOverHigh());
+        return this.body.isOverHigh();
     }
 }
 

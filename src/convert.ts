@@ -239,11 +239,8 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
         case 'leftright': {
             const node = abstractNode as TexLeftRight;
             const { left, right } = node;
-            const [_body] = node.args!;
-            // const [typ_left, typ_body, typ_right] = node.args!.map((n) => convert_tex_node_to_typst(n, options));
-            const typ_body = convert_tex_node_to_typst(_body, options);
 
-
+            const typ_body = convert_tex_node_to_typst(node.body, options);
 
             if (options.optimize) {
                 // optimization off: "lr(bar.v.double a + 1/2 bar.v.double)"
@@ -291,8 +288,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
 
             return new TypstLeftright(
                 new TypstToken(TypstTokenType.SYMBOL, 'lr'),
-                [typ_body],
-                { left: typ_left, right: typ_right }
+                { body: typ_body, left: typ_left, right: typ_right }
             );
         }
         case 'funcCall': {
@@ -605,7 +601,7 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
         }
         case 'leftright': {
             const node = abstractNode as TypstLeftright;
-            const args = node.args!.map(convert_typst_node_to_tex);
+            const body = convert_typst_node_to_tex(node.body);
             let left = node.left? typst_token_to_tex(node.left) : new TexToken(TexTokenType.ELEMENT, '.');
             let right = node.right? typst_token_to_tex(node.right) : new TexToken(TexTokenType.ELEMENT, '.');
             // const is_over_high = node.isOverHigh();
@@ -615,11 +611,9 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 left.value = '\\left' + left.value;
                 right.value = '\\right' + right.value;
             }
-            args.unshift(left.toNode());
-            args.push(right.toNode());
             // TODO: should be TeXLeftRight(...)
             // But currently writer will output `\left |` while people commonly prefer `\left|`.
-            return new TexGroup(args);
+            return new TexGroup([left.toNode(), body, right.toNode()]);
         }
         case 'funcCall': {
             const node = abstractNode as TypstFuncCall;
@@ -629,14 +623,15 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
                 case 'norm': {
                     const arg0 = node.args![0];
-                    const args = [ convert_typst_node_to_tex(arg0) ];
+                    const body = convert_typst_node_to_tex(arg0);
                     if (node.isOverHigh()) {
-                        return new TexLeftRight(args, {
+                        return new TexLeftRight({
+                            body: body,
                             left: new TexToken(TexTokenType.COMMAND, "\\|"),
                             right: new TexToken(TexTokenType.COMMAND, "\\|")
                         });
                     } else {
-                        return new TexGroup(args);
+                        return body;
                     }
                 }
                 // special hook for floor, ceil
@@ -649,16 +644,17 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                     const left = "\\l" + node.head.value;
                     const right = "\\r" + node.head.value;
                     const arg0 = node.args![0];
-                    const typ_arg0 = convert_typst_node_to_tex(arg0);
+                    const body = convert_typst_node_to_tex(arg0);
                     const left_node = new TexToken(TexTokenType.COMMAND, left);
                     const right_node = new TexToken(TexTokenType.COMMAND, right);
                     if (node.isOverHigh()) {
-                        return new TexLeftRight([typ_arg0], {
+                        return new TexLeftRight({
+                            body: body,
                             left: left_node,
                             right: right_node
                         });
                     } else {
-                        return new TexGroup([left_node.toNode(), typ_arg0, right_node.toNode()]);
+                        return new TexGroup([left_node.toNode(), body, right_node.toNode()]);
                     }
                 }
                 // special hook for root
