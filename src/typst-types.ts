@@ -65,8 +65,9 @@ export interface TypstLeftRightData {
  * fraction: `1/2`, `(x + y)/2`, `(1+x)/(1-x)`
  * group: `a + 1/3`
  * leftright: `(a + 1/3)`, `[a + 1/3)`, `lr(]sum_(x=1)^n])`
+ * markupFunc: `#heading(level: 2)[something]`, `#text(fill: red)[some text and math $x + y$]`
  */
-export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction'| 'leftright' | 'matrixLike';
+export type TypstNodeType = 'terminal' | 'group' | 'supsub' | 'funcCall' | 'fraction'| 'leftright' | 'matrixLike'| 'markupFunc';
 
 export type TypstNamedParams = { [key: string]: TypstNode; };
 
@@ -207,4 +208,22 @@ export class TypstMatrixLike extends TypstNode {
     static readonly CASES = new TypstToken(TypstTokenType.SYMBOL, 'cases');
 }
 
+export class TypstMarkupFunc extends TypstNode {
+    /*
+    In idealized situations, for `#heading([some text and math $x + y$ example])`,
+    fragments would be [TypstMarkup{"some text and math "}, TypstNode{"x + y"}, TypstMarkup{" example"}]
+    At present, we haven't implemented anything about TypstMarkup.
+    So only pattens like `#heading(level: 2)[$x+y$]`, `#text(fill: red)[$x + y$]` are supported.
+    Therefore, fragments is always a list containing exactly 1 TypstNode in well-working situations.
+    */
+    public fragments: TypstNode[];
 
+    constructor(head: TypstToken, fragments: TypstNode[]) {
+        super('markupFunc', head);
+        this.fragments = fragments;
+    }
+
+    public isOverHigh(): boolean {
+        return this.fragments.some((n) => n.isOverHigh());
+    }
+}

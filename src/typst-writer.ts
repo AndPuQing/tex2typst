@@ -1,5 +1,5 @@
 import { TexNode } from "./tex-types";
-import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
+import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMarkupFunc, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
 import { shorthandMap } from "./typst-shorthands";
@@ -54,7 +54,7 @@ export class TypstWriter {
     }
 
 
-    private writeBuffer(token: TypstToken) {
+    private writeBuffer(previousToken: TypstToken | null, token: TypstToken) {
         const str = token.toString();
 
         if (str === '') {
@@ -84,8 +84,13 @@ export class TypstWriter {
         no_need_space ||= this.buffer.endsWith('&') && str === '=';
         // before or after a slash e.g. "a/b" instead of "a / b"
         no_need_space ||= this.buffer.endsWith('/') || str === '/';
+        // "[$x + y$]" instead of "[ $ x + y $ ]"
+        no_need_space ||= token.type === TypstTokenType.LITERAL;
         // other cases
         no_need_space ||= /[\s_^{\(]$/.test(this.buffer);
+        if (previousToken !== null) {
+            no_need_space ||= previousToken.type === TypstTokenType.LITERAL;
+        }
         if (!no_need_space) {
             this.buffer += ' ';
         }
@@ -275,6 +280,32 @@ export class TypstWriter {
                 }
                 break;
             }
+            case 'markupFunc': {
+                const node = abstractNode as TypstMarkupFunc;
+                this.queue.push(node.head);
+                this.queue.push(TYPST_LEFT_PARENTHESIS);
+                if (node.options) {
+                    const entries = Object.entries(node.options);
+                    for (let i = 0; i < entries.length; i++) {
+                        const [key, value] = entries[i];
+                        this.queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}`));
+                        if (i < entries.length - 1) {
+                            this.queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+                        }
+                    }
+                }
+                this.queue.push(TYPST_RIGHT_PARENTHESIS);
+
+                this.queue.push(new TypstToken(TypstTokenType.LITERAL, '['));
+                for (const frag of node.fragments) {
+                    this.queue.push(new TypstToken(TypstTokenType.LITERAL, '$'));
+                    this.serialize(frag);
+                    this.queue.push(new TypstToken(TypstTokenType.LITERAL, '$'));
+                }
+                this.queue.push(new TypstToken(TypstTokenType.LITERAL, ']'));
+
+                break;
+            }
             default:
                 throw new TypstWriterError(`Unimplemented node type to append: ${abstractNode.type}`, abstractNode);
         }
@@ -328,9 +359,11 @@ export class TypstWriter {
 
         this.queue = this.queue.filter((token) => !token.eq(dummy_token));
 
-        this.queue.forEach((token) => {
-            this.writeBuffer(token)
-        });
+        for(let i = 0; i < this.queue.length; i++) {
+            let token = this.queue[i];
+            let previous_token = i === 0 ? null : this.queue[i - 1];
+            this.writeBuffer(previous_token, token);
+        }
 
         this.queue = [];
     }

@@ -2,7 +2,7 @@ import { TexNode, Tex2TypstOptions,
     TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
     TexText, TexBeginEnd, TexLeftRight,
     TexTerminal} from "./tex-types";
-import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
+import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMarkupFunc, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -339,6 +339,16 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 return new TypstFuncCall(new TypstToken(TypstTokenType.SYMBOL, 'op'), [new TypstToken(TypstTokenType.TEXT, arg0.head.value).toNode()]);
             }
 
+            // \textcolor{red}{2y} -> #text(fill: red)[$2y$]
+            if (node.head.value === '\\textcolor') {
+                const res = new TypstMarkupFunc(
+                    new TypstToken(TypstTokenType.SYMBOL, `#text`),
+                    [convert_tex_node_to_typst(node.args[1], options)]
+                );
+                res.setOptions({ fill: arg0 });
+                return res;
+            }
+
             // \substack{a \\ b} -> `a \ b`
             // as in translation from \sum_{\substack{a \\ b}} to sum_(a \ b)
             if (node.head.value === '\\substack') {
@@ -358,6 +368,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                     return new TypstFraction(node.args.map((n) => convert_tex_node_to_typst(n, options)));
                 }
             }
+
             if(options.optimize) {
                 // \mathbb{R} -> RR
                 if (node.head.value === '\\mathbb' && /^\\mathbb{[A-Z]}$/.test(node.toString())) {

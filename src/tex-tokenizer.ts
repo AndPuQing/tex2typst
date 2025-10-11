@@ -46,6 +46,7 @@ export const TEX_BINARY_COMMANDS = [
     'tbinom',
     'overset',
     'underset',
+    'textcolor',
 ]
 
 
@@ -58,7 +59,7 @@ function unescape(str: string): string {
 }
 
 const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[]>([
-    // math `\begin{array}{cc}`
+    // match `\begin{array}{cc}`
     [
         String.raw`\\begin{(array|subarry)}{(.+?)}`, (s) => {
             const match = s.reMatchArray()!;
@@ -74,7 +75,7 @@ const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[
         }
     ],
     [
-        String.raw`\\(text|operatorname|begin|end|hspace|array){(.+?)}`, (s) => {
+        String.raw`\\(text|operatorname|textcolor|begin|end|hspace|array){(.+?)}`, (s) => {
             const match = s.reMatchArray()!;
             return [
                 new TexToken(TexTokenType.COMMAND, '\\' + match[1]),
