@@ -171,3 +171,6 @@ cases:
   # - title: leftright {}
   #   tex: \left\{a + \frac{1}{3} \right\}
   #   typst: "{a + 1/3}"
+  - title: textcolor
+    tex: x = \textcolor{red}{a + y}
+    typst: "x = #text(fill: red)[$a + y$]"

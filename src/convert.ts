@@ -716,6 +716,24 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 }
             }
         }
+        case 'markupFunc': {
+            const node = abstractNode as TypstMarkupFunc;
+            switch (node.head.value) {
+                case '#text': {
+                    // `\textcolor{red}{2y}` <- `#text(fill: red)[$2 y$]`
+                    if (node.options && node.options['fill']) {
+                        const color = node.options['fill'];
+                        return new TexFuncCall(
+                            new TexToken(TexTokenType.COMMAND, '\\textcolor'),
+                            [convert_typst_node_to_tex(color), convert_typst_node_to_tex(node.fragments[0])]
+                        )
+                    }
+                }
+                case '#heading':
+                default:
+                    throw new Error(`Unimplemented markup function: ${node.head.value}`);
+            }
+        }
         case 'supsub': {
             const node = abstractNode as TypstSupsub;
             const { base, sup, sub } = node;

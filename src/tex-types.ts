@@ -339,6 +339,8 @@ export function writeTexTokenBuffer(buffer: string, token: TexToken): string {
         no_need_space ||= /[\(\[{]\s*(-|\+)$/.test(buffer) || buffer === '-' || buffer === '+';
         // "&=" instead of "& ="
         no_need_space ||= buffer.endsWith('&') && str === '=';
+        // "2y" instead of "2 y"
+        no_need_space ||= /\d$/.test(buffer) && /^[a-zA-Z]$/.test(str);
     }
 
     if (!no_need_space) {

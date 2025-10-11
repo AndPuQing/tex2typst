@@ -69,10 +69,10 @@ const rules_map = new Map<string, (a: Scanner<TypstToken>) => TypstToken | Typst
             new TypstToken(TypstTokenType.ELEMENT, ")"),
         ];
     }],
-    [String.raw`[a-zA-Z\.]+`, (s) => {
+    [String.raw`#none`, (s) => new TypstToken(TypstTokenType.NONE, s.text()!)],
+    [String.raw`#?[a-zA-Z\.]+`, (s) => {
         return new TypstToken(s.text()!.length === 1? TypstTokenType.ELEMENT: TypstTokenType.SYMBOL, s.text()!);
     }],
-    [String.raw`#none`, (s) => new TypstToken(TypstTokenType.NONE, s.text()!)],
     [String.raw`.`, (s) => new TypstToken(TypstTokenType.ELEMENT, s.text()!)],
 ]);
 

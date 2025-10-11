@@ -1,6 +1,6 @@
 
 import { array_find } from "./generic";
-import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMatrixLike, TypstNode, TypstSupsub } from "./typst-types";
+import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstLeftRightData, TypstMarkupFunc, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
@@ -18,7 +18,6 @@ function eat_primes(tokens: TypstToken[], start: number): number {
     }
     return pos - start;
 }
-
 
 function _find_closing_match(tokens: TypstToken[], start: number,
         leftBrackets: TypstToken[], rightBrackets: TypstToken[]): number {
@@ -189,6 +188,18 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
     }
 }
 
+function parse_named_params(groups: TypstGroup[]): TypstNamedParams {
+    const COLON = new TypstToken(TypstTokenType.ELEMENT, ':').toNode();
+
+    const np: TypstNamedParams = {};
+    for (const group of groups) {
+        assert(group.items.length == 3);
+        assert(group.items[1].eq(COLON));
+        np[group.items[0].toString()] = new TypstTerminal(new TypstToken(TypstTokenType.LITERAL, group.items[2].toString()));
+    }
+    return np;
+}
+
 export class TypstParserError extends Error {
     constructor(message: string) {
         super(message);
@@ -331,6 +342,18 @@ export class TypstParser {
                 }
                 if (firstToken.value === 'lr') {
                     return this.parseLrArguments(tokens, start + 1);
+                }
+                if (['#heading', '#text'].includes(firstToken.value)) {
+                    const [args, newPos] = this.parseArguments(tokens, start + 1);
+                    const named_params = parse_named_params(args as TypstGroup[]);
+                    assert(tokens[newPos].eq(LEFT_BRACKET));
+                    const DOLLAR = new TypstToken(TypstTokenType.ELEMENT, '$');
+                    const end = _find_closing_match(tokens, newPos + 1, [DOLLAR], [DOLLAR]);
+                    const [group, _] = this.parseGroup(tokens, newPos + 2, end);
+                    assert(tokens[end + 1].eq(RIGHT_BRACKET));
+                    const markup_func = new TypstMarkupFunc(firstToken, [group]);
+                    markup_func.setOptions(named_params);
+                    return [markup_func, end + 2];
                 }
                 const [args, newPos] = this.parseArguments(tokens, start + 1);
                 const func_call = new TypstFuncCall(firstToken, args);

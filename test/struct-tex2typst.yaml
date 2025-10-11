@@ -425,6 +425,3 @@ cases:
   - title: subarray-with-rr &
     tex: \sum_{\begin{subarray}{rr} a & b \\ c & d \end{subarray}} P(i, j)
     typst: sum_(a & b \ c & d) P(i, j)
-  - title: textcolor
-    tex: x = \textcolor{red}{2y}
-    typst: "x = #text(fill: red)[$2 y$]"
