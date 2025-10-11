@@ -46,6 +46,7 @@ export class TypstToken {
     }
 
     public static readonly NONE = new TypstToken(TypstTokenType.NONE, '#none');
+    public static readonly EMPTY = new TypstToken(TypstTokenType.ELEMENT, '');
 }
 
 export interface TypstSupsubData {

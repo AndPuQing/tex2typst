@@ -402,10 +402,10 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                     const align_node = node.data;
                     switch (align_node.head.value) {
                         case 'r':
-                            matrix.forEach(row => (row[0] as TypstGroup).items.push(new TypstToken(TypstTokenType.CONTROL, '&').toNode()));
+                            matrix.forEach(row => row.push(TypstToken.EMPTY.toNode()));
                             break;
                         case 'l':
-                            matrix.forEach(row => (row[0] as TypstGroup).items.unshift(new TypstToken(TypstTokenType.CONTROL, '&').toNode()));
+                            matrix.forEach(row => row.unshift(TypstToken.EMPTY.toNode()));
                             break;
                         default:
                             break;
