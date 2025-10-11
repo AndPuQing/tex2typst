@@ -53,9 +53,6 @@ export interface TexSupsubData {
     sub: TexNode | null;
 }
 
-export type TexSqrtData = TexNode;
-
-export type TexArrayData = TexNode[][];
 
 /**
  * funcCall: LaTeX macro with 1 or more parameters. e.g. \sqrt{3} \log{x} \exp{x} \frac{1}{2}
@@ -77,17 +74,11 @@ export abstract class TexNode {
     type: TexNodeType;
     head: TexToken;
     args?: TexNode[];
-    // For type="sqrt", it's additional argument wrapped square bracket. e.g. 3 in \sqrt[3]{x}
-    // For type="supsub", it's base, sup, and sub.
-    // For type="beginend", it's the 2-dimensional matrix.
-    data?: TexSqrtData | TexSupsubData | TexArrayData;
 
-    constructor(type: TexNodeType, head: TexToken | null, args?: TexNode[],
-            data?: TexSqrtData | TexSupsubData | TexArrayData) {
+    constructor(type: TexNodeType, head: TexToken | null, args?: TexNode[]) {
         this.type = type;
         this.head = head ? head : TexToken.EMPTY;
         this.args = args;
-        this.data = data;
     }
 
     // Note that this is only shallow equality.
@@ -174,13 +165,20 @@ export class TexGroup extends TexNode {
 }
 
 export class TexSupSub extends TexNode {
+    public base: TexNode;
+    public sup: TexNode | null;
+    public sub: TexNode | null;
+
     constructor(data: TexSupsubData) {
-        super('supsub', TexToken.EMPTY, [], data);
+        super('supsub', TexToken.EMPTY, []);
+        this.base = data.base;
+        this.sup = data.sup;
+        this.sub = data.sub;
     }
 
     public serialize(): TexToken[] {
         let tokens: TexToken[] = [];
-        const { base, sup, sub } = this.data! as TexSupsubData;
+        const { base, sup, sub } = this;
         tokens = tokens.concat(base.serialize());
 
         // TODO: should return true for more cases e.g. a_{\theta} instead of a_\theta
@@ -220,8 +218,12 @@ export class TexSupSub extends TexNode {
 }
 
 export class TexFuncCall extends TexNode {
-    constructor(head: TexToken, args: TexNode[], data?: TexSqrtData) {
-        super('funcCall', head, args, data);
+    // For type="sqrt", it's additional argument wrapped square bracket. e.g. 3 in \sqrt[3]{x}
+    public data: TexNode | null;
+
+    constructor(head: TexToken, args: TexNode[], data: TexNode | null = null) {
+        super('funcCall', head, args);
+        this.data = data;
     }
 
     public serialize(): TexToken[] {
@@ -231,7 +233,7 @@ export class TexFuncCall extends TexNode {
         // special hook for \sqrt
         if (this.head.value === '\\sqrt' && this.data) {
             tokens.push(new TexToken(TexTokenType.ELEMENT, '['));
-            tokens = tokens.concat((this.data! as TexSqrtData).serialize());
+            tokens = tokens.concat(this.data.serialize());
             tokens.push(new TexToken(TexTokenType.ELEMENT, ']'));
         }
 
@@ -260,14 +262,17 @@ export class TexLeftRight extends TexNode {
 }
 
 export class TexBeginEnd extends TexNode {
-    constructor(head: TexToken, args: TexNode[], data: TexArrayData) {
+    public matrix: TexNode[][];
+
+    constructor(head: TexToken, args: TexNode[], data: TexNode[][]) {
         assert(head.type === TexTokenType.LITERAL);
-        super('beginend', head, args, data);
+        super('beginend', head, args);
+        this.matrix = data;
     }
 
     public serialize(): TexToken[] {
         let tokens: TexToken[] = [];
-        const matrix = this.data as TexArrayData;
+        const matrix = this.matrix;
         // tokens.push(new TexToken(TexTokenType.COMMAND, `\\begin{${this.content}}`));
         tokens.push(new TexToken(TexTokenType.COMMAND, '\\begin'));
         tokens.push(new TexToken(TexTokenType.ELEMENT, '{'));

@@ -1,6 +1,7 @@
-import { TexNode, TexSupsubData, TexSqrtData, Tex2TypstOptions, TexArrayData,
+import { TexNode, Tex2TypstOptions,
     TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
-    TexText, TexBeginEnd, TexLeftRight } from "./tex-types";
+    TexText, TexBeginEnd, TexLeftRight,
+    TexTerminal} from "./tex-types";
 import { TypstAlign, TypstCases, TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMatrix, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";
@@ -189,11 +190,14 @@ function convert_tex_array_align_literal(alignLiteral: string): TypstNamedParams
 }
 
 
-export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptions = {}): TypstNode {
-    switch (node.type) {
-        case 'terminal':
+export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2TypstOptions = {}): TypstNode {
+    switch (abstractNode.type) {
+        case 'terminal': {
+            const node = abstractNode as TexTerminal;
             return tex_token_to_typst(node.head, options).toNode();
+        }
         case 'text': {
+            const node = abstractNode as TexText;
             if ((/[^\x00-\x7F]+/).test(node.head.value) && options.nonAsciiWrapper !== "") {
                 return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, options.nonAsciiWrapper!),
@@ -203,11 +207,13 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             return new TypstToken(TypstTokenType.TEXT, node.head.value).toNode();
         }
         case 'ordgroup':
+            const node = abstractNode as TexGroup;
             return new TypstGroup(
                 node.args!.map((n) => convert_tex_node_to_typst(n, options))
             );
         case 'supsub': {
-            let { base, sup, sub } = node.data as TexSupsubData;
+            const node = abstractNode as TexSupSub;
+            let { base, sup, sub } = node;
 
             // special hook for overbrace
             if (base && base.type === 'funcCall' && base.head.value === '\\overbrace' && sup) {
@@ -224,21 +230,14 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
 
             const data: TypstSupsubData = {
                 base: convert_tex_node_to_typst(base, options),
-                sup: null,
-                sub: null,
+                sup: sup? convert_tex_node_to_typst(sup, options) : null,
+                sub: sub? convert_tex_node_to_typst(sub, options) : null,
             };
-
-            if (sup) {
-                data.sup = convert_tex_node_to_typst(sup, options);
-            }
-
-            if (sub) {
-                data.sub = convert_tex_node_to_typst(sub, options);
-            }
 
             return new TypstSupsub(data);
         }
         case 'leftright': {
+            const node = abstractNode as TexLeftRight;
             const [left, _body, right] = node.args!;
             const [typ_left, typ_body, typ_right] = node.args!.map((n) => convert_tex_node_to_typst(n, options));
 
@@ -294,10 +293,11 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             );
         }
         case 'funcCall': {
+            const node = abstractNode as TexFuncCall;
             const arg0 = convert_tex_node_to_typst(node.args![0], options);
             // \sqrt[3]{x} -> root(3, x)
             if (node.head.value === '\\sqrt' && node.data) {
-                const data = convert_tex_node_to_typst(node.data as TexSqrtData, options); // the number of times to take the root
+                const data = convert_tex_node_to_typst(node.data, options); // the number of times to take the root
                 return new TypstFuncCall(
                     new TypstToken(TypstTokenType.SYMBOL, 'root'),
                     [data, arg0]
@@ -376,8 +376,8 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             );
         }
         case 'beginend': {
-            const matrix = node.data as TexNode[][];
-            const data = matrix.map((row) => row.map((n) => convert_tex_node_to_typst(n, options)));
+            const node = abstractNode as TexBeginEnd;
+            const data = node.matrix.map((row) => row.map((n) => convert_tex_node_to_typst(n, options)));
 
             if (node.head.value.startsWith('align')) {
                 // align, align*, alignat, alignat*, aligned, etc.
@@ -444,7 +444,7 @@ export function convert_tex_node_to_typst(node: TexNode, options: Tex2TypstOptio
             throw new ConverterError(`Unimplemented beginend: ${node.head}`, node);
         }
         default:
-            throw new ConverterError(`Unimplemented node type: ${node.type}`, node);
+            throw new ConverterError(`Unimplemented node type: ${abstractNode.type}`, abstractNode);
     }
 }
 
@@ -654,7 +654,7 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 // special hook for root
                 case 'root': {
                     const [degree, radicand] = node.args!;
-                    const data: TexSqrtData = convert_typst_node_to_tex(degree);
+                    const data = convert_typst_node_to_tex(degree);
                     return new TexFuncCall(new TexToken(TexTokenType.COMMAND, '\\sqrt'), [convert_typst_node_to_tex(radicand)], data);
                 }
                 // special hook for overbrace and underbrace
@@ -669,7 +669,7 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 // special hook for vec
                 // "vec(a, b, c)" -> "\begin{pmatrix}a\\ b\\ c\end{pmatrix}"
                 case 'vec': {
-                    const tex_data = node.args!.map(convert_typst_node_to_tex).map((n) => [n]) as TexArrayData;
+                    const tex_data = node.args!.map(convert_typst_node_to_tex).map((n) => [n]);
                     return new TexBeginEnd(new TexToken(TexTokenType.LITERAL, 'pmatrix'), [], tex_data);
                 }
                 // special hook for op
