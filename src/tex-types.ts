@@ -53,6 +53,10 @@ export interface TexSupsubData {
     sub: TexNode | null;
 }
 
+export interface TexLeftRightData {
+    left: TexNode;
+    right: TexNode;
+}
 
 /**
  * funcCall: LaTeX macro with 1 or more parameters. e.g. \sqrt{3} \log{x} \exp{x} \frac{1}{2}
@@ -248,15 +252,26 @@ export class TexFuncCall extends TexNode {
 }
 
 export class TexLeftRight extends TexNode {
-    constructor(args: TexNode[]) {
+    public left: TexNode | null;
+    public right: TexNode | null;
+
+    constructor(args: TexNode[], data: TexLeftRightData) {
         super('leftright', TexToken.EMPTY, args);
+        this.left = data.left;
+        this.right = data.right;
     }
 
     public serialize(): TexToken[] {
-        let tokens = this.args!.map((n) => n.serialize()).flat();
-        tokens.splice(0, 0, new TexToken(TexTokenType.COMMAND, '\\left'));
-        tokens.splice(tokens.length - 1, 0, new TexToken(TexTokenType.COMMAND, '\\right'));
-
+        let tokens: TexToken[] = [];
+        tokens.push(new TexToken(TexTokenType.COMMAND, '\\left'));
+        if (this.left) {
+            tokens.push(new TexToken(TexTokenType.ELEMENT, this.left.head.value));
+        }
+        tokens = tokens.concat(this.args!.map((n) => n.serialize()).flat());
+        tokens.push(new TexToken(TexTokenType.COMMAND, '\\right'));
+        if (this.right) {
+            tokens.push(new TexToken(TexTokenType.ELEMENT, this.right.head.value));
+        }
         return tokens;
     }
 }

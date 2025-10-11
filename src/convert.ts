@@ -238,8 +238,16 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
         }
         case 'leftright': {
             const node = abstractNode as TexLeftRight;
-            const [left, _body, right] = node.args!;
-            const [typ_left, typ_body, typ_right] = node.args!.map((n) => convert_tex_node_to_typst(n, options));
+            const { left, right } = node;
+            const [_body] = node.args!;
+            // const [typ_left, typ_body, typ_right] = node.args!.map((n) => convert_tex_node_to_typst(n, options));
+            const typ_body = convert_tex_node_to_typst(_body, options);
+            if (left === null || right === null) {
+                throw Error("Unimplemented");
+            }
+            const typ_left = convert_tex_node_to_typst(left, options);
+            const typ_right = convert_tex_node_to_typst(right, options);
+
 
             if (options.optimize) {
                 // optimization off: "lr(bar.v.double a + 1/2 bar.v.double)"
@@ -619,13 +627,12 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                 // `\left\| a + \frac{1}{3} \right\|` <- `norm(a + 1/3)`
                 case 'norm': {
                     const arg0 = node.args![0];
-                    const args = [
-                        new TexToken(TexTokenType.COMMAND, "\\|").toNode(),
-                        convert_typst_node_to_tex(arg0),
-                        new TexToken(TexTokenType.COMMAND, "\\|").toNode()
-                    ];
+                    const args = [ convert_typst_node_to_tex(arg0) ];
                     if (node.isOverHigh()) {
-                        return new TexLeftRight(args);
+                        return new TexLeftRight(args, {
+                            left: new TexToken(TexTokenType.COMMAND, "\\|").toNode(),
+                            right: new TexToken(TexTokenType.COMMAND, "\\|").toNode()
+                        });
                     } else {
                         return new TexGroup(args);
                     }
@@ -640,15 +647,16 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                     const left = "\\l" + node.head.value;
                     const right = "\\r" + node.head.value;
                     const arg0 = node.args![0];
-                    const args = [
-                        new TexToken(TexTokenType.COMMAND, left).toNode(),
-                        convert_typst_node_to_tex(arg0),
-                        new TexToken(TexTokenType.COMMAND, right).toNode()
-                    ];
+                    const typ_arg0 = convert_typst_node_to_tex(arg0);
+                    const left_node = new TexToken(TexTokenType.COMMAND, left).toNode();
+                    const right_node = new TexToken(TexTokenType.COMMAND, right).toNode();
                     if (node.isOverHigh()) {
-                        return new TexLeftRight(args);
+                        return new TexLeftRight([typ_arg0], {
+                            left: left_node,
+                            right: right_node
+                        });
                     } else {
-                        return new TexGroup(args);
+                        return new TexGroup([left_node, typ_arg0, right_node]);
                     }
                 }
                 // special hook for root

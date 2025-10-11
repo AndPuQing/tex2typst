@@ -393,12 +393,8 @@ export class LatexParser {
         pos++;
 
         const [body, _] = this.parseGroup(tokens, exprInsideStart, exprInsideEnd);
-        const args: TexNode[] = [
-            leftDelimiter.toNode(),
-            body,
-            rightDelimiter.toNode()
-        ]
-        const res = new TexLeftRight(args);
+        const args = [ body ];
+        const res = new TexLeftRight(args, {left: leftDelimiter.toNode(), right: rightDelimiter.toNode()});
         return [res, pos];
     }
 
