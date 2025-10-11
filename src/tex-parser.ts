@@ -204,16 +204,14 @@ export class LatexParser {
                 res.sub = sub;
             }
             if (num_prime > 0) {
-                res.sup = new TexGroup([]);
+                const items: TexNode[] = [];
                 for (let i = 0; i < num_prime; i++) {
-                    res.sup.args!.push(new TexToken(TexTokenType.ELEMENT, "'").toNode());
+                    items.push(new TexToken(TexTokenType.ELEMENT, "'").toNode());
                 }
                 if (sup) {
-                    res.sup.args!.push(sup);
+                    items.push(sup);
                 }
-                if (res.sup.args!.length === 1) {
-                    res.sup = res.sup.args![0];
-                }
+                res.sup = items.length === 1 ? items[0] : new TexGroup(items);
             } else if (sup) {
                 res.sup = sup;
             }
@@ -410,12 +408,10 @@ export class LatexParser {
         pos += 3;
 
 
-        const args: TexNode[] = [];
+        let data: TexNode | null = null;
         if(['array', 'subarray'].includes(envName)) {
             pos += eat_whitespaces(tokens, pos).length;
-            const [arg, newPos] = this.parseNextArg(tokens, pos);
-            args.push(arg);
-            pos = newPos;
+            [data, pos] = this.parseNextArg(tokens, pos);
         }
 
         pos += eat_whitespaces(tokens, pos).length; // ignore whitespaces and '\n' after \begin{envName}
@@ -444,7 +440,7 @@ export class LatexParser {
             exprInside.pop();
         }
         const body = this.parseAligned(exprInside);
-        const res = new TexBeginEnd(new TexToken(TexTokenType.LITERAL, envName), args, body);
+        const res = new TexBeginEnd(new TexToken(TexTokenType.LITERAL, envName), body, data);
         return [res, pos];
     }
 
@@ -478,7 +474,7 @@ export class LatexParser {
                 group = new TexGroup([]);
                 row.push(group);
             } else {
-                group.args!.push(res);
+                group.items.push(res);
             }
         }
         return allRows;

@@ -71,12 +71,10 @@ type TexNodeType = 'terminal' | 'text' | 'ordgroup' | 'supsub'
 export abstract class TexNode {
     type: TexNodeType;
     head: TexToken;
-    args?: TexNode[];
 
-    constructor(type: TexNodeType, head: TexToken | null, args?: TexNode[]) {
+    constructor(type: TexNodeType, head: TexToken | null) {
         this.type = type;
         this.head = head ? head : TexToken.EMPTY;
-        this.args = args;
     }
 
     // Note that this is only shallow equality.
@@ -149,12 +147,14 @@ export class TexText extends TexNode {
 }
 
 export class TexGroup extends TexNode {
-    constructor(args: TexNode[]) {
-        super('ordgroup', TexToken.EMPTY, args);
+    public items: TexNode[];
+    constructor(items: TexNode[]) {
+        super('ordgroup', TexToken.EMPTY);
+        this.items = items;
     }
 
     public serialize(): TexToken[] {
-        return this.args!.map((n) => n.serialize()).flat();
+        return this.items.map((n) => n.serialize()).flat();
     }
 }
 
@@ -164,7 +164,7 @@ export class TexSupSub extends TexNode {
     public sub: TexNode | null;
 
     constructor(data: TexSupsubData) {
-        super('supsub', TexToken.EMPTY, []);
+        super('supsub', TexToken.EMPTY);
         this.base = data.base;
         this.sup = data.sup;
         this.sub = data.sub;
@@ -212,11 +212,14 @@ export class TexSupSub extends TexNode {
 }
 
 export class TexFuncCall extends TexNode {
+    public args: TexNode[];
+
     // For type="sqrt", it's additional argument wrapped square bracket. e.g. 3 in \sqrt[3]{x}
     public data: TexNode | null;
 
     constructor(head: TexToken, args: TexNode[], data: TexNode | null = null) {
-        super('funcCall', head, args);
+        super('funcCall', head);
+        this.args = args;
         this.data = data;
     }
 
@@ -266,11 +269,14 @@ export class TexLeftRight extends TexNode {
 
 export class TexBeginEnd extends TexNode {
     public matrix: TexNode[][];
+    // for environment="array" or "subarray", there's additional data like {c|c} right after \begin{env}
+    public data: TexNode | null;
 
-    constructor(head: TexToken, args: TexNode[], data: TexNode[][]) {
+    constructor(head: TexToken, matrix: TexNode[][], data: TexNode | null = null) {
         assert(head.type === TexTokenType.LITERAL);
-        super('beginend', head, args);
-        this.matrix = data;
+        super('beginend', head);
+        this.matrix = matrix;
+        this.data = data;
     }
 
     public serialize(): TexToken[] {

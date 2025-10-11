@@ -73,14 +73,12 @@ export type TypstNamedParams = { [key: string]: TypstNode; };
 export abstract class TypstNode {
     readonly type: TypstNodeType;
     head: TypstToken;
-    args?: TypstNode[];
     // Some Typst functions accept additional options. e.g. mat() has option "delim", op() has option "limits"
     options?: TypstNamedParams;
 
-    constructor(type: TypstNodeType, head: TypstToken | null, args?: TypstNode[]) {
+    constructor(type: TypstNodeType, head: TypstToken | null) {
         this.type = type;
         this.head = head ? head : TypstToken.NONE;
-        this.args = args;
     }
 
     // whether the node is over high so that if it's wrapped in braces, \left and \right should be used in its TeX form
@@ -116,12 +114,14 @@ export class TypstTerminal extends TypstNode {
 }
 
 export class TypstGroup extends TypstNode {
-    constructor(args: TypstNode[]) {
-        super('group', TypstToken.NONE, args);
+    public items: TypstNode[];
+    constructor(items: TypstNode[]) {
+        super('group', TypstToken.NONE);
+        this.items = items;
     }
 
     public isOverHigh(): boolean {
-        return this.args!.some((n) => n.isOverHigh());
+        return this.items.some((n) => n.isOverHigh());
     }
 }
 
@@ -131,7 +131,7 @@ export class TypstSupsub extends TypstNode {
     public sub: TypstNode | null;
 
     constructor(data: TypstSupsubData) {
-        super('supsub', TypstToken.NONE, []);
+        super('supsub', TypstToken.NONE);
         this.base = data.base;
         this.sup = data.sup;
         this.sub = data.sub;
@@ -143,8 +143,10 @@ export class TypstSupsub extends TypstNode {
 }
 
 export class TypstFuncCall extends TypstNode {
+    public args: TypstNode[];
     constructor(head: TypstToken, args: TypstNode[]) {
-        super('funcCall', head, args);
+        super('funcCall', head);
+        this.args = args;
     }
 
     public isOverHigh(): boolean {
@@ -156,8 +158,11 @@ export class TypstFuncCall extends TypstNode {
 }
 
 export class TypstFraction extends TypstNode {
+    public args: TypstNode[];
+
     constructor(args: TypstNode[]) {
-        super('fraction', TypstToken.NONE, args);
+        super('fraction', TypstToken.NONE);
+        this.args = args;
     }
 
     public isOverHigh(): boolean {
@@ -187,7 +192,7 @@ export class TypstAlign extends TypstNode {
     public matrix: TypstNode[][];
 
     constructor(data: TypstNode[][]) {
-        super('align', TypstToken.NONE, []);
+        super('align', TypstToken.NONE);
         this.matrix = data;
     }
 
@@ -198,9 +203,8 @@ export class TypstAlign extends TypstNode {
 
 export class TypstMatrix extends TypstNode {
     public matrix: TypstNode[][];
-
     constructor(data: TypstNode[][]) {
-        super('matrix', TypstToken.NONE, []);
+        super('matrix', TypstToken.NONE);
         this.matrix = data;
     }
 
@@ -213,7 +217,7 @@ export class TypstCases extends TypstNode {
     public matrix: TypstNode[][];
 
     constructor(data: TypstNode[][]) {
-        super('cases', TypstToken.NONE, []);
+        super('cases', TypstToken.NONE);
         this.matrix = data;
     }
 

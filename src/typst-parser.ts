@@ -397,18 +397,18 @@ export class TypstParser {
                             continue;
                         }
 
-                        const g = arr[i];
-                        const pos_colon = array_find(g.args!, COLON);
+                        const g = arr[i] as TypstGroup;
+                        const pos_colon = array_find(g.items, COLON);
                         if(pos_colon === -1 || pos_colon === 0) {
                             continue;
                         }
                         to_delete.push(i);
-                        const param_name = g.args![pos_colon - 1];
+                        const param_name = g.items[pos_colon - 1];
                         if(param_name.eq(new TypstToken(TypstTokenType.SYMBOL, 'delim').toNode())) {
-                            if(g.args!.length !== 3) {
+                            if(g.items.length !== 3) {
                                 throw new TypstParserError('Invalid number of arguments for delim');
                             }
-                            np['delim'] = g.args![pos_colon + 1];
+                            np['delim'] = g.items[pos_colon + 1];
                         } else {
                             throw new TypstParserError('Not implemented for other named parameters');
                         }

@@ -137,7 +137,7 @@ export class TypstWriter {
             }
             case 'group': {
                 const node = abstractNode as TypstGroup;
-                for (const item of node.args!) {
+                for (const item of node.items) {
                     this.serialize(item);
                 }
                 break;
@@ -316,12 +316,13 @@ export class TypstWriter {
         let need_to_wrap = ['group', 'supsub', 'align', 'fraction','empty'].includes(node.type);
 
         if (node.type === 'group') {
-            if (node.args!.length === 0) {
+            const group = node as TypstGroup;
+            if (group.items.length === 0) {
                 // e.g. TeX `P_{}` converts to Typst `P_()`
                 need_to_wrap = true;
             } else {
-                const first = node.args![0];
-                const last = node.args![node.args!.length - 1];
+                const first = group.items[0];
+                const last = group.items[group.items.length - 1];
                 if (is_delimiter(first) && is_delimiter(last)) {
                     need_to_wrap = false;
                 }
