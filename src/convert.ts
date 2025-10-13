@@ -1,7 +1,6 @@
-import { TexNode, Tex2TypstOptions,
-    TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
-    TexText, TexBeginEnd, TexLeftRight,
-    TexTerminal} from "./tex-types";
+import { TexNode, TexToken, TexTokenType, TexFuncCall, TexGroup, TexSupSub,
+    TexText, TexBeginEnd, TexLeftRight, TexTerminal} from "./tex-types";
+import type { Tex2TypstOptions } from "./exposed-types";
 import { TypstFraction, TypstFuncCall, TypstGroup, TypstLeftright, TypstMarkupFunc, TypstMatrixLike, TypstNode, TypstSupsub, TypstTerminal } from "./typst-types";
 import { TypstNamedParams } from "./typst-types";
 import { TypstSupsubData } from "./typst-types";

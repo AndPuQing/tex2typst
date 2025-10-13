@@ -1,5 +1,5 @@
 import { parseTex } from "./tex-parser";
-import type { Tex2TypstOptions } from "./tex-types";
+import type { Tex2TypstOptions } from "./exposed-types";
 import { TypstWriter, type TypstWriterOptions } from "./typst-writer";
 import { convert_tex_node_to_typst, convert_typst_node_to_tex } from "./convert";
 import { symbolMap } from "./map";
@@ -43,4 +43,4 @@ export function typst2tex(typst: string): string {
     return writer.finalize();
 }
 
-export { Tex2TypstOptions, symbolMap, shorthandMap };
+export { symbolMap, shorthandMap };

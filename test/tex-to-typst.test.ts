@@ -3,7 +3,8 @@ import { tokenize_tex } from '../src/tex-tokenizer';
 import { parseTex } from '../src/tex-parser';
 import { tex2typst } from '../src/index';
 import { TypstWriterError } from '../src/typst-writer';
-import { Tex2TypstOptions, TexNode, TexToken } from '../src/tex-types';
+import { TexNode, TexToken } from '../src/tex-types';
+import type { Tex2TypstOptions } from '../src/exposed-types';
 import { loadTestCases, TestCase } from './test-common';
 import { ConverterError } from '../src/convert';
 
