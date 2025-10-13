@@ -102,7 +102,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "test/**/*.ts",
+    "tests/**/*.ts",
   ],
   "exclude": [
     "src/tex2typst.ts",
