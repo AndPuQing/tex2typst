@@ -5,7 +5,7 @@
 
 
 interface ILexSpec<T> {
-    start: Map<string, (arg0: Scanner<T>) => T | T[]>;
+    [key: string]: Map<string, (arg0: Scanner<T>) => T | T[]>;
 }
 
 interface IRule<T> {

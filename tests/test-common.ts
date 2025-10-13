@@ -1,6 +1,7 @@
-import yaml from 'js-yaml';
 import path from 'node:path';
 import fs from 'node:fs';
+// @ts-ignore
+import yaml from 'js-yaml';
 
 export interface TestCase {
   title: string;

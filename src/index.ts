@@ -21,9 +21,12 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
     };
 
     if(options !== undefined) {
+        if (typeof options !== 'object') {
+            throw new Error("options must be an object");
+        }
         for (const key in opt) {
-            if (options[key] !== undefined) {
-                opt[key] = options[key];
+            if (key in options) {
+                opt[key as keyof Tex2TypstOptions] = options[key as keyof Tex2TypstOptions] as any;
             }
         }
     }
