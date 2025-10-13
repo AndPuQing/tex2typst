@@ -5,7 +5,6 @@
  *   https://github.com/qwinsi/tex2typst/blob/main/docs/api-reference.md
  * Any undocumented options may be not working at present or break in the future!
  */
-
 export interface Tex2TypstOptions {
     nonStrict?: boolean; /** default is true */
     preferShorthands?: boolean; /** default is true */
