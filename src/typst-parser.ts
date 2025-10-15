@@ -53,8 +53,8 @@ function find_closing_delim(tokens: TypstToken[], start: number): number {
     return _find_closing_match(
         tokens,
         start,
-        [LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET, VERTICAL_BAR],
-        [RIGHT_PARENTHESES, RIGHT_BRACKET, RIGHT_CURLY_BRACKET, VERTICAL_BAR]
+        TypstToken.LEFT_DELIMITERS,
+        TypstToken.RIGHT_DELIMITERS
     );
 }
 
@@ -218,7 +218,6 @@ const LEFT_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '[');
 const RIGHT_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ']');
 const LEFT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '{');
 const RIGHT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '}');
-const VERTICAL_BAR = new TypstToken(TypstTokenType.ELEMENT, '|');
 const COMMA = new TypstToken(TypstTokenType.ELEMENT, ',');
 const SEMICOLON = new TypstToken(TypstTokenType.ELEMENT, ';');
 const SINGLE_SPACE = new TypstToken(TypstTokenType.SPACE, ' ');
@@ -373,7 +372,7 @@ export class TypstParser {
     // start: the position of the left parentheses
     parseLrArguments(tokens: TypstToken[], start: number): [TypstNode, number] {
         const lr_token = tokens[start];
-        if (tokens[start + 1].isOneOf([LEFT_PARENTHESES, LEFT_BRACKET, LEFT_CURLY_BRACKET, VERTICAL_BAR])) {
+        if (tokens[start + 1].isOneOf(TypstToken.LEFT_DELIMITERS)) {
             const end = find_closing_match(tokens, start);
             const inner_start = start + 1;
             const inner_end = find_closing_delim(tokens, inner_start);

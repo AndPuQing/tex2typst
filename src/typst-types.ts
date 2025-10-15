@@ -47,6 +47,22 @@ export class TypstToken {
 
     public static readonly NONE = new TypstToken(TypstTokenType.NONE, '#none');
     public static readonly EMPTY = new TypstToken(TypstTokenType.ELEMENT, '');
+
+    public static readonly LEFT_DELIMITERS = [
+        new TypstToken(TypstTokenType.ELEMENT, '('),
+        new TypstToken(TypstTokenType.ELEMENT, '['),
+        new TypstToken(TypstTokenType.ELEMENT, '{'),
+        new TypstToken(TypstTokenType.ELEMENT, '|'),
+        new TypstToken(TypstTokenType.SYMBOL, 'angle.l'),
+    ];
+
+    public static readonly RIGHT_DELIMITERS = [
+        new TypstToken(TypstTokenType.ELEMENT, ')'),
+        new TypstToken(TypstTokenType.ELEMENT, ']'),
+        new TypstToken(TypstTokenType.ELEMENT, '}'),
+        new TypstToken(TypstTokenType.ELEMENT, '|'),
+        new TypstToken(TypstTokenType.SYMBOL, 'angle.r'),
+    ];
 }
 
 export interface TypstSupsubData {
