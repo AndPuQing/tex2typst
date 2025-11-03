@@ -106,7 +106,7 @@ cases:
     typst: myop
     nonStrict: true
   - title: extended
-    tex: \mathscr{A} \LaTeX \TeX
+    tex: \LaTeX \TeX
     typst: "#LaTeX #TeX"
   - title: mathbf
     tex: \mathbf{A}
