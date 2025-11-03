@@ -19,7 +19,7 @@ cases:
     typst: 'lr([bold(A))) lr({b))'
   - title: dot as right bracket
     tex: '\left\{ \frac{a}{b} \right.'
-    typst: 'lr(\{a/b)'
+    typst: 'lr(\{ a/b)'
   - title: dot as left bracket
     tex: '\left. \frac{a}{b} \right\}'
     typst: 'lr(a/b})'
@@ -121,7 +121,7 @@ cases:
       "diag"(bold(G) bold(psi)^(n + 1))
       (diff bold(k)_(A v))/(diff bold(psi)^(n + 1))
       - bold(D)
-      "diag"(bold(k)_(A v)(bold(psi)^(n + 1) comma bold(m)))
+      "diag"(bold(k)_(A v) (bold(psi)^(n + 1) comma bold(m)))
       bold(G)
       - bold(G)_z
       (diff bold(k)_(A v))/(diff bold(psi)^(n + 1))
@@ -132,10 +132,10 @@ cases:
       +
       underbrace(
       [
-      -1/(Delta t)
+      - 1/(Delta t)
       (diff bold(theta)^n)/(diff bold(psi)^n)
       ]
-      , bold(A)_(-1)(bold(psi)^n))
+      , bold(A)_(-1) (bold(psi)^n))
       (diff bold(psi)^n)/(diff bold(m))
       =
       underbrace(
@@ -290,7 +290,7 @@ cases:
     typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2 ]
   - title: base is group wrapped in brackets
     tex: e = \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
-    typst: e = lim_(n -> infinity)(1 + 1/n)^n
+    typst: e = lim_(n -> infinity) (1 + 1/n)^n
 
   - title: oo
     tex: \infty

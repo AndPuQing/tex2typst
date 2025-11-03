@@ -159,7 +159,6 @@ export class TypstTerminal extends TypstNode {
     }
 
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
-        // return [this.head];
         if (this.head.type === TypstTokenType.ELEMENT) {
             if (this.head.value === ',' && env.insideFunctionDepth > 0) {
                 return [new TypstToken(TypstTokenType.SYMBOL, 'comma')];
@@ -210,38 +209,6 @@ export class TypstGroup extends TypstNode {
     }
 }
 
-function is_delimiter(c: TypstNode): boolean {
-    return c.head.type === TypstTokenType.ELEMENT && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.head.value);
-}
-
-function appendWithBracketsIfNeeded(queue: TypstToken[], node: TypstNode, env: TypstWriterEnvironment, options: TypstWriterOptions): boolean {
-    let need_to_wrap = ['group', 'supsub', 'matrixLike', 'fraction','empty'].includes(node.type);
-
-    if (node.type === 'group') {
-        const group = node as TypstGroup;
-        if (group.items.length === 0) {
-            // e.g. TeX `P_{}` converts to Typst `P_()`
-            need_to_wrap = true;
-        } else {
-            const first = group.items[0];
-            const last = group.items[group.items.length - 1];
-            if (is_delimiter(first) && is_delimiter(last)) {
-                need_to_wrap = false;
-            }
-        }
-    }
-
-    if (need_to_wrap) {
-        node = new TypstLeftright(null, {
-            left: TYPST_LEFT_PARENTHESIS,
-            right: TYPST_RIGHT_PARENTHESIS,
-            body: node,
-        });
-    }
-    queue.push(...node.serialize(env, options));
-
-    return !need_to_wrap;
-}
 
 export class TypstSupsub extends TypstNode {
     public base: TypstNode;
@@ -263,9 +230,8 @@ export class TypstSupsub extends TypstNode {
         const queue: TypstToken[] = [];
         let { base, sup, sub } = this;
 
-        appendWithBracketsIfNeeded(queue, base, env, options);
+        queue.push(...base.serialize(env, options));
 
-        let trailing_space_needed = false;
         const has_prime = (sup && sup.head.eq(new TypstToken(TypstTokenType.ELEMENT, "'")));
         if (has_prime) {
             // Put prime symbol before '_'. Because $y_1'$ is not displayed properly in Typst (so far)
@@ -273,19 +239,16 @@ export class TypstSupsub extends TypstNode {
             // y_1' -> y'_1
             // y_{a_1}' -> y'_(a_1)
             queue.push(new TypstToken(TypstTokenType.ELEMENT, '\''));
-            trailing_space_needed = false;
         }
         if (sub) {
             queue.push(new TypstToken(TypstTokenType.ELEMENT, '_'));
-            trailing_space_needed = appendWithBracketsIfNeeded(queue, sub, env, options);
+            queue.push(...sub.serialize(env, options));
         }
         if (sup && !has_prime) {
             queue.push(new TypstToken(TypstTokenType.ELEMENT, '^'));
-            trailing_space_needed = appendWithBracketsIfNeeded(queue, sup, env, options);
+            queue.push(...sup.serialize(env, options));
         }
-        if (trailing_space_needed) {
-            queue.push(SOFT_SPACE);
-        }
+        queue.push(SOFT_SPACE);
         return queue;
     }
 }
@@ -344,18 +307,11 @@ export class TypstFraction extends TypstNode {
         const queue: TypstToken[] = [];
 
         const [numerator, denominator] = this.args;
-        const pos = queue.length;
-        const no_wrap = appendWithBracketsIfNeeded(queue, numerator, env, options);
-
-        // This is a dirty hack to force `C \frac{xy}{z}`to translate to `C (x y)/z` instead of `C(x y)/z`
-        // To solve this properly, we should implement a Typst formatter
-        const wrapped = !no_wrap;
-        if (wrapped) {
-            queue.splice(pos, 0, SOFT_SPACE);
-        }
+        queue.push(SOFT_SPACE);
+        queue.push(...numerator.serialize(env, options));
 
         queue.push(new TypstToken(TypstTokenType.ELEMENT, '/'));
-        appendWithBracketsIfNeeded(queue, denominator, env, options);
+        queue.push(...denominator.serialize(env, options));
         return queue;
     }
 }

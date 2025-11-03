@@ -2,7 +2,7 @@ title: integration-tex2typst
 cases:
   - title: base of natural logarithm
     tex: \mathrm{e} \overset{\text{def}}{=} \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
-    typst: upright(e) eq.def lim_(n -> infinity)(1 + 1/n)^n
+    typst: upright(e) eq.def lim_(n -> infinity) (1 + 1/n)^n
   - title: Euler's product formula
     tex: \prod_{p} \frac{1}{1-p^{-s}} = \sum_{n=1}^{\infty} \frac{1}{n^s}
     typst: product_p 1/(1 - p^(-s)) = sum_(n = 1)^infinity 1/(n^s)
@@ -56,7 +56,7 @@ cases:
       d_2 &= d_1 - sigma sqrt(t)
   - title: Cauchy's integral formula
     tex: f(z_0) = \frac{1}{2\pi \mathrm{i}} \oint_{C} \frac{f(z)}{z-z_0}\, \mathrm{d} z
-    typst: f(z_0) = 1/(2 pi upright(i)) integral.cont_C  (f(z))/(z - z_0) thin dif z
+    typst: f(z_0) = 1/(2 pi upright(i)) integral.cont_C (f(z))/(z - z_0) thin dif z
   - title: determinant of a Vandermonde matrix
     tex: |-
       \begin{vmatrix}
@@ -74,7 +74,7 @@ cases:
       x_1^2, x_2^2, ..., x_n^2 ;
       dots.v, dots.v, dots.down, dots.v;
       x_1^(n - 1), x_2^(n - 1), ..., x_n^(n - 1))
-      = product_(1 <= i < j <= n)(x_j - x_i)
+      = product_(1 <= i < j <= n) (x_j - x_i)
   - title: ReLU function
     tex: |-
       \operatorname{ReLU}(x) = \begin{cases}

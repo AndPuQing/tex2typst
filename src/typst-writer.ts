@@ -58,8 +58,8 @@ export class TypstWriter {
         no_need_space ||= str.startsWith('\n');
         // buffer is empty
         no_need_space ||= this.buffer === "";
-        // str is starting with a space itself
-        no_need_space ||= /^\s/.test(str);
+        // don't put space multiple times
+        no_need_space ||= (/\s$/.test(this.buffer) || /^\s/.test(str));
         // "&=" instead of "& ="
         no_need_space ||= this.buffer.endsWith('&') && str === '=';
         // before or after a slash e.g. "a/b" instead of "a / b"
@@ -86,28 +86,36 @@ export class TypstWriter {
 
 
     protected flushQueue() {
-        const dummy_token = new TypstToken(TypstTokenType.SYMBOL, '');
+        // merge consecutive soft spaces
+        let qu: TypstToken[] = [];
+        for(const token of this.queue) {
+            if (token.eq(SOFT_SPACE) && qu.length > 0 && qu[qu.length - 1].eq(SOFT_SPACE)) {
+                continue;
+            }
+            qu.push(token);
+        }
 
         // delete soft spaces if they are not needed
-        for(let i = 0; i < this.queue.length; i++) {
-            let token = this.queue[i];
+        const dummy_token = new TypstToken(TypstTokenType.SYMBOL, '');
+        for(let i = 0; i < qu.length; i++) {
+            let token = qu[i];
             if (token.eq(SOFT_SPACE)) {
                 const to_delete = (i === 0)
-                                || (i === this.queue.length - 1)
-                                || (this.queue[i - 1].type === TypstTokenType.SPACE)
-                                || this.queue[i - 1].isOneOf([TYPST_LEFT_PARENTHESIS, TYPST_NEWLINE])
-                                || this.queue[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE]);
+                                || (i === qu.length - 1)
+                                || (qu[i - 1].type === TypstTokenType.SPACE)
+                                || qu[i - 1].isOneOf([TYPST_LEFT_PARENTHESIS, TYPST_NEWLINE])
+                                || qu[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE]);
                 if (to_delete) {
-                    this.queue[i] = dummy_token;
+                    qu[i] = dummy_token;
                 }
             }
         }
 
-        this.queue = this.queue.filter((token) => !token.eq(dummy_token));
+        qu = qu.filter((token) => !token.eq(dummy_token));
 
-        for(let i = 0; i < this.queue.length; i++) {
-            let token = this.queue[i];
-            let previous_token = i === 0 ? null : this.queue[i - 1];
+        for(let i = 0; i < qu.length; i++) {
+            let token = qu[i];
+            let previous_token = i === 0 ? null : qu[i - 1];
             this.writeBuffer(previous_token, token);
         }
 
