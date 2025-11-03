@@ -232,12 +232,13 @@ function appendWithBracketsIfNeeded(queue: TypstToken[], node: TypstNode, env: T
     }
 
     if (need_to_wrap) {
-        queue.push(TYPST_LEFT_PARENTHESIS);
-        queue.push(...node.serialize(env, options));
-        queue.push(TYPST_RIGHT_PARENTHESIS);
-    } else {
-        queue.push(...node.serialize(env, options));
+        node = new TypstLeftright(null, {
+            left: TYPST_LEFT_PARENTHESIS,
+            right: TYPST_RIGHT_PARENTHESIS,
+            body: node,
+        });
     }
+    queue.push(...node.serialize(env, options));
 
     return !need_to_wrap;
 }
