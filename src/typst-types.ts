@@ -205,7 +205,15 @@ export class TypstGroup extends TypstNode {
     }
 
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
-        return this.items.flatMap((n) => n.serialize(env, options));
+        const queue = this.items.flatMap((n) => n.serialize(env, options));
+        // remove soft space at the start and end
+        if (queue.length > 0 && queue[0].eq(SOFT_SPACE)) {
+            queue.shift();
+        }
+        if (queue.length > 0 && queue[queue.length - 1].eq(SOFT_SPACE)) {
+            queue.pop();
+        }
+        return queue;
     }
 }
 
@@ -309,9 +317,9 @@ export class TypstFraction extends TypstNode {
         const [numerator, denominator] = this.args;
         queue.push(SOFT_SPACE);
         queue.push(...numerator.serialize(env, options));
-
         queue.push(new TypstToken(TypstTokenType.ELEMENT, '/'));
         queue.push(...denominator.serialize(env, options));
+        queue.push(SOFT_SPACE);
         return queue;
     }
 }
