@@ -1,4 +1,5 @@
 import { array_includes } from "./generic";
+import { shorthandMap } from "./typst-shorthands";
 
 export enum TypstTokenType {
     NONE,
@@ -78,6 +79,30 @@ export interface TypstLeftRightData {
     right: TypstToken | null;
 }
 
+export interface TypstWriterEnvironment {
+    insideFunctionDepth: number;
+}
+
+export interface TypstWriterOptions {
+    nonStrict: boolean;
+    preferShorthands: boolean;
+    keepSpaces: boolean;
+    inftyToOo: boolean;
+    optimize: boolean;
+}
+
+export class TypstWriterError extends Error {
+    node: TypstNode | TypstToken;
+
+    constructor(message: string, node: TypstNode | TypstToken) {
+        super(message);
+        this.name = "TypstWriterError";
+        this.node = node;
+    }
+}
+
+const SOFT_SPACE = new TypstToken(TypstTokenType.CONTROL, ' ');
+
 /**
  * fraction: `1/2`, `(x + y)/2`, `(1+x)/(1-x)`
  * group: `a + 1/3`
@@ -102,6 +127,9 @@ export abstract class TypstNode {
     // whether the node is over high so that if it's wrapped in braces, \left and \right should be used in its TeX form
     // e.g. 1/2 is over high, "2" is not.
     abstract isOverHigh(): boolean;
+
+    // Serialize a tree of TypstNode into a list of TypstToken
+    abstract serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[];
 
     public setOptions(options: TypstNamedParams) {
         this.options = options;
@@ -129,6 +157,41 @@ export class TypstTerminal extends TypstNode {
     public toString(): string {
         return this.head.toString();
     }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        // return [this.head];
+        if (this.head.type === TypstTokenType.ELEMENT) {
+            if (this.head.value === ',' && env.insideFunctionDepth > 0) {
+                return [new TypstToken(TypstTokenType.SYMBOL, 'comma')];
+            }
+        } else if (this.head.type === TypstTokenType.SYMBOL) {
+            let symbol_name = this.head.value;
+            if (options.preferShorthands) {
+                if (shorthandMap.has(symbol_name)) {
+                    symbol_name = shorthandMap.get(symbol_name)!;
+                }
+            }
+            if (options.inftyToOo && symbol_name === 'infinity') {
+                symbol_name = 'oo';
+            }
+            return [new TypstToken(TypstTokenType.SYMBOL, symbol_name)];
+        } else if (this.head.type === TypstTokenType.SPACE || this.head.type === TypstTokenType.NEWLINE) {
+            const queue: TypstToken[] = [];
+            for (const c of this.head.value) {
+                if (c === ' ') {
+                    if (options.keepSpaces) {
+                        queue.push(new TypstToken(TypstTokenType.SPACE, c));
+                    }
+                } else if (c === '\n') {
+                    queue.push(new TypstToken(TypstTokenType.SYMBOL, c));
+                } else {
+                    throw new TypstWriterError(`Unexpected whitespace character: ${c}`, this);
+                }
+            }
+            return queue;
+        }
+        return [this.head];
+    }
 }
 
 export class TypstGroup extends TypstNode {
@@ -141,6 +204,42 @@ export class TypstGroup extends TypstNode {
     public isOverHigh(): boolean {
         return this.items.some((n) => n.isOverHigh());
     }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        return this.items.flatMap((n) => n.serialize(env, options));
+    }
+}
+
+function is_delimiter(c: TypstNode): boolean {
+    return c.head.type === TypstTokenType.ELEMENT && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.head.value);
+}
+
+function appendWithBracketsIfNeeded(queue: TypstToken[], node: TypstNode, env: TypstWriterEnvironment, options: TypstWriterOptions): boolean {
+    let need_to_wrap = ['group', 'supsub', 'matrixLike', 'fraction','empty'].includes(node.type);
+
+    if (node.type === 'group') {
+        const group = node as TypstGroup;
+        if (group.items.length === 0) {
+            // e.g. TeX `P_{}` converts to Typst `P_()`
+            need_to_wrap = true;
+        } else {
+            const first = group.items[0];
+            const last = group.items[group.items.length - 1];
+            if (is_delimiter(first) && is_delimiter(last)) {
+                need_to_wrap = false;
+            }
+        }
+    }
+
+    if (need_to_wrap) {
+        queue.push(TYPST_LEFT_PARENTHESIS);
+        queue.push(...node.serialize(env, options));
+        queue.push(TYPST_RIGHT_PARENTHESIS);
+    } else {
+        queue.push(...node.serialize(env, options));
+    }
+
+    return !need_to_wrap;
 }
 
 export class TypstSupsub extends TypstNode {
@@ -158,6 +257,36 @@ export class TypstSupsub extends TypstNode {
     public isOverHigh(): boolean {
         return this.base.isOverHigh();
     }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        const queue: TypstToken[] = [];
+        let { base, sup, sub } = this;
+
+        appendWithBracketsIfNeeded(queue, base, env, options);
+
+        let trailing_space_needed = false;
+        const has_prime = (sup && sup.head.eq(new TypstToken(TypstTokenType.ELEMENT, "'")));
+        if (has_prime) {
+            // Put prime symbol before '_'. Because $y_1'$ is not displayed properly in Typst (so far)
+            // e.g.
+            // y_1' -> y'_1
+            // y_{a_1}' -> y'_(a_1)
+            queue.push(new TypstToken(TypstTokenType.ELEMENT, '\''));
+            trailing_space_needed = false;
+        }
+        if (sub) {
+            queue.push(new TypstToken(TypstTokenType.ELEMENT, '_'));
+            trailing_space_needed = appendWithBracketsIfNeeded(queue, sub, env, options);
+        }
+        if (sup && !has_prime) {
+            queue.push(new TypstToken(TypstTokenType.ELEMENT, '^'));
+            trailing_space_needed = appendWithBracketsIfNeeded(queue, sup, env, options);
+        }
+        if (trailing_space_needed) {
+            queue.push(SOFT_SPACE);
+        }
+        return queue;
+    }
 }
 
 export class TypstFuncCall extends TypstNode {
@@ -173,6 +302,29 @@ export class TypstFuncCall extends TypstNode {
         }
         return this.args.some((n) => n.isOverHigh());
     }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        const queue: TypstToken[] = [];
+
+        const func_symbol: TypstToken = this.head;
+        queue.push(func_symbol);
+        env.insideFunctionDepth++;
+        queue.push(TYPST_LEFT_PARENTHESIS);
+        for (let i = 0; i < this.args.length; i++) {
+            queue.push(...this.args[i].serialize(env, options));
+            if (i < this.args.length - 1) {
+                queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+            }
+        }
+        if (this.options) {
+            for (const [key, value] of Object.entries(this.options)) {
+                queue.push(new TypstToken(TypstTokenType.LITERAL, `, ${key}: ${value.toString()}`));
+            }
+        }
+        queue.push(TYPST_RIGHT_PARENTHESIS);
+        env.insideFunctionDepth--;
+        return queue;
+    }
 }
 
 export class TypstFraction extends TypstNode {
@@ -186,8 +338,29 @@ export class TypstFraction extends TypstNode {
     public isOverHigh(): boolean {
         return true;
     }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        const queue: TypstToken[] = [];
+
+        const [numerator, denominator] = this.args;
+        const pos = queue.length;
+        const no_wrap = appendWithBracketsIfNeeded(queue, numerator, env, options);
+
+        // This is a dirty hack to force `C \frac{xy}{z}`to translate to `C (x y)/z` instead of `C(x y)/z`
+        // To solve this properly, we should implement a Typst formatter
+        const wrapped = !no_wrap;
+        if (wrapped) {
+            queue.splice(pos, 0, SOFT_SPACE);
+        }
+
+        queue.push(new TypstToken(TypstTokenType.ELEMENT, '/'));
+        appendWithBracketsIfNeeded(queue, denominator, env, options);
+        return queue;
+    }
 }
 
+const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
+const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ')');
 
 export class TypstLeftright extends TypstNode {
     public body: TypstNode;
@@ -205,6 +378,27 @@ export class TypstLeftright extends TypstNode {
     public isOverHigh(): boolean {
         return this.body.isOverHigh();
     }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        const queue: TypstToken[] = [];
+        const LR = new TypstToken(TypstTokenType.SYMBOL, 'lr');
+        const {left, right} = this;
+        if (this.head.eq(LR)) {
+            queue.push(LR);
+            queue.push(TYPST_LEFT_PARENTHESIS);
+        }
+        if (left) {
+            queue.push(left);
+        }
+        queue.push(...this.body.serialize(env, options));
+        if (right) {
+            queue.push(right);
+        }
+        if (this.head.eq(LR)) {
+            queue.push(TYPST_RIGHT_PARENTHESIS);
+        }
+        return queue;
+    }
 }
 
 
@@ -219,6 +413,54 @@ export class TypstMatrixLike extends TypstNode {
 
     public isOverHigh(): boolean {
         return true;
+    }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        const queue: TypstToken[] = [];
+
+        let cell_sep: TypstToken;
+        let row_sep: TypstToken;
+        if (this.head.eq(TypstMatrixLike.MAT)) {
+            cell_sep = new TypstToken(TypstTokenType.ELEMENT, ',');
+            row_sep = new TypstToken(TypstTokenType.ELEMENT, ';');
+        } else if (this.head.eq(TypstMatrixLike.CASES)) {
+            cell_sep = new TypstToken(TypstTokenType.ELEMENT, '&');
+            row_sep = new TypstToken(TypstTokenType.ELEMENT, ',');
+        } else if (this.head.eq(TypstToken.NONE)){ // head is null
+            cell_sep = new TypstToken(TypstTokenType.ELEMENT, '&');
+            row_sep = new TypstToken(TypstTokenType.SYMBOL, '\\');
+        }
+
+        if (!this.head.eq(TypstToken.NONE)) {
+            queue.push(this.head);
+            env.insideFunctionDepth++;
+            queue.push(TYPST_LEFT_PARENTHESIS);
+            if (this.options) {
+                for (const [key, value] of Object.entries(this.options)) {
+                    queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}, `));
+                }
+            }
+        }
+
+        this.matrix.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                queue.push(...cell.serialize(env, options));
+                if (j < row.length - 1) {
+                    queue.push(cell_sep);
+                } else {
+                    if (i < this.matrix.length - 1) {
+                        queue.push(row_sep);
+                    }
+                }
+            });
+        });
+
+        if (!this.head.eq(TypstToken.NONE)) {
+            queue.push(TYPST_RIGHT_PARENTHESIS);
+            env.insideFunctionDepth--;
+        }
+
+        return queue;
     }
 
     static readonly MAT = new TypstToken(TypstTokenType.SYMBOL, 'mat');
@@ -242,5 +484,33 @@ export class TypstMarkupFunc extends TypstNode {
 
     public isOverHigh(): boolean {
         return this.fragments.some((n) => n.isOverHigh());
+    }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        const queue: TypstToken[] = [];
+
+        queue.push(this.head);
+        env.insideFunctionDepth++;
+        queue.push(TYPST_LEFT_PARENTHESIS);
+        if (this.options) {
+            const entries = Object.entries(this.options);
+            for (let i = 0; i < entries.length; i++) {
+                const [key, value] = entries[i];
+                queue.push(new TypstToken(TypstTokenType.LITERAL, `${key}: ${value.toString()}`));
+                if (i < entries.length - 1) {
+                    queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+                }
+            }
+        }
+        queue.push(TYPST_RIGHT_PARENTHESIS);
+
+        queue.push(new TypstToken(TypstTokenType.LITERAL, '['));
+        for (const frag of this.fragments) {
+            queue.push(new TypstToken(TypstTokenType.LITERAL, '$'));
+            queue.push(...frag.serialize(env, options));
+            queue.push(new TypstToken(TypstTokenType.LITERAL, '$'));
+        }
+        queue.push(new TypstToken(TypstTokenType.LITERAL, ']'));
+        return queue;
     }
 }
