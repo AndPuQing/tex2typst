@@ -56,6 +56,7 @@ const symbolMap = new Map<string, string>([
     ['mathbb', 'bb'],
     ['mathbf', 'bold'],
     ['mathcal', 'cal'],
+    ['mathscr', 'scr'],
     ['mathit', 'italic'],
     ['mathfrak', 'frak'],
     ['mathrm', 'upright'],
@@ -260,7 +261,6 @@ const symbolMap = new Map<string, string>([
     ['intop', 'limits(integral)'],
     
     // extended
-    ['mathscr', 'scr'],
     ['LaTeX', '#LaTeX'],
     ['TeX', '#TeX'],
 ]);

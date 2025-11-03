@@ -21,6 +21,9 @@ cases:
   - title: mathcal
     tex: \mathcal{A} \mathcal{B} \mathcal{C} \mathcal{D} \mathcal{E} \mathcal{F} \mathcal{G} \mathcal{H} \mathcal{I} \mathcal{J} \mathcal{K} \mathcal{L} \mathcal{M} \mathcal{N} \mathcal{O} \mathcal{P} \mathcal{Q} \mathcal{R} \mathcal{S} \mathcal{T} \mathcal{U} \mathcal{V} \mathcal{W} \mathcal{X} \mathcal{Y} \mathcal{Z}
     typst: cal(A) cal(B) cal(C) cal(D) cal(E) cal(F) cal(G) cal(H) cal(I) cal(J) cal(K) cal(L) cal(M) cal(N) cal(O) cal(P) cal(Q) cal(R) cal(S) cal(T) cal(U) cal(V) cal(W) cal(X) cal(Y) cal(Z)
+  - title: mathscr
+    tex: \mathscr{A}
+    typst: scr(A)
   - title: mathrm
     tex: \mathrm{a} \rm{a}
     typst: upright(a) upright(a)
@@ -104,7 +107,7 @@ cases:
     nonStrict: true
   - title: extended
     tex: \mathscr{A} \LaTeX \TeX
-    typst: "scr(A) #LaTeX #TeX"
+    typst: "#LaTeX #TeX"
   - title: mathbf
     tex: \mathbf{A}
     typst: upright(bold(A))
