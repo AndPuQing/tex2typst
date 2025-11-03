@@ -435,3 +435,9 @@ cases:
   - title: subarray-with-rr &
     tex: \sum_{\begin{subarray}{rr} a & b \\ c & d \end{subarray}} P(i, j)
     typst: sum_(a & b \ c & d) P(i, j)
+  - title: command set
+    tex: \set{a, b, c}
+    typst: "{a, b, c}"
+  - title: command set, empty
+    tex: \set{}
+    typst: "{}"

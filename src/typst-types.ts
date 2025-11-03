@@ -48,6 +48,9 @@ export class TypstToken {
 
     public static readonly NONE = new TypstToken(TypstTokenType.NONE, '#none');
     public static readonly EMPTY = new TypstToken(TypstTokenType.ELEMENT, '');
+    public static readonly LEFT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '{');
+    public static readonly RIGHT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '}');
+
 
     public static readonly LEFT_DELIMITERS = [
         new TypstToken(TypstTokenType.ELEMENT, '('),

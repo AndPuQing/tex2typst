@@ -391,10 +391,18 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 return res;
             }
 
-            // \substack{a \\ b} -> `a \ b`
+            // \substack{a \\ b} -> a \ b
             // as in translation from \sum_{\substack{a \\ b}} to sum_(a \ b)
             if (node.head.value === '\\substack') {
                 return arg0;
+            }
+
+            // \set{a, b, c} -> {a, b, c}
+            if (node.head.value === '\\set') {
+                return new TypstLeftright(
+                    null,
+                    { body: arg0, left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
+                );
             }
 
             if (node.head.value === '\\overset') {
