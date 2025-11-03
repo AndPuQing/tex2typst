@@ -1,3 +1,4 @@
+- follow changes in Typst 0.14 https://typst.app/docs/changelog/0.14.0/#math
 - proper formatter in tex-writer.ts and typst-writer.ts
 - Typst math `{a + 1/3}` should convert to TeX math `\left\{a + \frac{1}{3} \right\}`
 - typst-parser should produce TypstAlign instead of TypstGroup if there's a `&`

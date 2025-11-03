@@ -12,7 +12,6 @@ export interface Tex2TypstOptions {
     fracToSlash?: boolean; /** default is true */
     inftyToOo?: boolean; /** default is false */
     optimize?: boolean; /** default is true */
-    nonAsciiWrapper?: string; /** default is "" */
     customTexMacros?: { [key: string]: string; };
 }
 

@@ -17,7 +17,6 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
         fracToSlash: true,
         inftyToOo: false,
         optimize: true,
-        nonAsciiWrapper: "",
         customTexMacros: {}
     };
 

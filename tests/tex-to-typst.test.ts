@@ -31,17 +31,10 @@ describe('options', () => {
     });
 
 
-    it('nonAsciiWrapper = ""', function () {
+    it('non-ASCII text', function () {
         const input = 'a + b = \\text{こにちは、世界}';
         const expected = 'a + b = "こにちは、世界"';
         const res = tex2typst(input);
-        expect(res).toEqual(expected);
-    });
-
-    it('nonAsciiWrapper = "ut"', function () {
-        const input = 'a + b = \\text{こにちは、世界}';
-        const expected = 'a + b = ut("こにちは、世界")';
-        const res = tex2typst(input, { nonAsciiWrapper: 'ut' });
         expect(res).toEqual(expected);
     });
 

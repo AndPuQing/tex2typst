@@ -232,12 +232,6 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
         }
         case 'text': {
             const node = abstractNode as TexText;
-            if ((/[^\x00-\x7F]+/).test(node.head.value) && options.nonAsciiWrapper !== "") {
-                return new TypstFuncCall(
-                    new TypstToken(TypstTokenType.SYMBOL, options.nonAsciiWrapper!),
-                    [new TypstToken(TypstTokenType.TEXT, node.head.value).toNode()]
-                );
-            }
             return new TypstToken(TypstTokenType.TEXT, node.head.value).toNode();
         }
         case 'ordgroup':
