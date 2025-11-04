@@ -59,6 +59,9 @@ cases:
   - title: lparen rparen
     tex: \left\lparen \frac{1}{3} \right\rparen
     typst: lr(paren.l 1/3 paren.r)
+  - title: lbrace rbrace
+    tex: \left\lbrace \frac{1}{3} \right\rbrace
+    typst: lr(brace.l 1/3 brace.r)
   - title: operatorname
     tex: '\operatorname{diag} \text{diag}'
     typst: 'op("diag") "diag"'
