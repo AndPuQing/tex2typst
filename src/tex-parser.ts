@@ -110,8 +110,12 @@ const SUB_SYMBOL:TexToken = new TexToken(TexTokenType.CONTROL, '_');
 const SUP_SYMBOL:TexToken = new TexToken(TexTokenType.CONTROL, '^');
 
 export class LatexParser {
-    space_sensitive: boolean;
-    newline_sensitive: boolean;
+    public space_sensitive: boolean;
+    public newline_sensitive: boolean;
+
+    // how many levels of \begin{...} \end{...} are we currently in
+    public alignmentDepth: number = 0;
+
 
     constructor(space_sensitive: boolean = false, newline_sensitive: boolean = true) {
         this.space_sensitive = space_sensitive;
@@ -151,9 +155,6 @@ export class LatexParser {
                 if (!this.newline_sensitive && res.head.value === '\n') {
                     continue;
                 }
-            }
-            if (res.head.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
-                throw new LatexParserError('Unexpected & outside of an alignment');
             }
             results.push(res);
         }
@@ -268,6 +269,9 @@ export class LatexParser {
                     case '^':
                         return [ EMPTY_NODE, start];
                     case '&':
+                        if (this.alignmentDepth <= 0) {
+                            throw new LatexParserError('Unexpected & outside of an alignment');
+                        }
                         return [firstToken.toNode(), start + 1];
                     default:
                         throw new LatexParserError('Unknown control sequence');
@@ -445,6 +449,8 @@ export class LatexParser {
     }
 
     parseAligned(tokens: TexToken[]): TexNode[][] {
+        this.alignmentDepth++;
+
         let pos = 0;
         const allRows: TexNode[][] = [];
         let row: TexNode[] = [];
@@ -477,6 +483,8 @@ export class LatexParser {
                 group.items.push(res);
             }
         }
+
+        this.alignmentDepth--;
         return allRows;
     }
 }

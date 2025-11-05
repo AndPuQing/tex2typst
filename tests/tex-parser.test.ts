@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, test, expect } from 'vitest';
 import { tokenize_tex } from '../src/tex-tokenizer';
+import { parseTex } from '../src/tex-parser';
 import { TexToken, TexTokenType } from '../src/tex-types';
 
 
 describe('typst-tokenizer', () => {
-    it('a + b', function () {
+    test('a + b', function () {
         const res = tokenize_tex('a + b');
         expect(res).toEqual([
             new TexToken(TexTokenType.ELEMENT, 'a'),
@@ -15,7 +16,7 @@ describe('typst-tokenizer', () => {
         ]);
     });
 
-    it('a (x)', function () {
+    test('a (x)', function () {
         const res = tokenize_tex('a (x)');
         expect(res).toEqual([
             new TexToken(TexTokenType.ELEMENT, 'a'),
@@ -26,7 +27,7 @@ describe('typst-tokenizer', () => {
         ]);
     });
 
-    it('f(x)', function () {
+    test('f(x)', function () {
         const res = tokenize_tex('f(x)');
         expect(res).toEqual([
             new TexToken(TexTokenType.ELEMENT, 'f'),
@@ -36,7 +37,7 @@ describe('typst-tokenizer', () => {
         ]);
     });
 
-    it('comment', function() {
+    test('comment', function() {
         const res = tokenize_tex('a % comment');
         expect(res).toEqual([
             new TexToken(TexTokenType.ELEMENT, 'a'),
@@ -45,7 +46,7 @@ describe('typst-tokenizer', () => {
         ]);
     });
 
-    it('macro', function() {
+    test('macro', function() {
         const res = tokenize_tex('\\sqrt{a}');
         expect(res).toEqual([
             new TexToken(TexTokenType.COMMAND, '\\sqrt'),
@@ -53,5 +54,9 @@ describe('typst-tokenizer', () => {
             new TexToken(TexTokenType.ELEMENT, 'a'),
             new TexToken(TexTokenType.CONTROL, '}'),
         ]);
-    })
+    });
+
+    test('throw error on & outside of an alignment', function() {
+        expect(() => parseTex('a & b', {})).toThrow();
+    });
 });
