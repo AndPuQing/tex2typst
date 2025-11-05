@@ -315,7 +315,7 @@ export class LatexParser {
                 return [new TexFuncCall(command_token, [arg1, arg2]), pos2];
             }
             default:
-                throw new Error( 'Invalid number of parameters');
+                throw new Error('Invalid number of parameters');
         }
     }
 
