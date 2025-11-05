@@ -1,6 +1,6 @@
 import { TexBeginEnd, TexFuncCall, TexLeftRight, TexNode, TexGroup, TexSupSub, TexSupsubData, TexText, TexToken, TexTokenType } from "./tex-types";
 import { assert } from "./util";
-import { array_find } from "./generic";
+import { array_find, array_join } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";
 
 const IGNORED_COMMANDS = [
@@ -65,6 +65,7 @@ const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
 const BEGIN_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\begin');
 const END_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\end');
 
+const CONTROL_LINEBREAK = new TexToken(TexTokenType.CONTROL, '\\\\').toNode();
 
 export class LatexParserError extends Error {
     constructor(message: string) {
@@ -299,6 +300,11 @@ export class LatexParser {
                     assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
                     const literal = tokens[pos + 1];
                     return [new TexText(literal), pos + 3];
+                } else if (command === '\\displaylines') {
+                    assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
+                    const [matrix, newPos] = this.parseAligned(tokens, pos + 1, RIGHT_CURLY_BRACKET);
+                    const group = new TexGroup(array_join(matrix, CONTROL_LINEBREAK));
+                    return [new TexFuncCall(command_token, [group]), newPos];
                 }
                 let [arg1, newPos] = this.parseNextArg(tokens, pos);
                 return [new TexFuncCall(command_token, [arg1]), newPos];

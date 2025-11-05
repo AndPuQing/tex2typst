@@ -447,3 +447,14 @@ cases:
   - title: command set, empty
     tex: \set{}
     typst: "{}"
+  - title: command displaylines is ignored
+    tex: |-
+      \displaylines{
+        E = mc^2 \\
+        F = ma \\
+        P = IV
+      }
+    typst: |-
+      E = m c^2 \
+      F = m a \
+      P = I V

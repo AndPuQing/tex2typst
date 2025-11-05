@@ -59,6 +59,22 @@ export function array_split<T extends IEquatable>(array: T[], sep: T): T[][] {
     return res;
 }
 
+// e.g. input array=[['a', 'b'], ['c'], ['d', 'e']], sep = '+'
+// return ['a', 'b', '+', 'c', '+', 'd', 'e']
+export function array_join<T>(arrays: T[][], sep: T): T[] {
+    /*
+    const res: T[] = [];
+    for (let i = 0; i < arrays.length; i++) {
+        res.push(...arrays[i]);
+        if (i !== arrays.length - 1) {
+            res.push(sep);
+        }
+    }
+    return res;
+    */
+    return arrays.flatMap((arr, i) => i !== arrays.length - 1? [...arr, sep]: arr);
+}
+
 // e.g. input array=['a', 'b', 'c'], sep = '+'
 // return ['a','+', 'b', '+','c']
 export function array_intersperse<T>(array: T[], sep: T): T[] {
