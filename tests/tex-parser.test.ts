@@ -57,6 +57,30 @@ describe('typst-tokenizer', () => {
     });
 
     test('throw error on & outside of an alignment', function() {
-        expect(() => parseTex('a & b', {})).toThrow();
+        expect(() => parseTex('a & b')).toThrow();
+    });
+
+    test('throw on extra {', function() {
+        expect(() => parseTex('a { {b}')).toThrow();
+    });
+
+    test('throw on extra }', function() {
+        expect(() => parseTex('a { b } }')).toThrow();
+    });
+
+    test('throw on extra \\left', function() {
+        expect(() => parseTex('a \\left( \\left( b \\right)')).toThrow();
+    });
+
+    test('throw on extra \\right', function() {
+        expect(() => parseTex('a \\left( b \\right) \\right)')).toThrow();
+    });
+
+    test('throw on extra \\begin', function() {
+        expect(() => parseTex('a \\begin{aligned} \\begin{aligned} b \\end{aligned}')).toThrow();
+    });
+
+    test('throw on extra \\end', function() {
+        expect(() => parseTex('a \\begin{aligned} b \\end{aligned} \\end{aligned}')).toThrow();
     });
 });

@@ -58,42 +58,12 @@ function eat_primes(tokens: TexToken[], start: number): number {
 }
 
 
-function find_closing_match(tokens: TexToken[], start: number, leftToken: TexToken, rightToken: TexToken): number {
-    assert(tokens[start].eq(leftToken));
-    let count = 1;
-    let pos = start + 1;
-
-    while (count > 0) {
-        if (pos >= tokens.length) {
-            return -1;
-        }
-        if (tokens[pos].eq(leftToken)) {
-            count += 1;
-        } else if (tokens[pos].eq(rightToken)) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    return pos - 1;
-}
-
 
 const LEFT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\left');
 const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
 
-function find_closing_right_command(tokens: TexToken[], start: number): number {
-    return find_closing_match(tokens, start, LEFT_COMMAND, RIGHT_COMMAND);
-}
-
-
 const BEGIN_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\begin');
 const END_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\end');
-
-
-function find_closing_end_command(tokens: TexToken[], start: number): number {
-    return find_closing_match(tokens, start, BEGIN_COMMAND, END_COMMAND);
-}
 
 
 export class LatexParserError extends Error {
@@ -127,25 +97,35 @@ export class LatexParser {
         const idx = array_find(tokens, token_displaystyle);
         if (idx === -1) {
             // no \displaystyle, normal execution path
-            const [tree, _] = this.parseGroup(tokens, 0, tokens.length);
-            return tree;
+            return this.parseGroup(tokens.slice(0));
         } else if (idx === 0) {
             // \displaystyle at the beginning. Wrap the whole thing in \displaystyle
-            const [tree, _] = this.parseGroup(tokens, 1, tokens.length);
+            const tree = this.parseGroup(tokens.slice(1));
             return new TexFuncCall(token_displaystyle, [tree]);
         } else {
             // \displaystyle somewhere in the middle. Split the expression to two parts
-            const [tree1, _1] = this.parseGroup(tokens, 0, idx);
-            const [tree2, _2] = this.parseGroup(tokens, idx + 1, tokens.length);
+            const tree1 = this.parseGroup(tokens.slice(0, idx));
+            const tree2 = this.parseGroup(tokens.slice(idx + 1, tokens.length));
             const display = new TexFuncCall(token_displaystyle, [tree2]);
             return new TexGroup([tree1, display]);
         }
     }
 
-    parseGroup(tokens: TexToken[], start: number, end: number): ParseResult {
+    parseGroup(tokens: TexToken[]): TexNode {
+        const [tree, _] = this.parseClosure(tokens, 0, null);
+        return tree;
+    }
+
+    // return pos: (position of closingToken) + 1
+    // throw error if no matching closingToken
+    parseClosure(tokens: TexToken[], start: number, closingToken: TexToken | null): ParseResult {
         const results: TexNode[] = [];
         let pos = start;
-        while (pos < end) {
+        while (pos < tokens.length) {
+            if (closingToken !== null && tokens[pos].eq(closingToken)) {
+                break;
+            }
+
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
             if(res.head.type === TexTokenType.SPACE || res.head.type === TexTokenType.NEWLINE) {
@@ -158,6 +138,9 @@ export class LatexParser {
             }
             results.push(res);
         }
+        if (pos >= tokens.length && closingToken !== null) {
+            throw new LatexParserError('No matching ' + closingToken.toString);
+        }
 
         let node: TexNode;
         if (results.length === 1) {
@@ -165,7 +148,7 @@ export class LatexParser {
         } else {
             node = new TexGroup(results);
         }
-        return [node, end + 1];
+        return [node, pos + 1];
     }
 
     parseNextExpr(tokens: TexToken[], start: number): ParseResult {
@@ -176,25 +159,28 @@ export class LatexParser {
 
         num_prime += eat_primes(tokens, pos);
         pos += num_prime;
-        if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
-            [sub, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
-            num_prime += eat_primes(tokens, pos);
-            pos += num_prime;
-            if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
+        if (pos < tokens.length) {
+            const next_token = tokens[pos];
+            if (next_token.eq(SUB_SYMBOL)) {
+                [sub, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
+                num_prime += eat_primes(tokens, pos);
+                pos += num_prime;
+                if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
+                    [sup, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
+                    if (eat_primes(tokens, pos) > 0) {
+                        throw new LatexParserError('Double superscript');
+                    }
+                }
+            } else if (next_token.eq(SUP_SYMBOL)) {
                 [sup, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
                 if (eat_primes(tokens, pos) > 0) {
                     throw new LatexParserError('Double superscript');
                 }
-            }
-        } else if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
-            [sup, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
-            if (eat_primes(tokens, pos) > 0) {
-                throw new LatexParserError('Double superscript');
-            }
-            if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
-                [sub, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
-                if (eat_primes(tokens, pos) > 0) {
-                    throw new LatexParserError('Double superscript');
+                if (pos < tokens.length && tokens[pos].eq(SUB_SYMBOL)) {
+                    [sub, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
+                    if (eat_primes(tokens, pos) > 0) {
+                        throw new LatexParserError('Double superscript');
+                    }
                 }
             }
         }
@@ -224,7 +210,7 @@ export class LatexParser {
 
     parseNextExprWithoutSupSub(tokens: TexToken[], start: number): ParseResult {
         if (start >= tokens.length) {
-            return [EMPTY_NODE, start];
+            throw new LatexParserError("Unexpected end of input");
         }
         const firstToken = tokens[start];
         switch (firstToken.type) {
@@ -241,8 +227,12 @@ export class LatexParser {
                 }
                 if (firstToken.eq(BEGIN_COMMAND)) {
                     return this.parseBeginEndExpr(tokens, start);
+                } else if(firstToken.eq(END_COMMAND)) {
+                    throw new LatexParserError("Unmatched '\\end'");
                 } else if (firstToken.eq(LEFT_COMMAND)) {
                     return this.parseLeftRightExpr(tokens, start);
+                } else if (firstToken.eq(RIGHT_COMMAND)) {
+                    throw new LatexParserError("Unmatched '\\right'");
                 } else {
                     return this.parseCommandExpr(tokens, start);
                 }
@@ -250,13 +240,9 @@ export class LatexParser {
                 const controlChar = firstToken.value;
                 switch (controlChar) {
                     case '{':
-                        const posClosingBracket = find_closing_match(tokens, start, LEFT_CURLY_BRACKET, RIGHT_CURLY_BRACKET);
-                        if(posClosingBracket === -1) {
-                            throw new LatexParserError("Unmatched '{'");
-                        }
-                        return this.parseGroup(tokens, start + 1, posClosingBracket);
+                        return this.parseClosure(tokens, start + 1, RIGHT_CURLY_BRACKET);
                     case '}':
-                        throw new LatexParserError("Unmatched '}'");
+                        throw new LatexParserError("Unreachable code: Unmatched '}'");
                     case '\\\\':
                     case '\\!':
                     case '\\,':
@@ -267,6 +253,7 @@ export class LatexParser {
                         return [firstToken.toNode(), start + 1];
                     case '_':
                     case '^':
+                        // e.g. "_1" or "^2" are valid LaTeX math expressions
                         return [ EMPTY_NODE, start];
                     case '&':
                         if (this.alignmentDepth <= 0) {
@@ -289,11 +276,6 @@ export class LatexParser {
 
         let pos = start + 1;
 
-        if (['left', 'right', 'begin', 'end'].includes(command.slice(1))) {
-            throw new LatexParserError('Unexpected command: ' + command);
-        }
-
-
         const paramNum = get_command_param_num(command.slice(1));
         switch (paramNum) {
             case 0:
@@ -305,14 +287,9 @@ export class LatexParser {
                     throw new LatexParserError('Expecting argument for ' + command);
                 }
                 if (command === '\\sqrt' && pos < tokens.length && tokens[pos].eq(LEFT_SQUARE_BRACKET)) {
-                    const posLeftSquareBracket = pos;
-                    const posRightSquareBracket = find_closing_match(tokens, pos, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET);
-                    if (posRightSquareBracket === -1) {
-                        throw new LatexParserError('No matching right square bracket for [');
-                    }
-                    const [exponent, _] = this.parseGroup(tokens, posLeftSquareBracket + 1, posRightSquareBracket);
-                    const [arg1, newPos] = this.parseNextArg(tokens, posRightSquareBracket + 1);
-                    return [new TexFuncCall(command_token, [arg1], exponent), newPos];
+                    const [exponent, newPos1] = this.parseClosure(tokens, pos + 1, RIGHT_SQUARE_BRACKET);
+                    const [arg1, newPos2] = this.parseNextArg(tokens, newPos1);
+                    return [new TexFuncCall(command_token, [arg1], exponent), newPos2];
                 } else if (command === '\\text') {
                     if (pos + 2 >= tokens.length) {
                         throw new LatexParserError('Expecting content for \\text command');
@@ -367,7 +344,7 @@ export class LatexParser {
         pos += eat_whitespaces(tokens, pos).length;
 
         if (pos >= tokens.length) {
-            throw new LatexParserError('Expecting delimiter after \\left');
+            throw new LatexParserError('Expecting a delimiter after \\left');
         }
 
         const leftDelimiter = eat_parenthesis(tokens, pos);
@@ -375,17 +352,13 @@ export class LatexParser {
             throw new LatexParserError('Invalid delimiter after \\left');
         }
         pos++;
-        const exprInsideStart = pos;
-        const idx = find_closing_right_command(tokens, start);
-        if (idx === -1) {
-            throw new LatexParserError('No matching \\right');
-        }
-        const exprInsideEnd = idx;
-        pos = idx + 1;
+
+        const [body, idx] = this.parseClosure(tokens, pos, RIGHT_COMMAND);
+        pos = idx;
 
         pos += eat_whitespaces(tokens, pos).length;
         if (pos >= tokens.length) {
-            throw new LatexParserError('Expecting \\right after \\left');
+            throw new LatexParserError('Expecting a delimiter after \\right');
         }
 
         const rightDelimiter = eat_parenthesis(tokens, pos);
@@ -394,7 +367,6 @@ export class LatexParser {
         }
         pos++;
 
-        const [body, _] = this.parseGroup(tokens, exprInsideStart, exprInsideEnd);
         const left = leftDelimiter.value === '.'? null: leftDelimiter;
         const right = rightDelimiter.value === '.'? null: rightDelimiter;
         const res = new TexLeftRight({body: body, left: left, right: right});
@@ -418,40 +390,31 @@ export class LatexParser {
             [data, pos] = this.parseNextArg(tokens, pos);
         }
 
-        pos += eat_whitespaces(tokens, pos).length; // ignore whitespaces and '\n' after \begin{envName}
+        const [body, endIdx] = this.parseAligned(tokens, pos, END_COMMAND);
 
-
-        const exprInsideStart = pos;
-
-        const endIdx = find_closing_end_command(tokens, start);
-        if (endIdx === -1) {
-            throw new LatexParserError('No matching \\end');
-        }
-        const exprInsideEnd = endIdx;
-        pos = endIdx + 1;
+        pos = endIdx;
 
         assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
         assert(tokens[pos + 1].type === TexTokenType.LITERAL);
         assert(tokens[pos + 2].eq(RIGHT_CURLY_BRACKET));
         if (tokens[pos + 1].value !== envName) {
-            throw new LatexParserError('Mismatched \\begin and \\end environments');
+            throw new LatexParserError('\\begin and \\end environments mismatch');
         }
         pos += 3;
 
-        const exprInside = tokens.slice(exprInsideStart, exprInsideEnd);
-        // ignore spaces and '\n' before \end{envName}
-        while(exprInside.length > 0 && [TexTokenType.SPACE, TexTokenType.NEWLINE].includes(exprInside[exprInside.length - 1].type)) {
-            exprInside.pop();
-        }
-        const body = this.parseAligned(exprInside);
         const res = new TexBeginEnd(new TexToken(TexTokenType.LITERAL, envName), body, data);
         return [res, pos];
     }
 
-    parseAligned(tokens: TexToken[]): TexNode[][] {
+    // return pos: (position of closingToken) + 1
+    // throw error if no matching closingToken
+    parseAligned(tokens: TexToken[], start: number, closingToken: TexToken): [TexNode[][], number] {
         this.alignmentDepth++;
 
-        let pos = 0;
+        let pos = start;
+        // ignore whitespaces and '\n' after \begin{envName}
+        pos += eat_whitespaces(tokens, pos).length;
+
         const allRows: TexNode[][] = [];
         let row: TexNode[] = [];
         allRows.push(row);
@@ -459,6 +422,10 @@ export class LatexParser {
         row.push(group);
 
         while (pos < tokens.length) {
+            if (tokens[pos].eq(closingToken)) {
+                break;
+            }
+
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
 
@@ -484,8 +451,23 @@ export class LatexParser {
             }
         }
 
+        if (pos >= tokens.length) {
+            throw new LatexParserError('No matching \\end');
+        }
+
+        // ignore spaces and '\n' before \end{envName}
+        if (allRows.length > 0 && allRows[allRows.length - 1].length > 0) {
+            const last_cell = allRows[allRows.length - 1][allRows[allRows.length - 1].length - 1];
+            if (last_cell.type === 'ordgroup') {
+                const last_cell_items = (last_cell as TexGroup).items;
+                while(last_cell_items.length > 0 && [TexTokenType.SPACE, TexTokenType.NEWLINE].includes(last_cell_items[last_cell_items.length - 1].head.type)) {
+                    last_cell_items.pop();
+                }
+            }
+        }
+
         this.alignmentDepth--;
-        return allRows;
+        return [allRows, pos + 1];
     }
 }
 
@@ -519,7 +501,7 @@ function passExpandCustomTexMacros(tokens: TexToken[], customTexMacros: {[key: s
     return out_tokens;
 }
 
-export function parseTex(tex: string, customTexMacros: {[key: string]: string}): TexNode {
+export function parseTex(tex: string, customTexMacros: {[key: string]: string} = {}): TexNode {
     const parser = new LatexParser();
     let tokens = tokenize_tex(tex);
     tokens = passIgnoreWhitespaceBeforeScriptMark(tokens);
