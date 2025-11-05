@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { tokenize_tex } from '../src/tex-tokenizer';
-import { parseTex } from '../src/tex-parser';
+import { LatexParserError, parseTex } from '../src/tex-parser';
 import { TexToken, TexTokenType } from '../src/tex-types';
 
 
@@ -60,27 +60,38 @@ describe('typst-tokenizer', () => {
         expect(() => parseTex('a & b')).toThrow();
     });
 
+    test('throw on missing ] for sqrt', function() {
+        const input = '\\sqrt[3{x}';
+        expect(() => parseTex(input)).toThrowError(LatexParserError.UNMATCHED_LEFT_BRACKET);
+    });
+
     test('throw on extra {', function() {
-        expect(() => parseTex('a { {b}')).toThrow();
+        const input = 'a { {b}';
+        expect(() => parseTex(input)).toThrowError(LatexParserError.UNMATCHED_LEFT_BRACE);
     });
 
     test('throw on extra }', function() {
-        expect(() => parseTex('a { b } }')).toThrow();
+        const input = 'a { b } }';
+        expect(() => parseTex(input)).toThrowError(LatexParserError.UNMATCHED_RIGHT_BRACE);
     });
 
     test('throw on extra \\left', function() {
-        expect(() => parseTex('a \\left( \\left( b \\right)')).toThrow();
+        const input = 'a \\left( \\left( b \\right)';
+        expect(() => parseTex(input)).toThrowError(LatexParserError.UNMATCHED_COMMAND_LEFT);
     });
 
     test('throw on extra \\right', function() {
-        expect(() => parseTex('a \\left( b \\right) \\right)')).toThrow();
+        const input = 'a \\left( b \\right) \\right)';
+        expect(() => parseTex(input)).toThrowError(LatexParserError.UNMATCHED_COMMAND_RIGHT);
     });
 
     test('throw on extra \\begin', function() {
-        expect(() => parseTex('a \\begin{aligned} \\begin{aligned} b \\end{aligned}')).toThrow();
+        const input = 'a \\begin{aligned} \\begin{aligned} b \\end{aligned}';
+        expect(() => parseTex(input)).toThrowError(LatexParserError.UNMATCHED_COMMAND_BEGIN);
     });
 
     test('throw on extra \\end', function() {
-        expect(() => parseTex('a \\begin{aligned} b \\end{aligned} \\end{aligned}')).toThrow();
+        const input = 'a \\begin{aligned} b \\end{aligned} \\end{aligned}';
+        expect(() => parseTex(input)).toThrowError(LatexParserError.UNMATCHED_COMMAND_END);
     });
 });

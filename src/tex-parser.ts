@@ -65,13 +65,22 @@ const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
 const BEGIN_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\begin');
 const END_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\end');
 
-const CONTROL_LINEBREAK = new TexToken(TexTokenType.CONTROL, '\\\\').toNode();
+const CONTROL_LINEBREAK = new TexToken(TexTokenType.CONTROL, '\\\\');
 
 export class LatexParserError extends Error {
     constructor(message: string) {
         super(message);
         this.name = 'LatexParserError';
     }
+
+    static readonly UNMATCHED_LEFT_BRACE = new LatexParserError("Unmatched '\\{'");
+    static readonly UNMATCHED_RIGHT_BRACE = new LatexParserError("Unmatched '\\}'");
+    static readonly UNMATCHED_LEFT_BRACKET = new LatexParserError("Unmatched '\\['");
+    static readonly UNMATCHED_RIGHT_BRACKET = new LatexParserError("Unmatched '\\]'");
+    static readonly UNMATCHED_COMMAND_BEGIN = new LatexParserError("Unmatched '\\begin'");
+    static readonly UNMATCHED_COMMAND_END = new LatexParserError("Unmatched '\\end'");
+    static readonly UNMATCHED_COMMAND_LEFT = new LatexParserError("Unmatched '\\left'");
+    static readonly UNMATCHED_COMMAND_RIGHT = new LatexParserError("Unmatched '\\right'");
 }
 
 
@@ -118,7 +127,7 @@ export class LatexParser {
     }
 
     // return pos: (position of closingToken) + 1
-    // throw error if no matching closingToken
+    // pos will be -1 if closingToken is not found
     parseClosure(tokens: TexToken[], start: number, closingToken: TexToken | null): ParseResult {
         const results: TexNode[] = [];
         let pos = start;
@@ -140,7 +149,7 @@ export class LatexParser {
             results.push(res);
         }
         if (pos >= tokens.length && closingToken !== null) {
-            throw new LatexParserError('No matching ' + closingToken.toString);
+            return [EMPTY_NODE, -1];
         }
 
         let node: TexNode;
@@ -229,11 +238,11 @@ export class LatexParser {
                 if (firstToken.eq(BEGIN_COMMAND)) {
                     return this.parseBeginEndExpr(tokens, start);
                 } else if(firstToken.eq(END_COMMAND)) {
-                    throw new LatexParserError("Unmatched '\\end'");
+                    throw LatexParserError.UNMATCHED_COMMAND_END;
                 } else if (firstToken.eq(LEFT_COMMAND)) {
                     return this.parseLeftRightExpr(tokens, start);
                 } else if (firstToken.eq(RIGHT_COMMAND)) {
-                    throw new LatexParserError("Unmatched '\\right'");
+                    throw LatexParserError.UNMATCHED_COMMAND_RIGHT;
                 } else {
                     return this.parseCommandExpr(tokens, start);
                 }
@@ -241,9 +250,13 @@ export class LatexParser {
                 const controlChar = firstToken.value;
                 switch (controlChar) {
                     case '{':
-                        return this.parseClosure(tokens, start + 1, RIGHT_CURLY_BRACKET);
+                        const [group, newPos] = this.parseClosure(tokens, start + 1, RIGHT_CURLY_BRACKET);
+                        if (newPos === -1) {
+                            throw LatexParserError.UNMATCHED_LEFT_BRACE;
+                        }
+                        return [group, newPos];
                     case '}':
-                        throw new LatexParserError("Unreachable code: Unmatched '}'");
+                        throw LatexParserError.UNMATCHED_RIGHT_BRACE;
                     case '\\\\':
                     case '\\!':
                     case '\\,':
@@ -289,6 +302,9 @@ export class LatexParser {
                 }
                 if (command === '\\sqrt' && pos < tokens.length && tokens[pos].eq(LEFT_SQUARE_BRACKET)) {
                     const [exponent, newPos1] = this.parseClosure(tokens, pos + 1, RIGHT_SQUARE_BRACKET);
+                    if (newPos1 === -1) {
+                        throw LatexParserError.UNMATCHED_LEFT_BRACKET;
+                    }
                     const [arg1, newPos2] = this.parseNextArg(tokens, newPos1);
                     return [new TexFuncCall(command_token, [arg1], exponent), newPos2];
                 } else if (command === '\\text') {
@@ -303,7 +319,10 @@ export class LatexParser {
                 } else if (command === '\\displaylines') {
                     assert(tokens[pos].eq(LEFT_CURLY_BRACKET));
                     const [matrix, newPos] = this.parseAligned(tokens, pos + 1, RIGHT_CURLY_BRACKET);
-                    const group = new TexGroup(array_join(matrix, CONTROL_LINEBREAK));
+                    if (newPos === -1) {
+                        throw LatexParserError.UNMATCHED_LEFT_BRACE;
+                    }
+                    const group = new TexGroup(array_join(matrix, CONTROL_LINEBREAK.toNode()));
                     return [new TexFuncCall(command_token, [group]), newPos];
                 }
                 let [arg1, newPos] = this.parseNextArg(tokens, pos);
@@ -360,6 +379,9 @@ export class LatexParser {
         pos++;
 
         const [body, idx] = this.parseClosure(tokens, pos, RIGHT_COMMAND);
+        if (idx === -1) {
+            throw LatexParserError.UNMATCHED_COMMAND_LEFT;
+        }
         pos = idx;
 
         pos += eat_whitespaces(tokens, pos).length;
@@ -397,6 +419,9 @@ export class LatexParser {
         }
 
         const [body, endIdx] = this.parseAligned(tokens, pos, END_COMMAND);
+        if (endIdx === -1) {
+            throw LatexParserError.UNMATCHED_COMMAND_BEGIN;
+        }
 
         pos = endIdx;
 
@@ -413,7 +438,7 @@ export class LatexParser {
     }
 
     // return pos: (position of closingToken) + 1
-    // throw error if no matching closingToken
+    // pos will be -1 if closingToken is not found
     parseAligned(tokens: TexToken[], start: number, closingToken: TexToken): [TexNode[][], number] {
         this.alignmentDepth++;
 
@@ -458,7 +483,7 @@ export class LatexParser {
         }
 
         if (pos >= tokens.length) {
-            throw new LatexParserError('No matching \\end');
+            return [[], -1];
         }
 
         // ignore spaces and '\n' before \end{envName}
