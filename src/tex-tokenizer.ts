@@ -38,6 +38,9 @@ export const TEX_UNARY_COMMANDS = [
     'set',
     'displaylines',
     'mathinner',
+    'mathrel',
+    'mathbin',
+    'mathop',
 ]
 
 export const TEX_BINARY_COMMANDS = [

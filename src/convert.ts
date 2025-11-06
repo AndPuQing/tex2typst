@@ -401,6 +401,30 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 return arg0;
             }
 
+            // \mathrel{X} -> class("relation", X)
+            if (node.head.value === '\\mathrel') {
+                return new TypstFuncCall(
+                    new TypstToken(TypstTokenType.SYMBOL, 'class'),
+                    [new TypstToken(TypstTokenType.TEXT, 'relation').toNode(), arg0]
+                );
+            }
+
+            // \mathbin{X} -> class("binary", X)
+            if (node.head.value === '\\mathbin') {
+                return new TypstFuncCall(
+                    new TypstToken(TypstTokenType.SYMBOL, 'class'),
+                    [new TypstToken(TypstTokenType.TEXT, 'binary').toNode(), arg0]
+                );
+            }
+
+            // \mathop{X} -> class("large", X)
+            if (node.head.value === '\\mathop') {
+                return new TypstFuncCall(
+                    new TypstToken(TypstTokenType.SYMBOL, 'class'),
+                    [new TypstToken(TypstTokenType.TEXT, 'large').toNode(), arg0]
+                );
+            }
+
             // \set{a, b, c} -> {a, b, c}
             if (node.head.value === '\\set') {
                 return new TypstLeftright(
@@ -751,6 +775,31 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode): TexNode {
                     const arg0 = node.args[0];
                     assert(arg0.head.type === TypstTokenType.TEXT);
                     return new TexFuncCall(typst_token_to_tex(node.head), [new TexToken(TexTokenType.LITERAL, arg0.head.value).toNode()]);
+                }
+                case 'class': {
+                    const arg0 = node.args[0];
+                    assert(arg0.head.type === TypstTokenType.TEXT);
+                    let command: string;
+                    switch (arg0.head.value) {
+                        // \mathrel{X} <- class("relation", X)
+                        case 'relation':
+                            command = '\\mathrel';
+                            break;
+                        // \mathbin{X} <- class("binary", X)
+                        case 'binary':
+                            command = '\\mathbin';
+                            break;
+                        // \mathop{X} <- class("large", X)
+                        case 'large':
+                            command = '\\mathop';
+                            break;
+                        default:
+                            throw new Error(`Unimplemented class: ${arg0.head.value}`);
+                    }
+                    return new TexFuncCall(
+                        new TexToken(TexTokenType.COMMAND, command),
+                        [convert_typst_node_to_tex(node.args[1])]
+                    );
                 }
                 // general case
                 default: {

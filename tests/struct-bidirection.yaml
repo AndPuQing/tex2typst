@@ -177,3 +177,12 @@ cases:
   - title: textcolor
     tex: x = \textcolor{red}{a + y}
     typst: "x = #text(fill: red)[$a + y$]"
+  - title: mathrel
+    tex: a \mathrel{X} b
+    typst: a class("relation", X) b
+  - title: mathbin
+    tex: a \mathbin{X} b
+    typst: a class("binary", X) b
+  - title: mathop
+    tex: a \mathop{X} b
+    typst: a class("large", X) b
