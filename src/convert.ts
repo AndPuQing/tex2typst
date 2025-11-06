@@ -396,6 +396,11 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 return arg0;
             }
 
+            // \mathinner{...} -> ...
+            if (node.head.value === '\\mathinner') {
+                return arg0;
+            }
+
             // \set{a, b, c} -> {a, b, c}
             if (node.head.value === '\\set') {
                 return new TypstLeftright(

@@ -458,3 +458,6 @@ cases:
       E = m c^2 \
       F = m a \
       P = I V
+  - title: command mathinner is ignored
+    tex: ab\mathinner{\text{inside}}cd
+    typst: a b "inside" c d

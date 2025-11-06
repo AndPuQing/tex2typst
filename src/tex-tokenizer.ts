@@ -37,6 +37,7 @@ export const TEX_UNARY_COMMANDS = [
     'substack',
     'set',
     'displaylines',
+    'mathinner',
 ]
 
 export const TEX_BINARY_COMMANDS = [
