@@ -103,7 +103,7 @@ caseFiles.forEach((ymlFilename) => {
         let tex_node: null | TexNode = null;
         let result: null | string = null;
         try {
-          const settings: Tex2TypstOptions = {
+          const settings: Partial<Tex2TypstOptions> = {
             nonStrict: c.nonStrict? c.nonStrict: false,
             preferShorthands: c.preferShorthands !== undefined? c.preferShorthands: true,
             inftyToOo: c.inftyToOo !== undefined? c.inftyToOo: false,

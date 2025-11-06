@@ -17,13 +17,15 @@ console.log(tex_recovered);
 
 ## Advanced options
 
+### Options for tex2typst()
+
 `tex2typst` function accepts an optional second argument, which is an object containing options to customize the conversion.
 
 ```typescript
 interface Tex2TypstOptions {
-    preferShorthands?: boolean;
-    fracToSlash?: boolean;
-    inftyToOo?: boolean;
+    preferShorthands: boolean;
+    fracToSlash: boolean;
+    inftyToOo: boolean;
 }
 ```
 
@@ -61,4 +63,30 @@ console.log(typst1);
 let typst2 = tex2typst(tex, { inftyToOo: true });
 console.log(typst2);
 // oo
+```
+
+### Options for typst2tex()
+
+```typescript
+interface Typst2TexOptions {
+    blockMathMode: boolean;
+}
+```
+
+- `blockMathMode`: Default is `true`.
+
+  It tells the converter it's whether in block or inline math environment. `true` for block math environment, `false` for inline math environment. The difference of translation comes when the Typst math code contains `display` or `inline` function.
+
+```javascript
+let typst1 = "a = display(sum_i x_i) b";
+console.log(typst2tex(typst1, { blockMathMode: false }));
+// a = \displaystyle \sum_i x_i \textstyle b
+console.log(typst2tex(typst1, { blockMathMode: true }));
+// a = \displaystyle \sum_i x_i b
+
+let typst2 = "a = inline(sum_i x_i) b";
+console.log(typst2tex(typst2, { blockMathMode: false }));
+// a = \textstyle \sum_i x_i b
+console.log(typst2tex(typst2, { blockMathMode: true }));
+// a = \textstyle \sum_i x_i \displaystyle b
 ```

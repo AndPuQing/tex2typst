@@ -192,3 +192,12 @@ cases:
   - title: mathop
     tex: a \mathop{X} b
     typst: a class("large", X) b
+  - title: display style
+    tex: a = \displaystyle \sum_i x_i
+    typst: a = display(sum_i x_i)
+  - title: display style, case 3
+    tex: \displaystyle \lim_x F(x) = 0, \lim_x F(x) = 1
+    typst: display(lim_x F(x) = 0 comma lim_x F(x) = 1)
+  - title: display style, case 4
+    tex:  \lim_x F(x) = 0, \displaystyle \lim_x F(x) = 1
+    typst: lim_x F(x) = 0, display(lim_x F(x) = 1)

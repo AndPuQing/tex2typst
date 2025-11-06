@@ -44,6 +44,8 @@ export class TexToken {
     }
 
     public static readonly EMPTY = new TexToken(TexTokenType.EMPTY, '');
+    public static readonly COMMAND_DISPLAYSTYLE = new TexToken(TexTokenType.COMMAND, '\\displaystyle');
+    public static readonly COMMAND_TEXTSTYLE = new TexToken(TexTokenType.COMMAND, '\\textstyle');
 }
 
 

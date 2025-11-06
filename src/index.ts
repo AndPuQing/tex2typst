@@ -1,5 +1,5 @@
 import { parseTex } from "./tex-parser";
-import type { Tex2TypstOptions } from "./exposed-types";
+import type { Tex2TypstOptions, Typst2TexOptions } from "./exposed-types";
 import { TypstWriter } from "./typst-writer";
 import { type TypstWriterOptions } from "./typst-types";
 import { convert_tex_node_to_typst, convert_typst_node_to_tex } from "./convert";
@@ -9,7 +9,7 @@ import { TexWriter } from "./tex-writer";
 import { shorthandMap } from "./typst-shorthands";
 
 
-export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
+export function tex2typst(tex: string, options: Partial<Tex2TypstOptions> = {}): string {
     const opt: Tex2TypstOptions = {
         nonStrict: true,
         preferShorthands: true,
@@ -20,14 +20,12 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
         customTexMacros: {}
     };
 
-    if(options !== undefined) {
-        if (typeof options !== 'object') {
-            throw new Error("options must be an object");
-        }
-        for (const key in opt) {
-            if (key in options) {
-                opt[key as keyof Tex2TypstOptions] = options[key as keyof Tex2TypstOptions] as any;
-            }
+    if (typeof options !== 'object') {
+        throw new Error("options must be an object");
+    }
+    for (const key in opt) {
+        if (key in options) {
+            opt[key as keyof Tex2TypstOptions] = options[key as keyof Tex2TypstOptions] as any;
         }
     }
 
@@ -38,9 +36,22 @@ export function tex2typst(tex: string, options?: Tex2TypstOptions): string {
     return writer.finalize();
 }
 
-export function typst2tex(typst: string): string {
+export function typst2tex(typst: string, options: Partial<Typst2TexOptions> = {}): string {
+    const opt: Typst2TexOptions = {
+        blockMathMode: true,
+    };
+
+    if (typeof options !== 'object') {
+        throw new Error("options must be an object");
+    }
+    for (const key in opt) {
+        if (key in options) {
+            opt[key as keyof Typst2TexOptions] = options[key as keyof Typst2TexOptions] as any;
+        }
+    }
+
     const typstTree = parseTypst(typst);
-    const texTree = convert_typst_node_to_tex(typstTree);
+    const texTree = convert_typst_node_to_tex(typstTree, opt);
     const writer = new TexWriter();
     writer.append(texTree);
     return writer.finalize();
