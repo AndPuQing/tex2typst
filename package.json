@@ -14,7 +14,7 @@
     "Markdown"
   ],
   "scripts": {
-    "type-check": "npx tsc --project tsconfig.json --noEmit",
+    "type-check": "tsc --project tsconfig.json --noEmit",
     "build:node": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --format=esm",
     "build:browser": "esbuild src/tex2typst.ts --bundle --platform=browser --outfile=dist/tex2typst.min.js --minify",
     "build:types": "cp src/exposed-types.ts dist/index.d.ts",
