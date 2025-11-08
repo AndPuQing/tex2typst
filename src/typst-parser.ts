@@ -129,7 +129,7 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
     return res;
 }
 
-function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
+function process_operators(nodes: TypstNode[]): TypstNode {
     nodes = trim_whitespace_around_operators(nodes);
 
     const opening_bracket = LEFT_PARENTHESES.toNode();
@@ -151,7 +151,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
             if(current.eq(opening_bracket)) {
                 // the expression is a group wrapped in parenthesis
                 const pos_closing = find_closing_parenthesis(nodes, pos);
-                current_tree = process_operators(nodes.slice(pos + 1, pos_closing), true);
+                current_tree = process_operators(nodes.slice(pos + 1, pos_closing));
                 pos = pos_closing + 1;
             } else {
                 // the expression is just a single item
@@ -180,12 +180,7 @@ function process_operators(nodes: TypstNode[], parenthesis = false): TypstNode {
             }
         }
     }
-    const body = args.length === 1? args[0]: new TypstGroup(args);
-    if(parenthesis) {
-        return new TypstLeftright(null, { body: body, left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
-    } else {
-        return body;
-    }
+    return args.length === 1? args[0]: new TypstGroup(args);
 }
 
 function parse_named_params(groups: TypstGroup[]): TypstNamedParams {
@@ -237,7 +232,7 @@ export class TypstParser {
         return tree;
     }
 
-    parseGroup(tokens: TypstToken[], start: number, end: number, parentheses = false): TypstParseResult {
+    parseGroup(tokens: TypstToken[], start: number, end: number): TypstParseResult {
         const results: TypstNode[] = [];
         let pos = start;
 
@@ -256,14 +251,10 @@ export class TypstParser {
         }
 
         let node: TypstNode;
-        if(parentheses) {
-            node = process_operators(results, true);
+        if (results.length === 1) {
+            node = results[0];
         } else {
-            if (results.length === 1) {
-                node = results[0];
-            } else {
-                node = process_operators(results);
-            }
+            node = process_operators(results);
         }
         return [node, end + 1];
     }
@@ -320,7 +311,9 @@ export class TypstParser {
         const node = firstToken.toNode();
         if(firstToken.eq(LEFT_PARENTHESES)) {
             const pos_closing = find_closing_match(tokens, start);
-            return this.parseGroup(tokens, start + 1, pos_closing, true);
+            const [body, _] = this.parseGroup(tokens, start + 1, pos_closing);
+            const node = new TypstLeftright(null, { body: body, left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
+            return [node, pos_closing + 1];
         }
         if(firstToken.type === TypstTokenType.ELEMENT && !isalpha(firstToken.value[0])) {
             return [node, start + 1];
