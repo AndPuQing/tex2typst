@@ -1,6 +1,6 @@
 import { TexBeginEnd, TexFuncCall, TexLeftRight, TexNode, TexGroup, TexSupSub, TexSupsubData, TexText, TexToken, TexTokenType } from "./tex-types";
 import { assert } from "./utils";
-import { array_find, array_join } from "./generic";
+import { array_find, array_join, array_split } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";
 
 const IGNORED_COMMANDS = [
@@ -446,59 +446,31 @@ export class LatexParser {
         // ignore whitespaces and '\n' after \begin{envName}
         pos += eat_whitespaces(tokens, pos).length;
 
-        const allRows: TexNode[][] = [];
-        let row: TexNode[] = [];
-        allRows.push(row);
-        let group = new TexGroup([]);
-        row.push(group);
+        let closure: TexNode;
+        [closure, pos] = this.parseClosure(tokens, pos, closingToken);
 
-        while (pos < tokens.length) {
-            if (tokens[pos].eq(closingToken)) {
-                break;
-            }
-
-            const [res, newPos] = this.parseNextExpr(tokens, pos);
-            pos = newPos;
-
-            if (res.head.type === TexTokenType.SPACE || res.head.type === TexTokenType.NEWLINE) {
-                if (!this.space_sensitive && res.head.value.replace(/ /g, '').length === 0) {
-                    continue;
-                }
-                if (!this.newline_sensitive && res.head.value === '\n') {
-                    continue;
-                }
-            }
-
-            if (res.head.eq(new TexToken(TexTokenType.CONTROL, '\\\\'))) {
-                row = [];
-                group = new TexGroup([]);
-                row.push(group);
-                allRows.push(row);
-            } else if (res.head.eq(new TexToken(TexTokenType.CONTROL, '&'))) {
-                group = new TexGroup([]);
-                row.push(group);
-            } else {
-                group.items.push(res);
-            }
-        }
-
-        if (pos >= tokens.length) {
+        if (pos === -1) {
             return [[], -1];
         }
 
-        // ignore spaces and '\n' before \end{envName}
-        if (allRows.length > 0 && allRows[allRows.length - 1].length > 0) {
-            const last_cell = allRows[allRows.length - 1][allRows[allRows.length - 1].length - 1];
-            if (last_cell.type === 'ordgroup') {
-                const last_cell_items = (last_cell as TexGroup).items;
-                while(last_cell_items.length > 0 && [TexTokenType.SPACE, TexTokenType.NEWLINE].includes(last_cell_items[last_cell_items.length - 1].head.type)) {
-                    last_cell_items.pop();
-                }
+        let allRows: TexNode[][];
+        if (closure.type === 'ordgroup') {
+            const elements = (closure as TexGroup).items;
+            // ignore spaces and '\n' before \end{envName}
+            while(elements.length > 0 && [TexTokenType.SPACE, TexTokenType.NEWLINE].includes(elements[elements.length - 1].head.type)) {
+                elements.pop();
             }
+            allRows = array_split(elements, new TexToken(TexTokenType.CONTROL, '\\\\').toNode())
+                      .map(row => {
+                          return array_split(row, new TexToken(TexTokenType.CONTROL, '&').toNode())
+                                   .map(arr => new TexGroup(arr));
+                      });
+        } else {
+            allRows = [[closure]];
         }
 
         this.alignmentDepth--;
-        return [allRows, pos + 1];
+        return [allRows, pos];
     }
 }
 
