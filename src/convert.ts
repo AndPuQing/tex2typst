@@ -8,7 +8,7 @@ import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
 import { symbolMap, reverseSymbolMap } from "./map";
 import { array_includes, array_intersperse, array_split } from "./generic";
-import { assert } from "./util";
+import { assert } from "./utils";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS } from "./tex-tokenizer";
 
 

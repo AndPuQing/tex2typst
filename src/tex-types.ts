@@ -1,4 +1,4 @@
-import { assert } from "./util";
+import { assert } from "./utils";
 
 /**
  * ELEMENT: 0-9, a-z, A-Z, punctuations such as +-/*,:; etc.

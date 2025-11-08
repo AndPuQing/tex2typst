@@ -6,7 +6,7 @@ import { TypstSupsubData } from "./typst-types";
 import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
 import { tokenize_typst } from "./typst-tokenizer";
-import { assert, isalpha } from "./util";
+import { assert, isalpha } from "./utils";
 
 
 // TODO: In Typst, y' ' is not the same as y''.

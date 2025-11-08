@@ -1,5 +1,5 @@
 import { TexBeginEnd, TexFuncCall, TexLeftRight, TexNode, TexGroup, TexSupSub, TexSupsubData, TexText, TexToken, TexTokenType } from "./tex-types";
-import { assert } from "./util";
+import { assert } from "./utils";
 import { array_find, array_join } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";
 
