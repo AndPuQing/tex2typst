@@ -59,6 +59,64 @@ function find_closing_delim(tokens: TypstToken[], start: number): number {
 }
 
 
+function find_closing_parenthesis(nodes: TypstToken[], start: number): number {
+    const left_parenthesis = new TypstToken(TypstTokenType.ELEMENT, '(');
+    const right_parenthesis = new TypstToken(TypstTokenType.ELEMENT, ')');
+
+
+
+    assert(nodes[start].eq(left_parenthesis));
+
+    let count = 1;
+    let pos = start + 1;
+
+    while (count > 0) {
+        if (pos >= nodes.length) {
+            throw new Error("Unmatched '('");
+        }
+        if (nodes[pos].eq(left_parenthesis)) {
+            count += 1;
+        } else if (nodes[pos].eq(right_parenthesis)) {
+            count -= 1;
+        }
+        pos += 1;
+    }
+
+    return pos - 1;
+}
+
+
+function extract_named_params(arr: TypstNode[]): [TypstNode[], TypstNamedParams] {
+    const COLON = new TypstToken(TypstTokenType.ELEMENT, ':').toNode();
+    const np: TypstNamedParams = {};
+
+    const to_delete: number[] = [];
+    for(let i = 0; i < arr.length; i++) {
+        if(arr[i].type !== 'group') {
+            continue;
+        }
+
+        const g = arr[i] as TypstGroup;
+        const pos_colon = array_find(g.items, COLON);
+        if(pos_colon === -1 || pos_colon === 0) {
+            continue;
+        }
+        to_delete.push(i);
+        const param_name = g.items[pos_colon - 1];
+        if(param_name.eq(new TypstToken(TypstTokenType.SYMBOL, 'delim').toNode())) {
+            if(g.items.length !== 3) {
+                throw new TypstParserError('Invalid number of arguments for delim');
+            }
+            np['delim'] = g.items[pos_colon + 1];
+        } else {
+            throw new TypstParserError('Not implemented for other named parameters');
+        }
+    }
+    for(let i = to_delete.length - 1; i >= 0; i--) {
+        arr.splice(to_delete[i], 1);
+    }
+    return [arr, np];
+}
 
 function primes(num: number): TypstNode[] {
     const res: TypstNode[] = [];
@@ -190,25 +248,7 @@ export class TypstParser {
     }
 
     parseGroup(tokens: TypstToken[], start: number, end: number): TypstParseResult {
-        const results: TypstNode[] = [];
-        let pos = start;
-
-        while (pos < end) {
-            const [res, newPos] = this.parseNextExpr(tokens, pos);
-            pos = newPos;
-            if (res.head.type === TypstTokenType.SPACE || res.head.type === TypstTokenType.NEWLINE) {
-                if (!this.space_sensitive && res.head.value.replace(/ /g, '').length === 0) {
-                    continue;
-                }
-                if (!this.newline_sensitive && res.head.value === '\n') {
-                    continue;
-                }
-            }
-            results.push(res);
-        }
-
-        const node = process_operators(results);
-        return [node, end + 1];
+        return this.parseClosure(tokens.slice(start, end), 0, null);
     }
 
     parseNextExpr(tokens: TypstToken[], start: number): TypstParseResult {
@@ -241,12 +281,13 @@ export class TypstParser {
         }
     }
 
-    parseClosure(tokens: TypstToken[], start: number, closingToken: TypstToken): TypstParseResult {
+    // return pos: (position of closingToken) + 1
+    parseClosure(tokens: TypstToken[], start: number, closingToken: TypstToken | null): TypstParseResult {
         const results: TypstNode[] = [];
         let pos = start;
 
         while (pos < tokens.length) {
-            if (tokens[pos].eq(closingToken)) {
+            if (closingToken !== null && tokens[pos].eq(closingToken)) {
                 break;
             }
             const [res, newPos] = this.parseNextExpr(tokens, pos);
@@ -261,7 +302,7 @@ export class TypstParser {
             }
             results.push(res);
         }
-        if (pos >= tokens.length) {
+        if (pos >= tokens.length && closingToken !== null) {
             throw new Error(`Unclosed closure at position ${pos}. Expecting ${closingToken.value}`);
         }
 
@@ -363,8 +404,7 @@ export class TypstParser {
 
     // start: the position of the left parentheses
     parseMatrix(tokens: TypstToken[], start: number, rowSepToken: TypstToken, cellSepToken: TypstToken): [TypstNode[][], TypstNamedParams, number] {
-        const end = find_closing_match(tokens, start);
-        tokens = tokens.slice(0, end);
+        const end = find_closing_parenthesis(tokens, start);
 
         const matrix: TypstNode[][] = [];
         let named_params: TypstNamedParams = {};
@@ -373,44 +413,12 @@ export class TypstParser {
         while (pos < end) {
             while(pos < end) {
                 let next_stop = array_find(tokens, rowSepToken, pos);
-                if (next_stop === -1) {
+                if (next_stop === -1 || next_stop > end) {
                     next_stop = end;
                 }
 
                 let row = this.parseArgumentsWithSeparator(tokens, pos, next_stop, cellSepToken);
                 let np: TypstNamedParams = {};
-
-                function extract_named_params(arr: TypstNode[]): [TypstNode[], TypstNamedParams] {
-                    const COLON = new TypstToken(TypstTokenType.ELEMENT, ':').toNode();
-                    const np: TypstNamedParams = {};
-
-                    const to_delete: number[] = [];
-                    for(let i = 0; i < arr.length; i++) {
-                        if(arr[i].type !== 'group') {
-                            continue;
-                        }
-
-                        const g = arr[i] as TypstGroup;
-                        const pos_colon = array_find(g.items, COLON);
-                        if(pos_colon === -1 || pos_colon === 0) {
-                            continue;
-                        }
-                        to_delete.push(i);
-                        const param_name = g.items[pos_colon - 1];
-                        if(param_name.eq(new TypstToken(TypstTokenType.SYMBOL, 'delim').toNode())) {
-                            if(g.items.length !== 3) {
-                                throw new TypstParserError('Invalid number of arguments for delim');
-                            }
-                            np['delim'] = g.items[pos_colon + 1];
-                        } else {
-                            throw new TypstParserError('Not implemented for other named parameters');
-                        }
-                    }
-                    for(let i = to_delete.length - 1; i >= 0; i--) {
-                        arr.splice(to_delete[i], 1);
-                    }
-                    return [arr, np];
-                }
 
                 [row, np] = extract_named_params(row);
                 matrix.push(row);
