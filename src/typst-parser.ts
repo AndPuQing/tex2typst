@@ -49,42 +49,6 @@ function find_closing_match(tokens: TypstToken[], start: number): number {
     );
 }
 
-function find_closing_delim(tokens: TypstToken[], start: number): number {
-    return _find_closing_match(
-        tokens,
-        start,
-        TypstToken.LEFT_DELIMITERS,
-        TypstToken.RIGHT_DELIMITERS
-    );
-}
-
-
-function find_closing_parenthesis(nodes: TypstToken[], start: number): number {
-    const left_parenthesis = new TypstToken(TypstTokenType.ELEMENT, '(');
-    const right_parenthesis = new TypstToken(TypstTokenType.ELEMENT, ')');
-
-
-
-    assert(nodes[start].eq(left_parenthesis));
-
-    let count = 1;
-    let pos = start + 1;
-
-    while (count > 0) {
-        if (pos >= nodes.length) {
-            throw new Error("Unmatched '('");
-        }
-        if (nodes[pos].eq(left_parenthesis)) {
-            count += 1;
-        } else if (nodes[pos].eq(right_parenthesis)) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    return pos - 1;
-}
-
 
 function extract_named_params(arr: TypstNode[]): [TypstNode[], TypstNamedParams] {
     const COLON = new TypstToken(TypstTokenType.ELEMENT, ':').toNode();
@@ -230,8 +194,13 @@ const LEFT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '{
 const RIGHT_CURLY_BRACKET: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '}');
 const COMMA = new TypstToken(TypstTokenType.ELEMENT, ',');
 const SEMICOLON = new TypstToken(TypstTokenType.ELEMENT, ';');
-const SINGLE_SPACE = new TypstToken(TypstTokenType.SPACE, ' ');
 const CONTROL_AND = new TypstToken(TypstTokenType.CONTROL, '&');
+
+
+interface TexParseEnv {
+    spaceSensitive: boolean;
+    newlineSensitive: boolean;
+}
 
 export class TypstParser {
     space_sensitive: boolean;
@@ -248,7 +217,7 @@ export class TypstParser {
     }
 
     parseGroup(tokens: TypstToken[], start: number, end: number): TypstParseResult {
-        return this.parseClosure(tokens.slice(start, end), 0, null);
+        return this.parseUntil(tokens.slice(start, end), 0, null);
     }
 
     parseNextExpr(tokens: TypstToken[], start: number): TypstParseResult {
@@ -281,29 +250,37 @@ export class TypstParser {
         }
     }
 
-    // return pos: (position of closingToken) + 1
-    parseClosure(tokens: TypstToken[], start: number, closingToken: TypstToken | null): TypstParseResult {
+    // return pos: (position of stopToken) + 1
+    // pos will be -1 if stopToken is not found
+    parseUntil(tokens: TypstToken[], start: number, stopToken: TypstToken | null, env: Partial<TexParseEnv> = {}): TypstParseResult {
+        if (env.spaceSensitive === undefined) {
+            env.spaceSensitive = this.space_sensitive;
+        }
+        if (env.newlineSensitive === undefined) {
+            env.newlineSensitive = this.newline_sensitive;
+        }
+
         const results: TypstNode[] = [];
         let pos = start;
 
         while (pos < tokens.length) {
-            if (closingToken !== null && tokens[pos].eq(closingToken)) {
+            if (stopToken !== null && tokens[pos].eq(stopToken)) {
                 break;
             }
             const [res, newPos] = this.parseNextExpr(tokens, pos);
             pos = newPos;
             if (res.head.type === TypstTokenType.SPACE || res.head.type === TypstTokenType.NEWLINE) {
-                if (!this.space_sensitive && res.head.value.replace(/ /g, '').length === 0) {
+                if (!env.spaceSensitive && res.head.value.replace(/ /g, '').length === 0) {
                     continue;
                 }
-                if (!this.newline_sensitive && res.head.value === '\n') {
+                if (!env.newlineSensitive && res.head.value === '\n') {
                     continue;
                 }
             }
             results.push(res);
         }
-        if (pos >= tokens.length && closingToken !== null) {
-            throw new Error(`Unclosed closure at position ${pos}. Expecting ${closingToken.value}`);
+        if (pos >= tokens.length && stopToken !== null) {
+            return [TypstToken.NONE.toNode(), -1];
         }
 
         const node = process_operators(results);
@@ -314,7 +291,10 @@ export class TypstParser {
         let node: TypstNode;
         let end: number;
         if(tokens[start].eq(LEFT_PARENTHESES)) {
-            [node, end] = this.parseClosure(tokens, start + 1, RIGHT_PARENTHESES);
+            [node, end] = this.parseUntil(tokens, start + 1, RIGHT_PARENTHESES);
+            if (end === -1) {
+                throw new Error("Unmatched '('");
+            }
         } else {
             [node, end] = this.parseNextExprWithoutSupSub(tokens, start);
         }
@@ -330,7 +310,10 @@ export class TypstParser {
         const firstToken = tokens[start];
         const node = firstToken.toNode();
         if(firstToken.eq(LEFT_PARENTHESES)) {
-            const [body, end] = this.parseClosure(tokens, start + 1, RIGHT_PARENTHESES);
+            const [body, end] = this.parseUntil(tokens, start + 1, RIGHT_PARENTHESES);
+            if (end === -1) {
+                throw new Error("Unmatched '('");
+            }
             const res = new TypstLeftright(null, { body: body, left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
             return [res, end];
         }
@@ -383,28 +366,32 @@ export class TypstParser {
 
     // start: the position of the left parentheses
     parseLrArguments(tokens: TypstToken[], start: number): [TypstNode, number] {
-        const lr_token = tokens[start];
+        const lr_token = new TypstToken(TypstTokenType.SYMBOL, 'lr');
         const end = find_closing_match(tokens, start);
-        if (tokens[start + 1].isOneOf(TypstToken.LEFT_DELIMITERS)) {
-            const inner_start = start + 1;
-            const inner_end = find_closing_delim(tokens, inner_start);
-            const [inner_args, _]= this.parseGroup(tokens, inner_start + 1, inner_end);
-            return [
-                new TypstLeftright(lr_token, { body: inner_args, left: tokens[inner_start], right: tokens[inner_end]}),
-                end + 1,
-            ];
-        } else {
-            const [inner_args, _] = this.parseGroup(tokens, start + 1, end - 1);
-            return [
-                new TypstLeftright(lr_token, { body: inner_args, left: null, right: null }),
-                end + 1,
-            ];
+
+        let left: TypstToken | null = null;
+        let right: TypstToken | null = null;
+        let inner_start = start + 1;
+        let inner_end = end;
+        if (inner_end > inner_start && tokens[inner_start].isOneOf(TypstToken.LEFT_DELIMITERS)) {
+            left = tokens[inner_start];
+            inner_start += 1;
         }
+        if (inner_end - 1 > inner_start && tokens[inner_end - 1].isOneOf(TypstToken.RIGHT_DELIMITERS)) {
+            right = tokens[inner_end - 1];
+            inner_end -= 1;
+        }
+
+        const [inner_args, _] = this.parseGroup(tokens, inner_start, inner_end);
+        return [
+            new TypstLeftright(lr_token, { body: inner_args, left: left, right: right }),
+            end + 1,
+        ];
     }
 
     // start: the position of the left parentheses
     parseMatrix(tokens: TypstToken[], start: number, rowSepToken: TypstToken, cellSepToken: TypstToken): [TypstNode[][], TypstNamedParams, number] {
-        const end = find_closing_parenthesis(tokens, start);
+        const end = find_closing_match(tokens, start);
 
         const matrix: TypstNode[][] = [];
         let named_params: TypstNamedParams = {};
@@ -434,29 +421,17 @@ export class TypstParser {
     parseArgumentsWithSeparator(tokens: TypstToken[], start: number, end: number, sepToken: TypstToken): TypstNode[] {
         const args: TypstNode[] = [];
         let pos = start;
+
         while (pos < end) {
-            let nodes: TypstNode[] = [];
-            while(pos < end) {
-                if(tokens[pos].eq(sepToken)) {
-                    pos += 1;
-                    break;
-                } else if(tokens[pos].eq(SINGLE_SPACE)) {
-                    pos += 1;
-                    continue;
-                }
-                const [argItem, newPos] = this.parseNextExpr(tokens, pos);
-                pos = newPos;
-                nodes.push(argItem);
-            }
-
             let arg: TypstNode;
-            if (nodes.length === 1) {
-                arg = nodes[0];
-            } else {
-                arg = process_operators(nodes);
+            let newPos: number;
+            const env = { spaceSensitive: false, newlineSensitive: true };
+            [arg, newPos] = this.parseUntil(tokens.slice(0, end), pos, sepToken, env);
+            if (newPos == -1) {
+                [arg, newPos] = this.parseUntil(tokens.slice(0, end), pos, null, env);
             }
-
             args.push(arg);
+            pos = newPos;
         }
         return args;
     }
