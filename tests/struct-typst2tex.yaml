@@ -410,3 +410,10 @@ cases:
   - title: overset & underset
     tex: \overset{b}{\underset{a}{+}}
     typst: limits(+)_a^b
+  - title: div parenthesis
+    tex: \frac{x + y}{z + w}
+    typst: (x + y) / (z + w)
+  # it should not throw an error when there is an unpaired right parenthesis
+  - title: unpaired right parenthesis
+    tex: a )
+    typst: a )

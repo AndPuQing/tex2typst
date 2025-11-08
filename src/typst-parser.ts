@@ -60,32 +60,6 @@ function find_closing_delim(tokens: TypstToken[], start: number): number {
 
 
 
-function find_closing_parenthesis(nodes: TypstNode[], start: number): number {
-    const left_parenthesis = new TypstToken(TypstTokenType.ELEMENT, '(').toNode();
-    const right_parenthesis = new TypstToken(TypstTokenType.ELEMENT, ')').toNode();
-
-
-
-    assert(nodes[start].eq(left_parenthesis));
-
-    let count = 1;
-    let pos = start + 1;
-
-    while (count > 0) {
-        if (pos >= nodes.length) {
-            throw new Error("Unmatched '('");
-        }
-        if (nodes[pos].eq(left_parenthesis)) {
-            count += 1;
-        } else if (nodes[pos].eq(right_parenthesis)) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    return pos - 1;
-}
-
 function primes(num: number): TypstNode[] {
     const res: TypstNode[] = [];
     for (let i = 0; i < num; i++) {
@@ -132,33 +106,15 @@ function trim_whitespace_around_operators(nodes: TypstNode[]): TypstNode[] {
 function process_operators(nodes: TypstNode[]): TypstNode {
     nodes = trim_whitespace_around_operators(nodes);
 
-    const opening_bracket = LEFT_PARENTHESES.toNode();
-    const closing_bracket = RIGHT_PARENTHESES.toNode();
-
     const stack: TypstNode[] = [];
 
     const args: TypstNode[] = [];
     let pos = 0;
     while (pos < nodes.length) {
-        const current = nodes[pos];
-        if (current.eq(closing_bracket)) {
-            throw new TypstParserError("Unexpected ')'");
-        } else if(current.eq(DIV)) {
-            stack.push(current);
-            pos++;
+        const current_tree = nodes[pos];
+        if(current_tree.eq(DIV)) {
+            stack.push(current_tree);
         } else {
-            let current_tree: TypstNode;
-            if(current.eq(opening_bracket)) {
-                // the expression is a group wrapped in parenthesis
-                const pos_closing = find_closing_parenthesis(nodes, pos);
-                current_tree = process_operators(nodes.slice(pos + 1, pos_closing));
-                pos = pos_closing + 1;
-            } else {
-                // the expression is just a single item
-                current_tree = current;
-                pos++;
-            }
-
             if(stack.length > 0 && stack[stack.length-1].eq(DIV)) {
                 let denominator = current_tree;
                 if(args.length === 0) {
@@ -179,6 +135,7 @@ function process_operators(nodes: TypstNode[]): TypstNode {
                 args.push(current_tree);
             }
         }
+        pos++;
     }
     return args.length === 1? args[0]: new TypstGroup(args);
 }
@@ -250,12 +207,7 @@ export class TypstParser {
             results.push(res);
         }
 
-        let node: TypstNode;
-        if (results.length === 1) {
-            node = results[0];
-        } else {
-            node = process_operators(results);
-        }
+        const node = process_operators(results);
         return [node, end + 1];
     }
 
@@ -289,12 +241,39 @@ export class TypstParser {
         }
     }
 
+    parseClosure(tokens: TypstToken[], start: number, closingToken: TypstToken): TypstParseResult {
+        const results: TypstNode[] = [];
+        let pos = start;
+
+        while (pos < tokens.length) {
+            if (tokens[pos].eq(closingToken)) {
+                break;
+            }
+            const [res, newPos] = this.parseNextExpr(tokens, pos);
+            pos = newPos;
+            if (res.head.type === TypstTokenType.SPACE || res.head.type === TypstTokenType.NEWLINE) {
+                if (!this.space_sensitive && res.head.value.replace(/ /g, '').length === 0) {
+                    continue;
+                }
+                if (!this.newline_sensitive && res.head.value === '\n') {
+                    continue;
+                }
+            }
+            results.push(res);
+        }
+        if (pos >= tokens.length) {
+            throw new Error(`Unclosed closure at position ${pos}. Expecting ${closingToken.value}`);
+        }
+
+        const node = process_operators(results);
+        return [node, pos + 1];
+    }
+
     parseSupOrSub(tokens: TypstToken[], start: number): TypstParseResult {
         let node: TypstNode;
         let end: number;
         if(tokens[start].eq(LEFT_PARENTHESES)) {
-            const pos_closing = find_closing_match(tokens, start);
-            [node, end] = this.parseGroup(tokens, start + 1, pos_closing);
+            [node, end] = this.parseClosure(tokens, start + 1, RIGHT_PARENTHESES);
         } else {
             [node, end] = this.parseNextExprWithoutSupSub(tokens, start);
         }
@@ -310,10 +289,9 @@ export class TypstParser {
         const firstToken = tokens[start];
         const node = firstToken.toNode();
         if(firstToken.eq(LEFT_PARENTHESES)) {
-            const pos_closing = find_closing_match(tokens, start);
-            const [body, _] = this.parseGroup(tokens, start + 1, pos_closing);
-            const node = new TypstLeftright(null, { body: body, left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
-            return [node, pos_closing + 1];
+            const [body, end] = this.parseClosure(tokens, start + 1, RIGHT_PARENTHESES);
+            const res = new TypstLeftright(null, { body: body, left: LEFT_PARENTHESES, right: RIGHT_PARENTHESES } as TypstLeftRightData);
+            return [res, end];
         }
         if(firstToken.type === TypstTokenType.ELEMENT && !isalpha(firstToken.value[0])) {
             return [node, start + 1];
