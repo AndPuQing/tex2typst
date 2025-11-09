@@ -1,8 +1,8 @@
-interface IEquatable {
-    eq(other: IEquatable): boolean;
+interface IEquatable<T> {
+    eq(other: T): boolean;
 }
 
-export function array_equal<T extends IEquatable>(a: T[], b: T[]): boolean {
+export function array_equal<T extends IEquatable<T>>(a: T[], b: T[]): boolean {
     /*
     if (a.length !== b.length) {
         return false;
@@ -17,7 +17,7 @@ export function array_equal<T extends IEquatable>(a: T[], b: T[]): boolean {
     return a.length === b.length && a.every((x, i) => x.eq(b[i]));
 }
 
-export function array_find<T extends IEquatable>(array: T[], item: T, start: number = 0): number {
+export function array_find<T extends IEquatable<T>>(array: T[], item: T, start: number = 0): number {
     /*
     for (let i = start; i < array.length; i++) {
         if (array[i].eq(item)) {
@@ -30,7 +30,7 @@ export function array_find<T extends IEquatable>(array: T[], item: T, start: num
     return index === -1 ? -1 : index + start;
 }
 
-export function array_includes<T extends IEquatable>(array: T[], item: T): boolean {
+export function array_includes<T extends IEquatable<T>>(array: T[], item: T): boolean {
     /*
     for (const x of array) {
         if (x.eq(item)) {
@@ -44,7 +44,7 @@ export function array_includes<T extends IEquatable>(array: T[], item: T): boole
 
 // e.g. input array=['a', 'b', '+', 'c', '+', 'd', 'e'], sep = '+'
 // return [['a', 'b'], ['c'], ['d', 'e']]
-export function array_split<T extends IEquatable>(array: T[], sep: T): T[][] {
+export function array_split<T extends IEquatable<T>>(array: T[], sep: T): T[][] {
     const res: T[][] = [];
     let current_slice: T[] = [];
     for (const i of array) {
