@@ -1,7 +1,7 @@
 .github/
 .vscode/
 node_modules/
-test/
+tests/
 vitest.config.ts
 .gitignore
 
