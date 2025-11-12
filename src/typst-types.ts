@@ -57,7 +57,7 @@ export class TypstToken {
         new TypstToken(TypstTokenType.ELEMENT, '['),
         new TypstToken(TypstTokenType.ELEMENT, '{'),
         new TypstToken(TypstTokenType.ELEMENT, '|'),
-        new TypstToken(TypstTokenType.SYMBOL, 'angle.l'),
+        new TypstToken(TypstTokenType.SYMBOL, 'chevron.l'),
         new TypstToken(TypstTokenType.SYMBOL, 'paren.l'),
         new TypstToken(TypstTokenType.SYMBOL, 'brace.l'),
     ];
@@ -67,7 +67,7 @@ export class TypstToken {
         new TypstToken(TypstTokenType.ELEMENT, ']'),
         new TypstToken(TypstTokenType.ELEMENT, '}'),
         new TypstToken(TypstTokenType.ELEMENT, '|'),
-        new TypstToken(TypstTokenType.SYMBOL, 'angle.r'),
+        new TypstToken(TypstTokenType.SYMBOL, 'chevron.r'),
         new TypstToken(TypstTokenType.SYMBOL, 'paren.r'),
         new TypstToken(TypstTokenType.SYMBOL, 'brace.r'),
     ];

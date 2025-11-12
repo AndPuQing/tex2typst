@@ -155,7 +155,7 @@ cases:
     typst: norm(a + 1/3)^2
   - title: left right angles
     tex: \left\langle \frac{1}{2} \right\rangle
-    typst: lr(angle.l 1/2 angle.r)
+    typst: lr(chevron.l 1/2 chevron.r)
   - title: lparen rparen
     tex: \left\lparen \frac{1}{3} \right\rparen
     typst: lr(paren.l 1/3 paren.r)
