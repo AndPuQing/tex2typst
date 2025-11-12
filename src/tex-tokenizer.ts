@@ -41,6 +41,7 @@ export const TEX_UNARY_COMMANDS = [
     'mathrel',
     'mathbin',
     'mathop',
+    'not',
 ]
 
 export const TEX_BINARY_COMMANDS = [

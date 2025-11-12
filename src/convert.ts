@@ -433,6 +433,22 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 );
             }
 
+            // \not X -> X.not
+            if (node.head.value === '\\not') {
+                const sym = convert_tex_node_to_typst(node.args[0], options);
+                assert(sym.type === "terminal");
+                if(sym.head.type === TypstTokenType.SYMBOL) {
+                    return new TypstToken(TypstTokenType.SYMBOL, sym.head.value + '.not').toNode();
+                } else {
+                    switch(sym.head.value) {
+                        case '=':
+                            return new TypstToken(TypstTokenType.SYMBOL, 'eq.not').toNode();
+                        default:
+                            throw new Error(`Not supported: \\not ${sym.head.value}`);
+                    }
+                }
+            }
+
             if (node.head.value === '\\overset') {
                 return convert_overset(node, options);
             }
@@ -573,14 +589,6 @@ const TYPST_BINARY_FUNCTIONS: string[] = [
 ];
 */
 
-function apply_escape_if_needed(c: TexToken): TexToken {
-    if (['{', '}', '%'].includes(c.value)) {
-        return new TexToken(TexTokenType.ELEMENT, '\\' + c.value);
-    }
-    return c;
-}
-
-
 function typst_token_to_tex(token: TypstToken): TexToken {
     switch (token.type) {
         case TypstTokenType.NONE:
@@ -588,11 +596,27 @@ function typst_token_to_tex(token: TypstToken): TexToken {
             return TexToken.EMPTY;
         case TypstTokenType.SYMBOL: {
             const _typst_symbol_to_tex = function(symbol: string): string {
-                if (reverseSymbolMap.has(symbol)) {
-                    return '\\' + reverseSymbolMap.get(symbol)!;
-                } else {
-                    return '\\' + symbol;
+                switch(symbol) {
+                    case 'eq':
+                        return '=';
+                    case 'plus':
+                        return '+';
+                    case 'minus':
+                        return '-';
+                    case 'percent':
+                        return '%';
+                    default: {
+                        if (reverseSymbolMap.has(symbol)) {
+                            return '\\' + reverseSymbolMap.get(symbol);
+                        } else {
+                            return '\\' + symbol;
+                        }
+                    }
                 }
+            }
+            if (token.value.endsWith('.not')) {
+                const sym = _typst_symbol_to_tex(token.value.slice(0, -4));
+                return new TexToken(TexTokenType.COMMAND, sym.startsWith('\\') ? `\\not${sym}` : `\\not ${sym}`);
             }
             return new TexToken(TexTokenType.COMMAND, _typst_symbol_to_tex(token.value));
         }
