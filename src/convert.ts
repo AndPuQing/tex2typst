@@ -463,6 +463,18 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 }
             }
 
+            // \mbox{} -> ""
+            if (node.head.value === '\\mbox') {
+                const sym = convert_tex_node_to_typst(node.args[0], options) as TypstGroup;
+                const value = sym.items.map(item => {
+                    if (item.type === 'terminal') {
+                        return item.head.value;
+                    }
+                }).join('');
+
+                return new TypstToken(TypstTokenType.TEXT, value).toNode();
+            }
+
             if(options.optimize) {
                 // \mathbb{R} -> RR
                 if (node.head.value === '\\mathbb' && /^\\mathbb{[A-Z]}$/.test(node.toString())) {
