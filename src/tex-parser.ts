@@ -1,6 +1,6 @@
 import { TexBeginEnd, TexFuncCall, TexLeftRight, TexNode, TexGroup, TexSupSub, TexSupsubData, TexText, TexToken, TexTokenType } from "./tex-types";
 import { assert } from "./utils";
-import { array_find, array_join, array_split } from "./generic";
+import { array_join, array_split } from "./generic";
 import { TEX_BINARY_COMMANDS, TEX_UNARY_COMMANDS, tokenize_tex } from "./tex-tokenizer";
 
 const IGNORED_COMMANDS = [
@@ -103,22 +103,7 @@ export class LatexParser {
     }
 
     parse(tokens: TexToken[]): TexNode {
-        const token_displaystyle = new TexToken(TexTokenType.COMMAND, '\\displaystyle');
-        const idx = array_find(tokens, token_displaystyle);
-        if (idx === -1) {
-            // no \displaystyle, normal execution path
-            return this.parseGroup(tokens.slice(0));
-        } else if (idx === 0) {
-            // \displaystyle at the beginning. Wrap the whole thing in \displaystyle
-            const tree = this.parseGroup(tokens.slice(1));
-            return new TexFuncCall(token_displaystyle, [tree]);
-        } else {
-            // \displaystyle somewhere in the middle. Split the expression to two parts
-            const tree1 = this.parseGroup(tokens.slice(0, idx));
-            const tree2 = this.parseGroup(tokens.slice(idx + 1, tokens.length));
-            const display = new TexFuncCall(token_displaystyle, [tree2]);
-            return new TexGroup([tree1, display]);
-        }
+        return this.parseGroup(tokens.slice(0));
     }
 
     parseGroup(tokens: TexToken[]): TexNode {
@@ -152,11 +137,13 @@ export class LatexParser {
             return [EMPTY_NODE, -1];
         }
 
+        const styledResults = this.applyStyleCommands(results);
+
         let node: TexNode;
-        if (results.length === 1) {
-            node = results[0];
+        if (styledResults.length === 1) {
+            node = styledResults[0];
         } else {
-            node = new TexGroup(results);
+            node = new TexGroup(styledResults);
         }
         return [node, pos + 1];
     }
@@ -471,6 +458,36 @@ export class LatexParser {
 
         this.alignmentDepth--;
         return [allRows, pos];
+    }
+
+    private applyStyleCommands(nodes: TexNode[]): TexNode[] {
+        for (let i = 0; i < nodes.length; i++) {
+            const styleToken = this.getStyleToken(nodes[i]);
+            if (styleToken) {
+                const before = this.applyStyleCommands(nodes.slice(0, i));
+                const after = this.applyStyleCommands(nodes.slice(i + 1));
+                let body: TexNode;
+                if (after.length === 0) {
+                    body = EMPTY_NODE;
+                } else if (after.length === 1) {
+                    body = after[0];
+                } else {
+                    body = new TexGroup(after);
+                }
+                const funcCall = new TexFuncCall(styleToken, [body]);
+                return before.concat(funcCall);
+            }
+        }
+        return nodes;
+    }
+
+    private getStyleToken(node: TexNode): TexToken | null {
+        if (node.type === 'terminal') {
+            if (node.head.eq(TexToken.COMMAND_DISPLAYSTYLE) || node.head.eq(TexToken.COMMAND_TEXTSTYLE)) {
+                return node.head;
+            }
+        }
+        return null;
     }
 }
 

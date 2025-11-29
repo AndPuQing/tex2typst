@@ -449,3 +449,6 @@ cases:
   - title: command mathinner is ignored
     tex: ab\mathinner{\text{inside}}cd
     typst: a b "inside" c d
+  - title: vector with overHigh
+    tex: \left( \displaystyle \vec{X} \right)
+    typst: (display(arrow(X)))
