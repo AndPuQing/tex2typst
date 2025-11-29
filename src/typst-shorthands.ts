@@ -1,4 +1,5 @@
 const shorthandMap = new Map<string, string>([
+    // The following snippet is generated with tools/make-short-hand-map.py
     ['arrow.l.r.double.long', '<==>'],
     ['arrow.l.r.long', '<-->'],
     ['arrow.r.bar', '|->'],
@@ -13,7 +14,6 @@ const shorthandMap = new Map<string, string>([
     ['arrow.l.long.squiggly', '<~~'],
     ['arrow.l.tail', '<-<'],
     ['arrow.l.twohead', '<<-'],
-    ['arrow.l.r', '<->'],
     ['arrow.l.r.double', '<=>'],
     ['colon.double.eq', '::='],
     ['dots.h', '...'],
@@ -25,8 +25,8 @@ const shorthandMap = new Map<string, string>([
     ['arrow.l', '<-'],
     ['arrow.l.squiggly', '<~'],
     ['bar.v.double', '||'],
-    ['bracket.l.double', '[|'],
-    ['bracket.r.double', '|]'],
+    ['bracket.l.stroked', '[|'],
+    ['bracket.r.stroked', '|]'],
     ['colon.eq', ':='],
     ['eq.colon', '=:'],
     ['eq.not', '!='],
@@ -37,6 +37,9 @@ const shorthandMap = new Map<string, string>([
     ['ast.op', '*'],
     ['minus', '-'],
     ['tilde.op', '~'],
+
+    // Typst's documentation doesn't include this. Wondering why
+    ['arrow.l.r', '<->'],
 ]);
 
 
