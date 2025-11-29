@@ -452,3 +452,24 @@ cases:
   - title: vector with overHigh
     tex: \left( \displaystyle \vec{X} \right)
     typst: (display(arrow(X)))
+  - title: frac with delimiter case1
+    tex: \frac{(a)(b)}{c}
+    typst: ((a)(b))/c
+  - title: frac with delimiter case2
+    tex: \frac{a}{(b)(c)}
+    typst: a/((b)(c))
+  - title: frac with delimiter case3
+    tex: \frac{(x+1)^2 + f(x)}{2}
+    typst: ((x + 1)^2 + f(x))/2
+  - title: frac with single parentheses stays single
+    tex: \frac{(a + b)}{c}
+    typst: (a + b)/c
+  - title: frac with nested parentheses stays nested
+    tex: \frac{((a + b))}{d}
+    typst: ((a + b))/d
+  - title: frac with partial parentheses needs wrapping (numerator)
+    tex: \frac{(a + b)c}{d}
+    typst: ((a + b) c)/d
+  - title: frac with partial parentheses needs wrapping (denominator)
+    tex: \frac{a}{(b + c)d}
+    typst: a/((b + c) d)
