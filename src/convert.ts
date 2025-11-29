@@ -195,6 +195,53 @@ function is_delimiter(c: TypstNode): boolean {
     return c.head.type === TypstTokenType.ELEMENT && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.head.value);
 }
 
+const MATCHING_DELIMITERS: Record<string, string> = {
+    '(': ')',
+    '[': ']',
+    '{': '}',
+    '|': '|',
+    '⌊': '⌋',
+    '⌈': '⌉',
+};
+
+function has_single_enclosing_delimiter(group: TypstGroup): boolean {
+    if (group.items.length < 2) {
+        return false;
+    }
+    const first = group.items[0];
+    const last = group.items[group.items.length - 1];
+    if (!(first.type === 'terminal' && last.type === 'terminal')) {
+        return false;
+    }
+    if (first.head.type !== TypstTokenType.ELEMENT || last.head.type !== TypstTokenType.ELEMENT) {
+        return false;
+    }
+    const expected_right = MATCHING_DELIMITERS[first.head.value];
+    if (!expected_right || last.head.value !== expected_right) {
+        return false;
+    }
+    let depth = 0;
+    for (let i = 0; i < group.items.length; i++) {
+        const item = group.items[i];
+        if (item.type !== 'terminal' || item.head.type !== TypstTokenType.ELEMENT) {
+            continue;
+        }
+        const value = item.head.value;
+        if (value === first.head.value) {
+            depth++;
+        } else if (value === expected_right) {
+            depth--;
+            if (depth === 0 && i !== group.items.length - 1) {
+                return false;
+            }
+            if (depth < 0) {
+                return false;
+            }
+        }
+    }
+    return depth === 0;
+}
+
 function appendWithBracketsIfNeeded(node: TypstNode): TypstNode {
     let need_to_wrap = ['group', 'supsub', 'matrixLike', 'fraction','empty'].includes(node.type);
 
@@ -204,9 +251,7 @@ function appendWithBracketsIfNeeded(node: TypstNode): TypstNode {
             // e.g. TeX `P_{}` converts to Typst `P_()`
             need_to_wrap = true;
         } else {
-            const first = group.items[0];
-            const last = group.items[group.items.length - 1];
-            if (is_delimiter(first) && is_delimiter(last)) {
+            if (has_single_enclosing_delimiter(group)) {
                 need_to_wrap = false;
             }
         }
@@ -978,4 +1023,3 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode, options: Typs
             throw new Error('[convert_typst_node_to_tex] Unimplemented type: ' + abstractNode.type);
     }
 }
-
