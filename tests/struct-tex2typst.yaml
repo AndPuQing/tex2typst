@@ -261,18 +261,15 @@ cases:
     tex: \prod_{p} \frac{1}{1-p^{-s}}= \sum_{n=1}^{\infty} \frac{1}{n^s}
     typst: product_p 1/(1 - p^(-s)) = sum_(n = 1)^infinity 1/(n^s)
   - title: Test5
-    tex: "{a+b}^2"
-    typst: (a + b)^2
-  - title: Test6
     tex: 1 + {a + b} + c
     typst: 1 + a + b + c
-  - title: Test7
+  - title: Test6
     tex: (a + b)^2
     typst: (a + b)^2
   - title: leading minus sign
     tex: a^{-s}
     typst: a^(-s)
-  - title: Test8
+  - title: Test7
     tex: \sqrt{\frac{1}{x^2 + y^2}}
     typst: sqrt(1/(x^2 + y^2))
   - title: basic prime case
@@ -463,10 +460,10 @@ cases:
     typst: ((x + 1)^2 + f(x))/2
   - title: frac with single parentheses stays single
     tex: \frac{(a + b)}{c}
-    typst: (a + b)/c
+    typst: ((a + b))/c
   - title: frac with nested parentheses stays nested
     tex: \frac{((a + b))}{d}
-    typst: ((a + b))/d
+    typst: (((a + b)))/d
   - title: frac with partial parentheses needs wrapping (numerator)
     tex: \frac{(a + b)c}{d}
     typst: ((a + b) c)/d

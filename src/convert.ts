@@ -191,71 +191,9 @@ function convert_tex_array_align_literal(alignLiteral: string): TypstNamedParams
 const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
 const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ')');
 
-function is_delimiter(c: TypstNode): boolean {
-    return c.head.type === TypstTokenType.ELEMENT && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.head.value);
-}
-
-const MATCHING_DELIMITERS: Record<string, string> = {
-    '(': ')',
-    '[': ']',
-    '{': '}',
-    '|': '|',
-    '⌊': '⌋',
-    '⌈': '⌉',
-};
-
-function has_single_enclosing_delimiter(group: TypstGroup): boolean {
-    if (group.items.length < 2) {
-        return false;
-    }
-    const first = group.items[0];
-    const last = group.items[group.items.length - 1];
-    if (!(first.type === 'terminal' && last.type === 'terminal')) {
-        return false;
-    }
-    if (first.head.type !== TypstTokenType.ELEMENT || last.head.type !== TypstTokenType.ELEMENT) {
-        return false;
-    }
-    const expected_right = MATCHING_DELIMITERS[first.head.value];
-    if (!expected_right || last.head.value !== expected_right) {
-        return false;
-    }
-    let depth = 0;
-    for (let i = 0; i < group.items.length; i++) {
-        const item = group.items[i];
-        if (item.type !== 'terminal' || item.head.type !== TypstTokenType.ELEMENT) {
-            continue;
-        }
-        const value = item.head.value;
-        if (value === first.head.value) {
-            depth++;
-        } else if (value === expected_right) {
-            depth--;
-            if (depth === 0 && i !== group.items.length - 1) {
-                return false;
-            }
-            if (depth < 0) {
-                return false;
-            }
-        }
-    }
-    return depth === 0;
-}
 
 function appendWithBracketsIfNeeded(node: TypstNode): TypstNode {
     let need_to_wrap = ['group', 'supsub', 'matrixLike', 'fraction','empty'].includes(node.type);
-
-    if (node.type === 'group') {
-        const group = node as TypstGroup;
-        if (group.items.length === 0) {
-            // e.g. TeX `P_{}` converts to Typst `P_()`
-            need_to_wrap = true;
-        } else {
-            if (has_single_enclosing_delimiter(group)) {
-                need_to_wrap = false;
-            }
-        }
-    }
 
     if (need_to_wrap) {
         return new TypstLeftright(null, {
@@ -308,7 +246,6 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 sub: sub? convert_tex_node_to_typst(sub, options) : null,
             };
 
-            data.base = appendWithBracketsIfNeeded(data.base);
             if (data.sup) {
                 data.sup = appendWithBracketsIfNeeded(data.sup);
             }

@@ -173,13 +173,13 @@ cases:
   - title: Euler Product
     tex: \prod_p \frac{1}{1 - p^{-s}} = \sum_{n = 1}^\infty \frac{1}{n^s}
     typst: product_p frac(1, 1 - p^(-s)) = sum_(n = 1)^infinity 1/n^s
-  - title: Test7
+  - title: Test6
     tex: (a + b)^2
     typst: (a + b)^2
   - title: leading minus sign
     tex: a^{-s}
     typst: a^(-s)
-  - title: Test8
+  - title: Test7
     tex: \sqrt{\frac{1}{x^2 + y^2}}
     typst: sqrt(frac(1, x^2 + y^2))
   - title: basic prime case
