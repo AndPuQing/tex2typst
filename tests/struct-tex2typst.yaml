@@ -470,3 +470,6 @@ cases:
   - title: frac with partial parentheses needs wrapping (denominator)
     tex: \frac{a}{(b + c)d}
     typst: a/((b + c) d)
+  - title: medspace
+    tex: a \> b
+    typst: a thick b

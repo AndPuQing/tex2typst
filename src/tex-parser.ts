@@ -249,6 +249,7 @@ export class LatexParser {
                     case '\\,':
                     case '\\:':
                     case '\\;':
+                    case '\\>':
                         return [firstToken.toNode(), start + 1];
                     case '\\ ':
                         return [firstToken.toNode(), start + 1];
