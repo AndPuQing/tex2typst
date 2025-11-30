@@ -450,8 +450,11 @@ cases:
     tex: ab\mathinner{\text{inside}}cd
     typst: a b "inside" c d
   - title: mbox is converted to text case1
-    tex: 'E = \mbox{mc}^2'
-    typst: 'E = "mc"^2'
+    tex: E = \mbox{mc}^2
+    typst: E = "mc"^2
   - title: mbox is converted to text case2
-    tex: '\mbox{in}\mathbb R^n\times\mathbb R_+'
+    tex: \mbox{in}\mathbb R^n\times\mathbb R_+
     typst: '"in" RR^n times RR_+'
+  - title: mbox is converted to text case3
+    tex: \mbox{\textrm{aasdfasdf+&&}}
+    typst: '"\\textrm{aasdfasdf+&&}"'

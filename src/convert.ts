@@ -330,6 +330,18 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
         }
         case 'funcCall': {
             const node = abstractNode as TexFuncCall;
+
+            // \mbox{text} -> "text"
+            // Must be checked before converting args since content is raw LaTeX
+            if (node.head.value === '\\mbox') {
+                const arg = node.args[0];
+                if (arg.type === 'terminal' && arg.head.type === TexTokenType.LITERAL) {
+                    const content = arg.head.value.replace(/\\/g, '\\\\');
+                    return new TypstToken(TypstTokenType.TEXT, content).toNode();
+                }
+                throw new ConverterError(`Unexpected mbox argument type: ${arg.type}`, node);
+            }
+
             const arg0 = convert_tex_node_to_typst(node.args[0], options);
             // \sqrt[3]{x} -> root(3, x)
             if (node.head.value === '\\sqrt' && node.data) {
@@ -461,18 +473,6 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 if (options.fracToSlash) {
                     return new TypstFraction(node.args.map((n) => convert_tex_node_to_typst(n, options)).map(appendWithBracketsIfNeeded));
                 }
-            }
-
-            // \mbox{} -> ""
-            if (node.head.value === '\\mbox') {
-                const sym = convert_tex_node_to_typst(node.args[0], options) as TypstGroup;
-                const value = sym.items.map(item => {
-                    if (item.type === 'terminal') {
-                        return item.head.value;
-                    }
-                }).join('');
-
-                return new TypstToken(TypstTokenType.TEXT, value).toNode();
             }
 
             if(options.optimize) {

@@ -67,6 +67,42 @@ function unescape(str: string): string {
 }
 
 const rules_map = new Map<string, (a: Scanner<TexToken>) => TexToken | TexToken[]>([
+    // match `\mbox{...}` with proper brace counting for nested braces
+    [
+        String.raw`\\mbox\{`, (s) => {
+            const inputStr = s.text()!; // "\mbox{"
+            let content = '';
+            let braceCount = 1; // We already have one opening brace
+            let char: string;
+
+            // Scan character by character, counting braces
+            while (braceCount > 0) {
+                char = s.input();
+                if (!char) {
+                    throw new Error('Unmatched brace in \\mbox{}');
+                }
+
+                if (char === '{') {
+                    braceCount++;
+                    content += char;
+                } else if (char === '}') {
+                    braceCount--;
+                    if (braceCount > 0) {
+                        content += char;
+                    }
+                } else {
+                    content += char;
+                }
+            }
+
+            return [
+                new TexToken(TexTokenType.COMMAND, '\\mbox'),
+                new TexToken(TexTokenType.CONTROL, '{'),
+                new TexToken(TexTokenType.LITERAL, unescape(content)),
+                new TexToken(TexTokenType.CONTROL, '}')
+            ];
+        }
+    ],
     // match `\begin{array}{cc}`
     [
         String.raw`\\begin{(array|subarry)}{(.+?)}`, (s) => {
