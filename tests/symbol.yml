@@ -32,7 +32,7 @@ cases:
     typst: bold(a)
   - title: variants of plus,minus,times,divide
     tex: \pm \mp \oplus \boxplus \otimes \boxtimes
-    typst: plus.minus minus.plus plus.circle plus.square times.circle times.square
+    typst: plus.minus minus.plus plus.o plus.square times.circle times.square
   - title: symbols about mathematical logic
     tex: \neg \land \lor
     typst: not and or
@@ -56,7 +56,7 @@ cases:
     typst: integral integral.cont integral.double integral.surf integral.triple integral.vol
   - title: big symbols used to denote accumulated operations
     tex: \sum \prod \bigcup \bigcap \bigvee \bigwedge \bigoplus \bigotimes \bigodot \biguplus \bigsqcup
-    typst: sum product union.big inter.big or.big and.big plus.circle.big times.circle.big dot.circle.big union.plus.big union.sq.big
+    typst: sum product union.big inter.big or.big and.big plus.o.big times.o.big dot.o.big union.plus.big union.sq.big
   - title: wave
     tex: \sim \approx \cong \simeq \asymp \equiv \propto
     typst: tilde.op approx tilde.equiv tilde.eq asymp equiv prop

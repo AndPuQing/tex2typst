@@ -90,6 +90,10 @@ function tex_token_to_typst(token: TexToken, options: Tex2TypstOptions): TypstTo
             } else if (token.value === '\\!') {
                 // \! -> #h(-math.thin.amount)
                 return new TypstToken(TypstTokenType.SYMBOL, '#h(-math.thin.amount)');
+            } else if (token.value === '~') {
+                // ~ -> space.nobreak
+                const typst_symbol = symbolMap.get('~')!;
+                return new TypstToken(TypstTokenType.SYMBOL, typst_symbol);
             } else if (symbolMap.has(token.value.substring(1))) {
                 // node.content is one of \, \: \;
                 const typst_symbol = symbolMap.get(token.value.substring(1))!;
@@ -191,26 +195,9 @@ function convert_tex_array_align_literal(alignLiteral: string): TypstNamedParams
 const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
 const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ')');
 
-function is_delimiter(c: TypstNode): boolean {
-    return c.head.type === TypstTokenType.ELEMENT && ['(', ')', '[', ']', '{', '}', '|', '⌊', '⌋', '⌈', '⌉'].includes(c.head.value);
-}
 
 function appendWithBracketsIfNeeded(node: TypstNode): TypstNode {
     let need_to_wrap = ['group', 'supsub', 'matrixLike', 'fraction','empty'].includes(node.type);
-
-    if (node.type === 'group') {
-        const group = node as TypstGroup;
-        if (group.items.length === 0) {
-            // e.g. TeX `P_{}` converts to Typst `P_()`
-            need_to_wrap = true;
-        } else {
-            const first = group.items[0];
-            const last = group.items[group.items.length - 1];
-            if (is_delimiter(first) && is_delimiter(last)) {
-                need_to_wrap = false;
-            }
-        }
-    }
 
     if (need_to_wrap) {
         return new TypstLeftright(null, {
@@ -263,7 +250,6 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 sub: sub? convert_tex_node_to_typst(sub, options) : null,
             };
 
-            data.base = appendWithBracketsIfNeeded(data.base);
             if (data.sup) {
                 data.sup = appendWithBracketsIfNeeded(data.sup);
             }
@@ -990,4 +976,3 @@ export function convert_typst_node_to_tex(abstractNode: TypstNode, options: Typs
             throw new Error('[convert_typst_node_to_tex] Unimplemented type: ' + abstractNode.type);
     }
 }
-
