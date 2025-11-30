@@ -252,6 +252,7 @@ export class LatexParser {
                     case '\\;':
                         return [firstToken.toNode(), start + 1];
                     case '\\ ':
+                    case '~':
                         return [firstToken.toNode(), start + 1];
                     case '_':
                     case '^':

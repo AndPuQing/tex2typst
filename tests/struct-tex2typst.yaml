@@ -473,3 +473,6 @@ cases:
   - title: frac case1
     tex: \frac{g}{g'_c}
     typst: g/(g'_c)
+  - title: non-breaking space
+    tex: a~b~c
+    typst: a space.nobreak b space.nobreak c
