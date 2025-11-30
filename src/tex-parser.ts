@@ -160,8 +160,9 @@ export class LatexParser {
             const next_token = tokens[pos];
             if (next_token.eq(SUB_SYMBOL)) {
                 [sub, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
-                num_prime += eat_primes(tokens, pos);
-                pos += num_prime;
+                const new_primes = eat_primes(tokens, pos);
+                num_prime += new_primes;
+                pos += new_primes;
                 if (pos < tokens.length && tokens[pos].eq(SUP_SYMBOL)) {
                     [sup, pos] = this.parseNextExprWithoutSupSub(tokens, pos + 1);
                     if (eat_primes(tokens, pos) > 0) {
