@@ -470,3 +470,6 @@ cases:
   - title: frac with partial parentheses needs wrapping (denominator)
     tex: \frac{a}{(b + c)d}
     typst: a/((b + c) d)
+  - title: frac case1
+    tex: \frac{g}{g'_c}
+    typst: g/(g'_c)
