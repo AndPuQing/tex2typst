@@ -8,6 +8,7 @@ const symbolMap = new Map<string, string>([
     [':', 'med'],
     [' ', 'med'],
     [';', 'thick'],
+    ['>', 'med'],
     ['~', 'space.nobreak'],
 
     ['blacktriangleleft', 'triangle.filled.l'],
