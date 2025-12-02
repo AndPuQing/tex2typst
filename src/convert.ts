@@ -90,6 +90,10 @@ function tex_token_to_typst(token: TexToken, options: Tex2TypstOptions): TypstTo
             } else if (token.value === '\\!') {
                 // \! -> #h(-math.thin.amount)
                 return new TypstToken(TypstTokenType.SYMBOL, '#h(-math.thin.amount)');
+            } else if (token.value === '~') {
+                // ~ -> space.nobreak
+                const typst_symbol = symbolMap.get('~')!;
+                return new TypstToken(TypstTokenType.SYMBOL, typst_symbol);
             } else if (symbolMap.has(token.value.substring(1))) {
                 // node.content is one of \, \: \;
                 const typst_symbol = symbolMap.get(token.value.substring(1))!;

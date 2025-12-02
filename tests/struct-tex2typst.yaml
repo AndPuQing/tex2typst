@@ -473,3 +473,12 @@ cases:
   - title: bra-ket notation
     tex: \left< 0\right|\, \left|0 \right>
     typst: lr(chevron.l 0|) thin lr(|0 chevron.r)
+  - title: medspace
+    tex: a \> b
+    typst: a med b
+  - title: frac case1
+    tex: \frac{g}{g'_c}
+    typst: g/(g'_c)
+  - title: non-breaking space
+    tex: a~b~c
+    typst: a space.nobreak b space.nobreak c
