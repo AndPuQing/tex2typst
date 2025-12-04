@@ -62,6 +62,9 @@ cases:
   - title: operatorname1
     tex: '\operatorname{a}'
     typst: op("a")
+  - title: operatorname star
+    tex: '\operatorname*{Ak}^5'
+    typst: 'op("Ak", limits: #true)^5'
   - title: scripts
     tex: '\boldsymbol{k}_{Av} \boldsymbol{k}^{Av}'
     typst: 'bold(k)_(A v) bold(k)^(A v)'

@@ -351,14 +351,18 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 );
             }
             // \operatorname{opname} -> op("opname")
-            if (node.head.value === '\\operatorname') {
+            if (node.head.value === '\\operatorname' || node.head.value === '\\operatorname*') {
                 // arg0 must be of type 'literal' in this situation
                 if (options.optimize) {
                     if (TYPST_INTRINSIC_OP.includes(arg0.head.value)) {
                         return new TypstToken(TypstTokenType.SYMBOL, arg0.head.value).toNode();
                     }
                 }
-                return new TypstFuncCall(new TypstToken(TypstTokenType.SYMBOL, 'op'), [new TypstToken(TypstTokenType.TEXT, arg0.head.value).toNode()]);
+                const op_call = new TypstFuncCall(new TypstToken(TypstTokenType.SYMBOL, 'op'), [new TypstToken(TypstTokenType.TEXT, arg0.head.value).toNode()]);
+                if (node.head.value === '\\operatorname*') {
+                    op_call.setOptions({ limits: new TypstToken(TypstTokenType.LITERAL, '#true').toNode() });
+                }
+                return op_call;
             }
 
             // \textcolor{red}{2y} -> #text(fill: red)[$2y$]
