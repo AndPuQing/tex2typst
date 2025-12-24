@@ -417,3 +417,6 @@ cases:
   - title: unpaired right parenthesis
     tex: a )
     typst: a )
+  - title: legacy diff
+    tex: \partial x
+    typst: diff x

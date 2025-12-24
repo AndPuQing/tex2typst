@@ -1144,6 +1144,7 @@ const typst_to_tex_map = new Map<string, string>([
     ['upright', 'mathrm'],
     ['bold', 'boldsymbol'],
     ['infinity', 'infty'],
+    ['diff', 'partial'],
 ]);
 
 for(const [key, value] of typst_to_tex_map) {
