@@ -119,35 +119,35 @@ cases:
       overbrace(
       [
       1/(Delta t)
-      (diff bold(theta)^(n + 1))/(diff bold(psi)^(n + 1))
+      (partial bold(theta)^(n + 1))/(partial bold(psi)^(n + 1))
       - bold(D)
       "diag"(bold(G) bold(psi)^(n + 1))
-      (diff bold(k)_(A v))/(diff bold(psi)^(n + 1))
+      (partial bold(k)_(A v))/(partial bold(psi)^(n + 1))
       - bold(D)
       "diag"(bold(k)_(A v) (bold(psi)^(n + 1) comma bold(m)))
       bold(G)
       - bold(G)_z
-      (diff bold(k)_(A v))/(diff bold(psi)^(n + 1))
+      (partial bold(k)_(A v))/(partial bold(psi)^(n + 1))
       ]
       , bold(A)_0 (bold(psi)^(n + 1)))
-      (diff bold(psi)^(n + 1))/(diff bold(m))
+      (partial bold(psi)^(n + 1))/(partial bold(m))
       \
       +
       underbrace(
       [
       - 1/(Delta t)
-      (diff bold(theta)^n)/(diff bold(psi)^n)
+      (partial bold(theta)^n)/(partial bold(psi)^n)
       ]
       , bold(A)_(-1) (bold(psi)^n))
-      (diff bold(psi)^n)/(diff bold(m))
+      (partial bold(psi)^n)/(partial bold(m))
       =
       underbrace(
       [
       -bold(D)
       "diag"(bold(G) bold(psi)^(n + 1))
-      (diff bold(k)_(A v))/(diff bold(m))
+      (partial bold(k)_(A v))/(partial bold(m))
       - bold(G)_z
-      (diff bold(k)_(A v))/(diff bold(m))
+      (partial bold(k)_(A v))/(partial bold(m))
       ]
       , bold(B)(psi^(n + 1))) &
   - title: leading underscore
@@ -192,7 +192,7 @@ cases:
     typst: a + b^1 + 2/3 + overbrace(123, b)
   - title: Symbols
     tex: '\alpha \nabla \partial'
-    typst: alpha nabla diff
+    typst: alpha nabla partial
   - title: Align
     tex: |-
       \begin{align*}

@@ -50,7 +50,7 @@ cases:
   - title: symbols about differential
     # TODO: \mathrm{d} or \operatorname{d} -> dif
     tex: \Delta \nabla \partial
-    typst: Delta nabla diff
+    typst: Delta nabla partial
   - title: symbols about integral
     tex: \int \oint \iint \oiint \iiint \oiiint
     typst: integral integral.cont integral.double integral.surf integral.triple integral.vol

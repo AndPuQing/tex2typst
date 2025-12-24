@@ -209,7 +209,7 @@ const symbolMap = new Map<string, string>([
     // ['oplus', 'xor'], // or 'plus.circle'
     ['otimes', 'times.circle'], 
     ['parallel', 'parallel'], 
-    ['partial', 'diff'], 
+    ['partial', 'partial'], 
     ['perp', 'perp'], 
     ['phi', 'phi.alt'], 
     ['pi', 'pi'], 

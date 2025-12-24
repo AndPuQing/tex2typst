@@ -94,35 +94,35 @@ cases:
       overbrace(
           [
               frac(1, Delta t)
-              frac(diff bold(theta)^(n + 1), diff bold(psi)^(n + 1))
+              frac(partial bold(theta)^(n + 1), partial bold(psi)^(n + 1))
               - bold(D)
               "diag"(bold(G) bold(psi)^(n + 1))
-              frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
+              frac(partial bold(k)_(A v), partial bold(psi)^(n + 1))
               - bold(D)
               "diag"(bold(k)_(A v)(bold(psi)^(n + 1), bold(m)))
               bold(G)
               - bold(G)_z
-              frac(diff bold(k)_(A v), diff bold(psi)^(n + 1))
+              frac(partial bold(k)_(A v), partial bold(psi)^(n + 1))
           ]
       , bold(A)_0 (bold(psi)^(n + 1)))
-      frac(diff bold(psi)^(n + 1), diff bold(m))
+      frac(partial bold(psi)^(n + 1), partial bold(m))
       \
       +
       underbrace(
           [
               -frac(1, Delta t)
-              frac(diff bold(theta)^n, diff bold(psi)^n)
+              frac(partial bold(theta)^n, partial bold(psi)^n)
           ]
       , bold(A)_(-1)(bold(psi)^n))
-      frac(diff bold(psi)^n, diff bold(m))
+      frac(partial bold(psi)^n, partial bold(m))
       =
       underbrace(
           [
               -bold(D)
               "diag"(bold(G) bold(psi)^(n + 1))
-              frac(diff bold(k)_(A v), diff bold(m))
+              frac(partial bold(k)_(A v), partial bold(m))
               - bold(G)_z
-              frac(diff bold(k)_(A v), diff bold(m))
+              frac(partial bold(k)_(A v), partial bold(m))
           ]
       , bold(B)(psi^(n + 1))) &
   # - title: leading underscore
@@ -160,7 +160,7 @@ cases:
     typst: a + b^1 + frac(2, 3) + overbrace(123, b)
   - title: Symbols
     tex: '\alpha \nabla \partial'
-    typst: alpha nabla diff
+    typst: alpha nabla partial
   - title: Test3
     tex: \boldsymbol{x}
     typst: bold(x)
@@ -245,8 +245,8 @@ cases:
       \nabla \cdot \boldsymbol{D} &= \rho
       \end{aligned}
     typst: |-
-      nabla times bold(H) &= bold(J) + frac(diff bold(D), diff t) \
-      nabla times bold(E) &= - frac(diff bold(B), diff t) \
+      nabla times bold(H) &= bold(J) + frac(partial bold(D), partial t) \
+      nabla times bold(E) &= - frac(partial bold(B), partial t) \
       nabla dot.op bold(B) &= 0 \
       nabla dot.op bold(D) &= rho
   - title: Chen's inequality
@@ -260,10 +260,10 @@ cases:
     typst: e^(i x) = cos x + i sin x
   - title: Gauss's divergence theorem
     tex: \iiint_\Omega \operatorname{div}(\vec{F}) \mathrm{d} V = \oiint_{\partial \Omega} \vec{F} \cdot \mathrm{d} \vec{S}
-    typst: integral.triple_Omega op("div")(arrow(F)) dif V = integral.surf_(diff Omega) arrow(F) dot.op dif arrow(S)
+    typst: integral.triple_Omega op("div")(arrow(F)) dif V = integral.surf_(partial Omega) arrow(F) dot.op dif arrow(S)
   - title: Stokes' theorem
     tex: \iint_\Sigma \operatorname{curl}(\vec{F}) \cdot \mathrm{d} \vec{S} = \oint_{\partial \Sigma} \vec{F} \times \mathrm{d} \vec{l}
-    typst: integral.double_Sigma op("curl")(arrow(F)) dot.op dif arrow(S) = integral.cont_(diff Sigma) arrow(F) times dif arrow(l)
+    typst: integral.double_Sigma op("curl")(arrow(F)) dot.op dif arrow(S) = integral.cont_(partial Sigma) arrow(F) times dif arrow(l)
   # - title: Black-Scholes formula for option pricing
   #   tex: |-
   #     \begin{aligned}
