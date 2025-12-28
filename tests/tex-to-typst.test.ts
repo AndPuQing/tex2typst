@@ -88,6 +88,13 @@ describe('options', () => {
         } });
         expect(res).toEqual(expected);
     });
+
+    test('necessary spacing after arrow', function() {
+        const input = '\\rightarrow()';
+        const expected = 'arrow.r ()'; // 'arrow.r()' fails to compile in Typst
+        const res = tex2typst(input, { preferShorthands: false });
+        expect(res).toEqual(expected);
+    });
 });
 
 

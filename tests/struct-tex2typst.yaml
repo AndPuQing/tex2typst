@@ -478,3 +478,6 @@ cases:
   - title: non-breaking space
     tex: a~b~c
     typst: a space.nobreak b space.nobreak c
+  - title: necessary spacing after dot.op
+    tex: \cdot() \cdot(a)
+    typst: dot.op () dot.op (a)

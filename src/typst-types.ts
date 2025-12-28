@@ -195,7 +195,7 @@ export class TypstTerminal extends TypstNode {
                 return true;
             case TypstTokenType.SYMBOL:
             case TypstTokenType.ELEMENT: {
-                return ['+', '=', ',', '\\/'].includes(this.head.value);
+                return ['+', '=', ',', '\\/', 'dot', 'dot.op', 'arrow', 'arrow.r'].includes(this.head.value);
             }
             default:
                 return false;
