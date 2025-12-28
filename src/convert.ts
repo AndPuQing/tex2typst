@@ -440,7 +440,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
 
             // The braket package
             if(['\\bra', '\\ket', '\\braket', '\\set', '\\Bra', '\\Ket', '\\Braket', '\\Set'].includes(node.head.value)) {
-                function process_vertical_bar(n: TypstNode): TypstNode {
+                function process_vertical_bar(n: TypstNode, once: boolean): TypstNode {
                     const mid_bar = new TypstFuncCall(
                         new TypstToken(TypstTokenType.SYMBOL, 'mid'),
                         [TypstToken.VERTICAL_BAR.toNode()]
@@ -452,6 +452,9 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                         for (let i = 0; i < group.items.length; i++) {
                             if (group.items[i].type === 'terminal' && group.items[i].head.eq(TypstToken.VERTICAL_BAR)) {
                                 group.items[i] = mid_bar;
+                                if (once) {
+                                    break;
+                                }
                             }
                         }
                         return group;
@@ -486,28 +489,30 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                             { body: arg0, left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
                         );
                     case '\\Bra':
-                        // \Bra{x | \frac{1}{3}} ->  lr(chevron.l x mid(|) 1/3 |)
+                        // \Bra{x | \frac{1}{3}} ->  lr(chevron.l x | 1/3 |)
                         return new TypstLeftright(
                             TypstToken.LR,
-                            { body: process_vertical_bar(arg0), left: TypstToken.LEFT_ANGLE, right: TypstToken.VERTICAL_BAR }
+                            { body: arg0, left: TypstToken.LEFT_ANGLE, right: TypstToken.VERTICAL_BAR }
                         );
                     case '\\Ket':
-                        // \Ket{x | \frac{1}{3}} -> lr(|x mid(|) 1/3 chevron.r)
+                        // \Ket{x | \frac{1}{3}} -> lr(|x | 1/3 chevron.r)
                         return new TypstLeftright(
                             TypstToken.LR,
-                            { body: process_vertical_bar(arg0), left: TypstToken.VERTICAL_BAR, right: TypstToken.RIGHT_ANGLE }
+                            { body: arg0, left: TypstToken.VERTICAL_BAR, right: TypstToken.RIGHT_ANGLE }
                         );
                     case '\\Braket':
                         // \Braket{x | \frac{1}{3}} -> lr(chevron.l x mid(|) 1/3 chevron.r)
+                        // In \Bracket, all vertical lines will expand.
                         return new TypstLeftright(
                             TypstToken.LR,
-                            { body: process_vertical_bar(arg0), left: TypstToken.LEFT_ANGLE, right: TypstToken.RIGHT_ANGLE }
+                            { body: process_vertical_bar(arg0, false), left: TypstToken.LEFT_ANGLE, right: TypstToken.RIGHT_ANGLE }
                         );
                     case '\\Set':
                         // \Set{x | \frac{1}{3}} -> lr({x mid(|) 1/3})
+                        // In \Set, the first vertical will expand.
                         return new TypstLeftright(
                             TypstToken.LR,
-                            { body: process_vertical_bar(arg0), left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
+                            { body: process_vertical_bar(arg0, true), left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
                         );
                     default:
                         // unreachable
