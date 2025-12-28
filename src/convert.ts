@@ -310,7 +310,7 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
             }
 
             return new TypstLeftright(
-                new TypstToken(TypstTokenType.SYMBOL, 'lr'),
+                TypstToken.LR,
                 { body: typ_body, left: typ_left, right: typ_right }
             );
         }
@@ -440,6 +440,26 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
 
             // The braket package
             if(['\\bra', '\\ket', '\\braket', '\\set', '\\Bra', '\\Ket', '\\Braket', '\\Set'].includes(node.head.value)) {
+                function process_vertical_bar(n: TypstNode): TypstNode {
+                    const mid_bar = new TypstFuncCall(
+                        new TypstToken(TypstTokenType.SYMBOL, 'mid'),
+                        [TypstToken.VERTICAL_BAR.toNode()]
+                    );
+                    if (n.type === 'terminal' && n.head.eq(TypstToken.VERTICAL_BAR)) {
+                        return mid_bar;
+                    } else if (n.type === 'group') {
+                        const group = n as TypstGroup;
+                        for (let i = 0; i < group.items.length; i++) {
+                            if (group.items[i].type === 'terminal' && group.items[i].head.eq(TypstToken.VERTICAL_BAR)) {
+                                group.items[i] = mid_bar;
+                            }
+                        }
+                        return group;
+                    } else {
+                        return n;
+                    }
+                }
+
                 switch(node.head.value) {
                     case '\\bra':
                         // \bra{x} -> chevron.l x|
@@ -465,8 +485,32 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                             null,
                             { body: arg0, left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
                         );
+                    case '\\Bra':
+                        // \Bra{x | \frac{1}{3}} ->  lr(chevron.l x mid(|) 1/3 |)
+                        return new TypstLeftright(
+                            TypstToken.LR,
+                            { body: process_vertical_bar(arg0), left: TypstToken.LEFT_ANGLE, right: TypstToken.VERTICAL_BAR }
+                        );
+                    case '\\Ket':
+                        // \Ket{x | \frac{1}{3}} -> lr(|x mid(|) 1/3 chevron.r)
+                        return new TypstLeftright(
+                            TypstToken.LR,
+                            { body: process_vertical_bar(arg0), left: TypstToken.VERTICAL_BAR, right: TypstToken.RIGHT_ANGLE }
+                        );
+                    case '\\Braket':
+                        // \Braket{x | \frac{1}{3}} -> lr(chevron.l x mid(|) 1/3 chevron.r)
+                        return new TypstLeftright(
+                            TypstToken.LR,
+                            { body: process_vertical_bar(arg0), left: TypstToken.LEFT_ANGLE, right: TypstToken.RIGHT_ANGLE }
+                        );
+                    case '\\Set':
+                        // \Set{x | \frac{1}{3}} -> lr({x mid(|) 1/3})
+                        return new TypstLeftright(
+                            TypstToken.LR,
+                            { body: process_vertical_bar(arg0), left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
+                        );
                     default:
-                        throw new Error(`Not supported: ${node.head.value}`);
+                        // unreachable
                 }
             }
 

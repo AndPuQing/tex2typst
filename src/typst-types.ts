@@ -56,6 +56,7 @@ export class TypstToken {
     public static readonly VERTICAL_BAR = new TypstToken(TypstTokenType.ELEMENT, '|');
     public static readonly PLUS = new TypstToken(TypstTokenType.ELEMENT, '+');
     public static readonly MINUS = new TypstToken(TypstTokenType.ELEMENT, '-');
+    public static readonly LR = new TypstToken(TypstTokenType.SYMBOL, 'lr');
 
 
     public static readonly LEFT_DELIMITERS = [

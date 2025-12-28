@@ -484,6 +484,12 @@ cases:
   - title: the braket package - set
     tex: \set{a, b, c} \set{}
     typst: "{a, b, c} {}"
-  # - title: the braket package - Braket
-    # tex: \Braket{x | \frac{1}{3}}
-    # typst: lr(chevron.l x mid(|) 1/3 chevron.r)
+  - title: the braket package - Bra, Ket
+    tex: \Bra{x | \frac{1}{3}} + \Ket{x | \frac{1}{3}}
+    typst: lr(chevron.l x mid(|) 1/3|) + lr(|x mid(|) 1/3 chevron.r)
+  - title: the braket package - Braket
+    tex: \Braket{x | \frac{1}{3}}
+    typst: lr(chevron.l x mid(|) 1/3 chevron.r)
+  - title: the braket package - Set
+    tex: \Set{x | \frac{1}{3}} + \Set{ x | 0<{|x|}<5 }
+    typst: lr({x mid(|) 1/3}) + lr({x mid(|) 0 < | x | < 5})
