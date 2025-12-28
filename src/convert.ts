@@ -302,6 +302,15 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
 
             let typ_left = left? tex_token_to_typst(left, options) : null;
             let typ_right = right? tex_token_to_typst(right, options) : null;
+
+            // Convert < and > delimiters to chevron.l and chevron.r
+            if (typ_left && typ_left.value === '<') {
+                typ_left = new TypstToken(TypstTokenType.SYMBOL, 'chevron.l');
+            }
+            if (typ_right && typ_right.value === '>') {
+                typ_right = new TypstToken(TypstTokenType.SYMBOL, 'chevron.r');
+            }
+
             if (typ_left === null && typ_right !== null) { // left.
                 typ_right = escape_curly_or_paren(typ_right);
             }

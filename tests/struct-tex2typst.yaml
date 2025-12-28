@@ -463,6 +463,9 @@ cases:
   - title: frac with partial parentheses needs wrapping (denominator)
     tex: \frac{a}{(b + c)d}
     typst: a/((b + c) d)
+  - title: bra-ket notation
+    tex: \left< 0\right|\, \left|0 \right>
+    typst: lr(chevron.l 0|) thin lr(|0 chevron.r)
   - title: medspace
     tex: a \> b
     typst: a med b
