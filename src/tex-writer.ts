@@ -12,15 +12,6 @@ export class TexWriter {
     }
 
     protected flushQueue() {
-        // remove \textstyle or \displaystyle if it is the end of the math code
-        while (this.queue.length > 0) {
-            const last_token = this.queue[this.queue.length - 1];
-            if (last_token.eq(TexToken.COMMAND_DISPLAYSTYLE) || last_token.eq(TexToken.COMMAND_TEXTSTYLE)) {
-                this.queue.pop();
-            } else {
-                break;
-            }
-        }
         for (let i = 0; i < this.queue.length; i++) {
             this.buffer = writeTexTokenBuffer(this.buffer, this.queue[i]);
         }
@@ -29,6 +20,13 @@ export class TexWriter {
 
     public finalize(): string {
         this.flushQueue();
+        // "\displaystyle \displaystyle" -> "\displaystyle"
+        this.buffer = this.buffer.replace(/\\displaystyle \\displaystyle/g, "\\displaystyle");
+        // "\textstyle \textstyle" -> "\textstyle"
+        this.buffer = this.buffer.replace(/\\textstyle \\textstyle/g, "\\textstyle");
+        // remove \textstyle or \displaystyle if it is the end
+        this.buffer = this.buffer.replace(/\s?\\textstyle\s?$/, "");
+        this.buffer = this.buffer.replace(/\s?\\displaystyle\s?$/, "");
         return this.buffer;
     }
 }

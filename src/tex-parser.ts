@@ -58,6 +58,29 @@ function eat_primes(tokens: TexToken[], start: number): number {
 }
 
 
+function process_styled_parts(nodes: TexNode[]): TexNode[] {
+    let style_token: TexToken | null = null;
+    let bucket: TexNode[] = [];
+    let res: TexNode[] = [];
+    let i = 0;
+    while(true) {
+        if (i === nodes.length || nodes[i].head.eq(TexToken.COMMAND_DISPLAYSTYLE) || nodes[i].head.eq(TexToken.COMMAND_TEXTSTYLE)) {
+            if(bucket.length > 0) {
+                const g = (bucket.length === 1)? bucket[0]: new TexGroup(bucket);
+                res.push(style_token? new TexFuncCall(style_token, [g]): g);
+            }
+            if (i === nodes.length) {
+                break;
+            }
+            bucket = [];
+            style_token = nodes[i].head;
+        } else {
+            bucket.push(nodes[i]);
+        }
+        i++;
+    }
+    return res;
+}
 
 const LEFT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\left');
 const RIGHT_COMMAND: TexToken = new TexToken(TexTokenType.COMMAND, '\\right');
@@ -137,7 +160,7 @@ export class LatexParser {
             return [EMPTY_NODE, -1];
         }
 
-        const styledResults = this.applyStyleCommands(results);
+        const styledResults = process_styled_parts(results);
 
         let node: TexNode;
         if (styledResults.length === 1) {
@@ -462,27 +485,6 @@ export class LatexParser {
         this.alignmentDepth--;
         return [allRows, pos];
     }
-
-    private applyStyleCommands(nodes: TexNode[]): TexNode[] {
-        for (let i = 0; i < nodes.length; i++) {
-            if (nodes[i].head.eq(TexToken.COMMAND_DISPLAYSTYLE) || nodes[i].head.eq(TexToken.COMMAND_TEXTSTYLE)) {
-                const before = this.applyStyleCommands(nodes.slice(0, i));
-                const after = this.applyStyleCommands(nodes.slice(i + 1));
-                let body: TexNode;
-                if (after.length === 0) {
-                    body = EMPTY_NODE;
-                } else if (after.length === 1) {
-                    body = after[0];
-                } else {
-                    body = new TexGroup(after);
-                }
-                const funcCall = new TexFuncCall(nodes[i].head, [body]);
-                return before.concat([funcCall]);
-            }
-        }
-        return nodes;
-    }
-
 }
 
 // Remove all whitespace before or after _ or ^

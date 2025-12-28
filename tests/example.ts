@@ -10,6 +10,6 @@ function example_typst2tex(text: string) {
     console.log(res);
 }
 
-example_tex2typst(String.raw`\set{a, b, c}`);
+example_tex2typst(String.raw`a + b`);
 
 example_typst2tex("a + 1/2");

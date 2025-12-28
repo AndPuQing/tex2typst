@@ -201,6 +201,9 @@ cases:
   - title: display style, case 4
     tex:  \lim_x F(x) = 0, \displaystyle \lim_x F(x) = 1
     typst: lim_x F(x) = 0, display(lim_x F(x) = 1)
+  - title: multiple \displaystyle and \textstyle
+    tex: a = \displaystyle b c \textstyle d e \displaystyle f g \textstyle h
+    typst: a = display(b c) inline(d e) display(f g) inline(h)
   - title: not
     tex: \not\in \not\subset
     typst: in.not subset.not
