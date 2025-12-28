@@ -19,10 +19,10 @@ cases:
     typst: 'lr([bold(A))) lr({b))'
   - title: dot as right bracket
     tex: '\left\{ \frac{a}{b} \right.'
-    typst: 'lr(\{ a/b)'
+    typst: 'lr(\{a/b)'
   - title: dot as left bracket
     tex: '\left. \frac{a}{b} \right\}'
-    typst: 'lr(a/b })'
+    typst: 'lr(a/b})'
   - title: left. and right.
     tex: '\left. \frac{a}{b} \right.'
     typst: 'lr(a/b)'
@@ -31,7 +31,7 @@ cases:
     typst: lr(|a + 1/3|)^2
   - title: biglr
     tex: \bigl|a + \frac{1}{3} \bigr|^2
-    typst: "|a + 1/3 |^2"
+    typst: "| a + 1/3 |^2"
   - title: bigm
     tex: \dfrac{d}{dx}x^2\bigm{|}_{x=2}
     typst: frac(d, d x) x^2 |_(x = 2)
@@ -40,7 +40,7 @@ cases:
     typst: limits(integral)_0^infinity x "d" x
   - title: bigglr
     tex: \biggl|a + \frac{1}{3} \biggr|^2
-    typst: "|a + 1/3 |^2"
+    typst: "| a + 1/3 |^2"
   - title: symmetry left right
     tex: \left\{ a \right\} \left( b \right) \left[ c \right]
     typst: '{a}(b) [c]'
@@ -55,7 +55,7 @@ cases:
     typst: '{a}(b) [c]'
   - title: paired delimiter commands
     tex: \left(\bigl[\biggl\{a\biggr\}\bigr]\right)
-    typst: '([ {a}])'
+    typst: '([{a}])'
   - title: operatorname
     tex: '\operatorname{diag} \text{diag}'
     typst: 'op("diag") "diag"'
@@ -121,10 +121,10 @@ cases:
       1/(Delta t)
       (partial bold(theta)^(n + 1))/(partial bold(psi)^(n + 1))
       - bold(D)
-      "diag"(bold(G) bold(psi)^(n + 1))
+      "diag" (bold(G) bold(psi)^(n + 1))
       (partial bold(k)_(A v))/(partial bold(psi)^(n + 1))
       - bold(D)
-      "diag"(bold(k)_(A v) (bold(psi)^(n + 1) comma bold(m)))
+      "diag" (bold(k)_(A v) (bold(psi)^(n + 1) comma bold(m)))
       bold(G)
       - bold(G)_z
       (partial bold(k)_(A v))/(partial bold(psi)^(n + 1))
@@ -143,8 +143,8 @@ cases:
       =
       underbrace(
       [
-      -bold(D)
-      "diag"(bold(G) bold(psi)^(n + 1))
+      - bold(D)
+      "diag" (bold(G) bold(psi)^(n + 1))
       (partial bold(k)_(A v))/(partial bold(m))
       - bold(G)_z
       (partial bold(k)_(A v))/(partial bold(m))
@@ -281,13 +281,9 @@ cases:
   - title: has both prime and subscript
     tex: y_1' + y'_2 + y_{a_1}' + {\theta}_1'
     typst: y'_1 + y'_2 + y'_(a_1) + theta'_1
-
   - title: space before or after script
     tex: \lim _{x \to 0} \sum_{i=1} ^ n
     typst: lim_(x -> 0) sum_(i = 1)^n
-  - title: spaces around text
-    tex: i_D = \mu_n C_\text{ox} \frac{W}{L} \left[ (v_\text{GS} - V_t)v_\text{DS} - \frac{1}{2} v_\text{DS}^2 \right]
-    typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2]
   - title: base is group wrapped in brackets
     tex: e = \lim_{{n \to \infty}} \left(1 + \frac{1}{n}\right)^n
     typst: e = lim_(n -> infinity) (1 + 1/n)^n

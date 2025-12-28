@@ -73,7 +73,7 @@ cases:
     typst: \$ pound yen
   - title: escape characters
     tex: \{ \} \_ \& \# \% \$
-    typst: "{} \\_\\& \\# % \\$" # Ideally there should be a space between \ and {, but not implemented yet
+    typst: "{} \\_ \\& \\# % \\$" # Ideally there should be a space between \ and {, but not implemented yet
   - title: combinatorial number
     tex: \binom{n}{k}
     typst: binom(n, k)
@@ -113,7 +113,7 @@ cases:
     typst: upright(bold(A))
   - title: slash
     tex: 1/2
-    typst: 1 \/2
+    typst: 1 \/ 2
   - title: double bar
     tex: \|
     typst: bar.v.double

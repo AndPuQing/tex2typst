@@ -1,5 +1,6 @@
 import { array_includes } from "./generic";
 import { shorthandMap } from "./typst-shorthands";
+import { isalpha } from "./utils";
 
 export enum TypstTokenType {
     NONE,
@@ -50,6 +51,8 @@ export class TypstToken {
     public static readonly EMPTY = new TypstToken(TypstTokenType.ELEMENT, '');
     public static readonly LEFT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '{');
     public static readonly RIGHT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '}');
+    public static readonly PLUS = new TypstToken(TypstTokenType.ELEMENT, '+');
+    public static readonly MINUS = new TypstToken(TypstTokenType.ELEMENT, '-');
 
 
     public static readonly LEFT_DELIMITERS = [
@@ -135,6 +138,9 @@ export abstract class TypstNode {
     // e.g. 1/2 is over high, "2" is not.
     abstract isOverHigh(): boolean;
 
+    abstract isLeftSpaceful(): boolean;
+    abstract isRightSpaceful(): boolean;
+
     // Serialize a tree of TypstNode into a list of TypstToken
     abstract serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[];
 
@@ -160,6 +166,42 @@ export class TypstTerminal extends TypstNode {
     public isOverHigh(): boolean {
         return false;
     }
+
+    public isLeftSpaceful(): boolean {
+        switch (this.head.type) {
+            case TypstTokenType.SPACE:
+            case TypstTokenType.NEWLINE:
+                return false;
+            case TypstTokenType.TEXT:
+                return true;
+            case TypstTokenType.SYMBOL:
+            case TypstTokenType.ELEMENT: {
+                if(['(', '!', '}', ']'].includes(this.head.value)) {
+                    return false;
+                }
+                return true;
+            }
+            default:
+                return true;
+        }
+    }
+
+    public isRightSpaceful(): boolean {
+        switch (this.head.type) {
+            case TypstTokenType.SPACE:
+            case TypstTokenType.NEWLINE:
+                return false;
+            case TypstTokenType.TEXT:
+                return true;
+            case TypstTokenType.SYMBOL:
+            case TypstTokenType.ELEMENT: {
+                return ['+', '=', ',', '\\/'].includes(this.head.value);
+            }
+            default:
+                return false;
+        }
+    }
+
 
     public toString(): string {
         return this.head.toString();
@@ -200,6 +242,8 @@ export class TypstTerminal extends TypstNode {
     }
 }
 
+
+
 export class TypstGroup extends TypstNode {
     public items: TypstNode[];
     constructor(items: TypstNode[]) {
@@ -211,14 +255,52 @@ export class TypstGroup extends TypstNode {
         return this.items.some((n) => n.isOverHigh());
     }
 
-    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
-        const queue = this.items.flatMap((n) => n.serialize(env, options));
-        // remove soft space at the start and end
-        if (queue.length > 0 && queue[0].eq(SOFT_SPACE)) {
-            queue.shift();
+    public isLeftSpaceful(): boolean {
+        if (this.items.length === 0) {
+            return false;
         }
-        if (queue.length > 0 && queue[queue.length - 1].eq(SOFT_SPACE)) {
-            queue.pop();
+        return this.items[0].isLeftSpaceful();
+    }
+
+    public isRightSpaceful(): boolean {
+        if (this.items.length === 0) {
+            return false;
+        }
+        return this.items.at(-1)!.isRightSpaceful();
+    }
+
+    public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
+        if (this.items.length === 0) {
+            return [];
+        }
+        const queue: TypstToken[] = [];
+        for(let i = 0; i < this.items.length; i++) {
+            const n = this.items[i];
+            const tokens = n.serialize(env, options);
+            if (n.isLeftSpaceful() && i > 0) {
+                if (queue.length > 0) {
+                    const top = queue.at(-1)!;
+                    let no_need_space = false;
+                    no_need_space ||= top.eq(SOFT_SPACE);
+                    no_need_space ||= ['{', '['].includes(top.value);
+                    if (!no_need_space) {
+                        queue.push(SOFT_SPACE);
+                    }
+                }
+            }
+            queue.push(...tokens);
+            if (n.isRightSpaceful() && i < this.items.length - 1) {
+                if(!(queue.at(-1)?.eq(SOFT_SPACE))) {
+                    queue.push(SOFT_SPACE);
+                }
+            }
+        }
+        // "- a" -> "-a"
+        // "+ a" -> "+a"
+        if (queue.length > 0 && (queue[0].eq(TypstToken.MINUS) || queue[0].eq(TypstToken.PLUS))) {
+            while(queue.length > 1 && queue[1].eq(SOFT_SPACE)) {
+                queue.splice(1, 1);
+            }
         }
         return queue;
     }
@@ -240,6 +322,15 @@ export class TypstSupsub extends TypstNode {
     public isOverHigh(): boolean {
         return this.base.isOverHigh();
     }
+
+    public isLeftSpaceful(): boolean {
+        return true;
+    }
+
+    public isRightSpaceful(): boolean {
+        return true;
+    }
+
 
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
         const queue: TypstToken[] = [];
@@ -263,7 +354,6 @@ export class TypstSupsub extends TypstNode {
             queue.push(new TypstToken(TypstTokenType.ELEMENT, '^'));
             queue.push(...sup.serialize(env, options));
         }
-        queue.push(SOFT_SPACE);
         return queue;
     }
 }
@@ -282,6 +372,14 @@ export class TypstFuncCall extends TypstNode {
         return this.args.some((n) => n.isOverHigh());
     }
 
+    public isLeftSpaceful(): boolean {
+        return true;
+    }
+
+    public isRightSpaceful(): boolean {
+        return !['op', 'bold', 'dot'].includes(this.head.value);
+    }
+
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
         const queue: TypstToken[] = [];
 
@@ -293,6 +391,7 @@ export class TypstFuncCall extends TypstNode {
             queue.push(...this.args[i].serialize(env, options));
             if (i < this.args.length - 1) {
                 queue.push(new TypstToken(TypstTokenType.ELEMENT, ','));
+                queue.push(SOFT_SPACE);
             }
         }
         if (this.options) {
@@ -318,15 +417,21 @@ export class TypstFraction extends TypstNode {
         return true;
     }
 
+    public isLeftSpaceful(): boolean {
+        return true;
+    }
+
+    public isRightSpaceful(): boolean {
+        return true;
+    }
+
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
         const queue: TypstToken[] = [];
 
         const [numerator, denominator] = this.args;
-        queue.push(SOFT_SPACE);
         queue.push(...numerator.serialize(env, options));
         queue.push(new TypstToken(TypstTokenType.ELEMENT, '/'));
         queue.push(...denominator.serialize(env, options));
-        queue.push(SOFT_SPACE);
         return queue;
     }
 }
@@ -351,6 +456,15 @@ export class TypstLeftright extends TypstNode {
         return this.body.isOverHigh();
     }
 
+    public isLeftSpaceful(): boolean {
+        return true;
+    }
+
+    public isRightSpaceful(): boolean {
+        return true;
+    }
+
+
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
         const queue: TypstToken[] = [];
         const LR = new TypstToken(TypstTokenType.SYMBOL, 'lr');
@@ -361,9 +475,17 @@ export class TypstLeftright extends TypstNode {
         }
         if (left) {
             queue.push(left);
+            // `lr(brace.l 1/3 brace.r)` instead of `lr(brace.l1/3 brace.r)`
+            if (isalpha(left.value[0])) {
+                queue.push(SOFT_SPACE);
+            }
         }
         queue.push(...this.body.serialize(env, options));
         if (right) {
+            // `lr(brace.l 1/3 brace.r)` instead of `lr(brace.l 1/3brace.r)`
+            if (isalpha(right.value[0])) {
+                queue.push(SOFT_SPACE);
+            }
             queue.push(right);
         }
         if (this.head.eq(LR)) {
@@ -385,6 +507,14 @@ export class TypstMatrixLike extends TypstNode {
 
     public isOverHigh(): boolean {
         return true;
+    }
+
+    public isLeftSpaceful(): boolean {
+        return true;
+    }
+
+    public isRightSpaceful(): boolean {
+        return false;
     }
 
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
@@ -418,10 +548,16 @@ export class TypstMatrixLike extends TypstNode {
             row.forEach((cell, j) => {
                 queue.push(...cell.serialize(env, options));
                 if (j < row.length - 1) {
+                    queue.push(SOFT_SPACE);
                     queue.push(cell_sep);
+                    queue.push(SOFT_SPACE);
                 } else {
                     if (i < this.matrix.length - 1) {
+                        if (row_sep.value === '\\') {
+                            queue.push(SOFT_SPACE);
+                        }
                         queue.push(row_sep);
+                        queue.push(SOFT_SPACE);
                     }
                 }
             });
@@ -456,6 +592,14 @@ export class TypstMarkupFunc extends TypstNode {
 
     public isOverHigh(): boolean {
         return this.fragments.some((n) => n.isOverHigh());
+    }
+
+    public isLeftSpaceful(): boolean {
+        return true;
+    }
+
+    public isRightSpaceful(): boolean {
+        return true;
     }
 
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {

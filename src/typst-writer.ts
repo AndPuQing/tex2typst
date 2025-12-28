@@ -72,7 +72,7 @@ export class TypstWriter {
             no_need_space ||= previousToken.type === TypstTokenType.LITERAL;
         }
         if (!no_need_space) {
-            this.buffer += ' ';
+            // this.buffer += ' ';
         }
 
         this.buffer += str;
@@ -86,9 +86,11 @@ export class TypstWriter {
 
 
     protected flushQueue() {
+        const queue1 = this.queue.filter((token) => token.value !== '');
+
         // merge consecutive soft spaces
         let qu: TypstToken[] = [];
-        for(const token of this.queue) {
+        for(const token of queue1) {
             if (token.eq(SOFT_SPACE) && qu.length > 0 && qu[qu.length - 1].eq(SOFT_SPACE)) {
                 continue;
             }
@@ -151,6 +153,8 @@ export class TypstWriter {
                 this.buffer = pass(this.buffer);
             }
         }
+        // "& =" -> "&="
+        this.buffer = this.buffer.replace(/& =/g, '&=');
         return this.buffer;
     }
 }

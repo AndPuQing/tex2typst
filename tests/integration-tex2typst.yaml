@@ -42,7 +42,7 @@ cases:
     typst: pi(x) ~ x/(log x)
   - title: current-voltage characteristics of n-channel enhancement MOSFETs
     tex: i_D = \mu_n C_\text{ox} \frac{W}{L} \left[ (v_\text{GS} - V_t)v_\text{DS} - \frac{1}{2} v_\text{DS}^2 \right]
-    typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2]
+    typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2 ]
   - title: Black-Scholes formula for option pricing
     tex: |-
       \begin{aligned}
@@ -52,7 +52,7 @@ cases:
       \end{aligned}
     typst: |-
       C &= N(d_1) S_t - N(d_2) K e^(-r t) \
-      d_1 &= (ln (S_t)/K +(r + (sigma^2)/2) t)/(sigma sqrt(t)) \
+      d_1 &= (ln (S_t)/K + (r + (sigma^2)/2) t)/(sigma sqrt(t)) \
       d_2 &= d_1 - sigma sqrt(t)
   - title: Cauchy's integral formula
     tex: f(z_0) = \frac{1}{2\pi \mathrm{i}} \oint_{C} \frac{f(z)}{z-z_0}\, \mathrm{d} z

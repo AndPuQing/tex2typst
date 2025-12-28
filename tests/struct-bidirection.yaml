@@ -207,3 +207,6 @@ cases:
   - title: not, case 2
     tex: \not =
     typst: "!="
+  - title: spaces around text
+    tex: v_\text{GS} - V_t \text{should} a
+    typst: v_"GS" - V_t "should" a
