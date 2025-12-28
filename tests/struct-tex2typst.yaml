@@ -415,13 +415,13 @@ cases:
     typst: sum_(0 <= i <= m \ 0 < j < n) P(i, j)
   - title: subarray-l
     tex: \sum_{\begin{subarray}{l} 0 \leq i \leq m \\ 0 < j < n \end{subarray}} P(i, j)
-    typst: sum_(& 0 <= i <= m \ & 0 < j < n) P(i, j)
+    typst: sum_( & 0 <= i <= m \ & 0 < j < n) P(i, j)
   - title: subarray
     tex: \sum_{\begin{subarray}{c} 0 \leq i \leq m \\ 0 < j < n \end{subarray}} P(i, j)
     typst: sum_(0 <= i <= m \ 0 < j < n) P(i, j)
   - title: subarray-r
     tex: \sum_{\begin{subarray}{r} 0 \leq i \leq m \\ 0 < j < n \end{subarray}} P(i, j)
-    typst: sum_(0 <= i <= m & \ 0 < j < n &) P(i, j)
+    typst: sum_(0 <= i <= m & \ 0 < j < n & ) P(i, j)
   - title: subarray-with-rr &
     tex: \sum_{\begin{subarray}{rr} a & b \\ c & d \end{subarray}} P(i, j)
     typst: sum_(a & b \ c & d) P(i, j)

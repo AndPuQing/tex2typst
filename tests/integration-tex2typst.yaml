@@ -42,7 +42,7 @@ cases:
     typst: pi(x) ~ x/(log x)
   - title: current-voltage characteristics of n-channel enhancement MOSFETs
     tex: i_D = \mu_n C_\text{ox} \frac{W}{L} \left[ (v_\text{GS} - V_t)v_\text{DS} - \frac{1}{2} v_\text{DS}^2 \right]
-    typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2 ]
+    typst: i_D = mu_n C_"ox" W/L [(v_"GS" - V_t) v_"DS" - 1/2 v_"DS"^2]
   - title: Black-Scholes formula for option pricing
     tex: |-
       \begin{aligned}

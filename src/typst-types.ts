@@ -180,7 +180,7 @@ export class TypstTerminal extends TypstNode {
                 return true;
             case TypstTokenType.SYMBOL:
             case TypstTokenType.ELEMENT: {
-                if(['(', '!', '}', ']'].includes(this.head.value)) {
+                if(['(', '!', ',', ')', '}', ']'].includes(this.head.value)) {
                     return false;
                 }
                 return true;
@@ -214,7 +214,7 @@ export class TypstTerminal extends TypstNode {
     public serialize(env: TypstWriterEnvironment, options: TypstWriterOptions): TypstToken[] {
         if (this.head.type === TypstTokenType.ELEMENT) {
             if (this.head.value === ',' && env.insideFunctionDepth > 0) {
-                return [new TypstToken(TypstTokenType.SYMBOL, 'comma')];
+                return [SOFT_SPACE, new TypstToken(TypstTokenType.SYMBOL, 'comma')];
             }
         } else if (this.head.type === TypstTokenType.SYMBOL) {
             let symbol_name = this.head.value;
@@ -246,6 +246,43 @@ export class TypstTerminal extends TypstNode {
     }
 }
 
+class TypstTokenQueue {
+    private queue: TypstToken[] = [];
+
+    public pushSoftSpace() {
+        if (this.queue.length === 0) {
+            return;
+        } else if (this.queue.at(-1)!.eq(SOFT_SPACE)) {
+            return;
+        } else if (['(', '{', '['].includes(this.queue.at(-1)!.value)) {
+            return;
+        }
+        this.queue.push(SOFT_SPACE);
+    }
+
+    public pushAll(tokens: TypstToken[]) {
+        if (tokens.length == 0) {
+            return;
+        } else if (tokens[0].eq(SOFT_SPACE) && this.queue.length === 0) {
+            this.queue.push(...tokens.slice(1));
+        } else {
+            if ([')', '}', ']'].includes(tokens[0].value)) {
+                while (this.queue.at(-1)?.eq(SOFT_SPACE)) {
+                    this.queue.pop();
+                }
+            }
+            this.queue.push(...tokens);
+        }
+    }
+
+    public getQueue(): TypstToken[] {
+        const res = Array.from(this.queue);
+        while (res.at(-1)?.eq(SOFT_SPACE)) {
+            res.pop();
+        }
+        return res;
+    }
+}
 
 
 export class TypstGroup extends TypstNode {
@@ -277,28 +314,21 @@ export class TypstGroup extends TypstNode {
         if (this.items.length === 0) {
             return [];
         }
-        const queue: TypstToken[] = [];
+
+        const q = new TypstTokenQueue();
         for(let i = 0; i < this.items.length; i++) {
             const n = this.items[i];
             const tokens = n.serialize(env, options);
-            if (n.isLeftSpaceful() && i > 0) {
-                if (queue.length > 0) {
-                    const top = queue.at(-1)!;
-                    let no_need_space = false;
-                    no_need_space ||= top.eq(SOFT_SPACE);
-                    no_need_space ||= ['{', '['].includes(top.value);
-                    if (!no_need_space) {
-                        queue.push(SOFT_SPACE);
-                    }
-                }
+            if (n.isLeftSpaceful()) {
+                q.pushSoftSpace();
             }
-            queue.push(...tokens);
-            if (n.isRightSpaceful() && i < this.items.length - 1) {
-                if(!(queue.at(-1)?.eq(SOFT_SPACE))) {
-                    queue.push(SOFT_SPACE);
-                }
+            q.pushAll(tokens);
+            if (n.isRightSpaceful()) {
+                q.pushSoftSpace();
             }
         }
+
+        const queue = q.getQueue();
         // "- a" -> "-a"
         // "+ a" -> "+a"
         if (queue.length > 0 && (queue[0].eq(TypstToken.MINUS) || queue[0].eq(TypstToken.PLUS))) {
@@ -552,7 +582,9 @@ export class TypstMatrixLike extends TypstNode {
             row.forEach((cell, j) => {
                 queue.push(...cell.serialize(env, options));
                 if (j < row.length - 1) {
-                    queue.push(SOFT_SPACE);
+                    if (cell_sep.value === '&') {
+                        queue.push(SOFT_SPACE);
+                    }
                     queue.push(cell_sep);
                     queue.push(SOFT_SPACE);
                 } else {

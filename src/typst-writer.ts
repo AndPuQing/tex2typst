@@ -4,9 +4,6 @@ import { TypstToken } from "./typst-types";
 import { TypstTokenType } from "./typst-types";
 
 
-const TYPST_LEFT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, '(');
-const TYPST_RIGHT_PARENTHESIS: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ')');
-const TYPST_COMMA: TypstToken = new TypstToken(TypstTokenType.ELEMENT, ',');
 const TYPST_NEWLINE: TypstToken = new TypstToken(TypstTokenType.SYMBOL, '\n');
 
 const SOFT_SPACE = new TypstToken(TypstTokenType.CONTROL, ' ');
@@ -53,7 +50,7 @@ export class TypstWriter {
             qu.push(token);
         }
 
-        // delete soft spaces if they are not needed
+        // delete soft spaces before or after a newline
         const dummy_token = new TypstToken(TypstTokenType.SYMBOL, '');
         for(let i = 0; i < qu.length; i++) {
             let token = qu[i];
@@ -61,18 +58,15 @@ export class TypstWriter {
                 const to_delete = (i === 0)
                                 || (i === qu.length - 1)
                                 || (qu[i - 1].type === TypstTokenType.SPACE)
-                                || qu[i - 1].isOneOf([TYPST_LEFT_PARENTHESIS, TYPST_NEWLINE])
-                                || qu[i + 1].isOneOf([TYPST_RIGHT_PARENTHESIS, TYPST_COMMA, TYPST_NEWLINE]);
+                                || qu[i - 1].eq(TYPST_NEWLINE)
+                                || qu[i + 1].eq(TYPST_NEWLINE);
                 if (to_delete) {
                     qu[i] = dummy_token;
                 }
             }
         }
 
-        qu = qu.filter((token) => !token.eq(dummy_token));
-
-        for(let i = 0; i < qu.length; i++) {
-            let token = qu[i];
+        for(const token of qu) {
             this.buffer += token.toString();
         }
 
