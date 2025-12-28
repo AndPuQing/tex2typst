@@ -465,8 +465,7 @@ export class LatexParser {
 
     private applyStyleCommands(nodes: TexNode[]): TexNode[] {
         for (let i = 0; i < nodes.length; i++) {
-            const styleToken = this.getStyleToken(nodes[i]);
-            if (styleToken) {
+            if (nodes[i].head.eq(TexToken.COMMAND_DISPLAYSTYLE) || nodes[i].head.eq(TexToken.COMMAND_TEXTSTYLE)) {
                 const before = this.applyStyleCommands(nodes.slice(0, i));
                 const after = this.applyStyleCommands(nodes.slice(i + 1));
                 let body: TexNode;
@@ -477,21 +476,13 @@ export class LatexParser {
                 } else {
                     body = new TexGroup(after);
                 }
-                const funcCall = new TexFuncCall(styleToken, [body]);
-                return before.concat(funcCall);
+                const funcCall = new TexFuncCall(nodes[i].head, [body]);
+                return before.concat([funcCall]);
             }
         }
         return nodes;
     }
 
-    private getStyleToken(node: TexNode): TexToken | null {
-        if (node.type === 'terminal') {
-            if (node.head.eq(TexToken.COMMAND_DISPLAYSTYLE) || node.head.eq(TexToken.COMMAND_TEXTSTYLE)) {
-                return node.head;
-            }
-        }
-        return null;
-    }
 }
 
 // Remove all whitespace before or after _ or ^
