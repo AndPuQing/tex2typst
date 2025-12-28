@@ -415,14 +415,6 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 );
             }
 
-            // \set{a, b, c} -> {a, b, c}
-            if (node.head.value === '\\set') {
-                return new TypstLeftright(
-                    null,
-                    { body: arg0, left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
-                );
-            }
-
             // \not X -> X.not
             if (node.head.value === '\\not') {
                 const sym = convert_tex_node_to_typst(node.args[0], options);
@@ -444,6 +436,38 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
             }
             if (node.head.value === '\\underset') {
                 return convert_underset(node, options);
+            }
+
+            // The braket package
+            if(['\\bra', '\\ket', '\\braket', '\\set', '\\Bra', '\\Ket', '\\Braket', '\\Set'].includes(node.head.value)) {
+                switch(node.head.value) {
+                    case '\\bra':
+                        // \bra{x} -> chevron.l x|
+                        return new TypstLeftright(
+                            null,
+                            { body: arg0, left: TypstToken.LEFT_ANGLE, right: TypstToken.VERTICAL_BAR }
+                        );
+                    case '\\ket':
+                        // \ket{x} -> |x chevron.r
+                        return new TypstLeftright(
+                            null,
+                            { body: arg0, left: TypstToken.VERTICAL_BAR, right: TypstToken.RIGHT_ANGLE }
+                        );
+                    case '\\braket':
+                        // \braket{x} -> chevron.l x chevron.r
+                        return new TypstLeftright(
+                            null,
+                            { body: arg0, left: TypstToken.LEFT_ANGLE, right: TypstToken.RIGHT_ANGLE }
+                        );
+                    case '\\set':
+                        // \set{a, b, c} -> {a, b, c}
+                        return new TypstLeftright(
+                            null,
+                            { body: arg0, left: TypstToken.LEFT_BRACE, right: TypstToken.RIGHT_BRACE }
+                        );
+                    default:
+                        throw new Error(`Not supported: ${node.head.value}`);
+                }
             }
 
             // \frac{a}{b} -> a / b

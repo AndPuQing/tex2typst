@@ -36,13 +36,15 @@ export const TEX_UNARY_COMMANDS = [
     'overrightarrow',
     'hspace',
     'substack',
-    'set',
     'displaylines',
     'mathinner',
     'mathrel',
     'mathbin',
     'mathop',
     'not',
+    // the braket package
+    'bra', 'ket', 'braket', 'set',
+    'Bra', 'Ket', 'Braket', 'Set',
 ]
 
 export const TEX_BINARY_COMMANDS = [

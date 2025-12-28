@@ -51,6 +51,9 @@ export class TypstToken {
     public static readonly EMPTY = new TypstToken(TypstTokenType.ELEMENT, '');
     public static readonly LEFT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '{');
     public static readonly RIGHT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '}');
+    public static readonly LEFT_ANGLE = new TypstToken(TypstTokenType.SYMBOL, 'chevron.l');
+    public static readonly RIGHT_ANGLE = new TypstToken(TypstTokenType.SYMBOL, 'chevron.r');
+    public static readonly VERTICAL_BAR = new TypstToken(TypstTokenType.ELEMENT, '|');
     public static readonly PLUS = new TypstToken(TypstTokenType.ELEMENT, '+');
     public static readonly MINUS = new TypstToken(TypstTokenType.ELEMENT, '-');
 
@@ -58,9 +61,9 @@ export class TypstToken {
     public static readonly LEFT_DELIMITERS = [
         new TypstToken(TypstTokenType.ELEMENT, '('),
         new TypstToken(TypstTokenType.ELEMENT, '['),
-        new TypstToken(TypstTokenType.ELEMENT, '{'),
-        new TypstToken(TypstTokenType.ELEMENT, '|'),
-        new TypstToken(TypstTokenType.SYMBOL, 'chevron.l'),
+        TypstToken.LEFT_BRACE,
+        TypstToken.VERTICAL_BAR,
+        TypstToken.LEFT_ANGLE,
         new TypstToken(TypstTokenType.SYMBOL, 'paren.l'),
         new TypstToken(TypstTokenType.SYMBOL, 'brace.l'),
     ];
@@ -68,9 +71,9 @@ export class TypstToken {
     public static readonly RIGHT_DELIMITERS = [
         new TypstToken(TypstTokenType.ELEMENT, ')'),
         new TypstToken(TypstTokenType.ELEMENT, ']'),
-        new TypstToken(TypstTokenType.ELEMENT, '}'),
-        new TypstToken(TypstTokenType.ELEMENT, '|'),
-        new TypstToken(TypstTokenType.SYMBOL, 'chevron.r'),
+        TypstToken.RIGHT_BRACE,
+        TypstToken.VERTICAL_BAR,
+        TypstToken.RIGHT_ANGLE,
         new TypstToken(TypstTokenType.SYMBOL, 'paren.r'),
         new TypstToken(TypstTokenType.SYMBOL, 'brace.r'),
     ];
