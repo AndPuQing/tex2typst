@@ -496,3 +496,6 @@ cases:
   - title: the braket package - Set
     tex: \Set{x | \frac{1}{3}} + \Set{ x | 0<|x|<5 }
     typst: lr({x mid(|) 1/3}) + lr({x mid(|) 0 < | x | < 5})
+  - title: mod, bmod, pmod
+    tex: a \mod b + a \bmod b + a \pmod b
+    typst: a mod b + a mod b + a (mod b)

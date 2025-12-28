@@ -51,6 +51,8 @@ export class TypstToken {
     public static readonly EMPTY = new TypstToken(TypstTokenType.ELEMENT, '');
     public static readonly LEFT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '{');
     public static readonly RIGHT_BRACE = new TypstToken(TypstTokenType.ELEMENT, '}');
+    public static readonly LEFT_PAREN = new TypstToken(TypstTokenType.ELEMENT, '(');
+    public static readonly RIGHT_PAREN = new TypstToken(TypstTokenType.ELEMENT, ')');
     public static readonly LEFT_ANGLE = new TypstToken(TypstTokenType.SYMBOL, 'chevron.l');
     public static readonly RIGHT_ANGLE = new TypstToken(TypstTokenType.SYMBOL, 'chevron.r');
     public static readonly VERTICAL_BAR = new TypstToken(TypstTokenType.ELEMENT, '|');
@@ -60,7 +62,7 @@ export class TypstToken {
 
 
     public static readonly LEFT_DELIMITERS = [
-        new TypstToken(TypstTokenType.ELEMENT, '('),
+        TypstToken.LEFT_PAREN,
         new TypstToken(TypstTokenType.ELEMENT, '['),
         TypstToken.LEFT_BRACE,
         TypstToken.VERTICAL_BAR,
@@ -70,7 +72,7 @@ export class TypstToken {
     ];
 
     public static readonly RIGHT_DELIMITERS = [
-        new TypstToken(TypstTokenType.ELEMENT, ')'),
+        TypstToken.RIGHT_PAREN,
         new TypstToken(TypstTokenType.ELEMENT, ']'),
         TypstToken.RIGHT_BRACE,
         TypstToken.VERTICAL_BAR,

@@ -440,6 +440,15 @@ export function convert_tex_node_to_typst(abstractNode: TexNode, options: Tex2Ty
                 }
             }
 
+            // \pmod y -> (mod y)
+            if (node.head.value === '\\pmod') {
+                const g = new TypstGroup([new TypstToken(TypstTokenType.SYMBOL, 'mod').toNode(), arg0]);
+                return new TypstLeftright(
+                    null,
+                    { body: g, left: TypstToken.LEFT_PAREN, right: TypstToken.RIGHT_PAREN }
+                );
+            }
+
             if (node.head.value === '\\overset') {
                 return convert_overset(node, options);
             }

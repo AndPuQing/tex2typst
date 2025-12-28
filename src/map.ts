@@ -45,6 +45,8 @@ const symbolMap = new Map<string, string>([
     ['hat', 'hat'],
     ['sqrt', 'sqrt'],
 
+    ['bmod', 'mod'],
+
     ['nonumber', ''],
     ['vec', 'arrow'],
     ['neq', 'eq.not'],

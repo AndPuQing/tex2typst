@@ -45,6 +45,7 @@ export const TEX_UNARY_COMMANDS = [
     // the braket package
     'bra', 'ket', 'braket', 'set',
     'Bra', 'Ket', 'Braket', 'Set',
+    'pmod',
 ]
 
 export const TEX_BINARY_COMMANDS = [
