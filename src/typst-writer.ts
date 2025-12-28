@@ -34,50 +34,6 @@ export class TypstWriter {
     }
 
 
-    private writeBuffer(previousToken: TypstToken | null, token: TypstToken) {
-        const str = token.toString();
-
-        if (str === '') {
-            return;
-        }
-
-        let no_need_space = false;
-        // putting the first token in clause
-        no_need_space ||= /[\(\[\|]$/.test(this.buffer) && /^\w/.test(str);
-        // closing a clause
-        no_need_space ||= /^[})\]\|]$/.test(str);
-        // putting the opening '(' for a function
-        no_need_space ||= /[^=]$/.test(this.buffer) && str === '(';
-        // putting punctuation
-        no_need_space ||= /^[_^,;!]$/.test(str);
-        // putting a prime
-        no_need_space ||= str === "'";
-        // leading sign. e.g. produce "+1" instead of " +1"
-        no_need_space ||= /[\(\[{]\s*(-|\+)$/.test(this.buffer) || this.buffer === "-" || this.buffer === "+";
-        // new line
-        no_need_space ||= str.startsWith('\n');
-        // buffer is empty
-        no_need_space ||= this.buffer === "";
-        // don't put space multiple times
-        no_need_space ||= (/\s$/.test(this.buffer) || /^\s/.test(str));
-        // "&=" instead of "& ="
-        no_need_space ||= this.buffer.endsWith('&') && str === '=';
-        // before or after a slash e.g. "a/b" instead of "a / b"
-        no_need_space ||= this.buffer.endsWith('/') || str === '/';
-        // "[$x + y$]" instead of "[ $ x + y $ ]"
-        no_need_space ||= token.type === TypstTokenType.LITERAL;
-        // other cases
-        no_need_space ||= /[\s_^{\(]$/.test(this.buffer);
-        if (previousToken !== null) {
-            no_need_space ||= previousToken.type === TypstTokenType.LITERAL;
-        }
-        if (!no_need_space) {
-            // this.buffer += ' ';
-        }
-
-        this.buffer += str;
-    }
-
     // Serialize a tree of TypstNode into a list of TypstToken
     public serialize(abstractNode: TypstNode) {
         const env = {insideFunctionDepth: 0};
@@ -117,8 +73,7 @@ export class TypstWriter {
 
         for(let i = 0; i < qu.length; i++) {
             let token = qu[i];
-            let previous_token = i === 0 ? null : qu[i - 1];
-            this.writeBuffer(previous_token, token);
+            this.buffer += token.toString();
         }
 
         this.queue = [];
