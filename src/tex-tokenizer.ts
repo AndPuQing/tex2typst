@@ -46,6 +46,7 @@ export const TEX_UNARY_COMMANDS = [
     'bra', 'ket', 'braket', 'set',
     'Bra', 'Ket', 'Braket', 'Set',
     'pmod',
+    'cancel',
 ]
 
 export const TEX_BINARY_COMMANDS = [

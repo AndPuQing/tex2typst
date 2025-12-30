@@ -213,3 +213,6 @@ cases:
   - title: spaces around text
     tex: v_\text{GS} - V_t \text{should} a
     typst: v_"GS" - V_t "should" a
+  - title: cancel
+    tex: \cancel{a}
+    typst: cancel(a)

@@ -69,6 +69,7 @@ const symbolMap = new Map<string, string>([
     ['tbinom', 'binom'],
     ['dfrac', 'frac'],
     ['tfrac', 'frac'],
+    ['cancel', 'cancel'],
 
     ['operatorname', 'op'],
     ['operatorname*', 'op'],
